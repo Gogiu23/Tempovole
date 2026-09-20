@@ -1,0 +1,19 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+build/
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Firma de release: nunca debe subirse al repositorio.
+keystore.properties
+*.jks
+*.keystore
+
+# Caches y artefactos de compilacion locales
+.kotlin/
+.icon_preview/

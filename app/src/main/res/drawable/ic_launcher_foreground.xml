@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Rayos -->
+    <path
+        android:pathData="M54.81,28.81 L51.98,25.98 M64,25 V21 M73.19,28.81 L76.02,25.98 M77,38 H81"
+        android:strokeColor="#FFD54A"
+        android:strokeWidth="4"
+        android:strokeLineCap="round" />
+
+    <!-- Sol -->
+    <path android:pathData="M53,38 a11,11 0 1,0 22,0 a11,11 0 1,0 -22,0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="61"
+                android:centerY="34"
+                android:gradientRadius="16"
+                android:startColor="#FFEE99"
+                android:endColor="#FFC24A" />
+        </aapt:attr>
+    </path>
+
+    <!-- Nube -->
+    <path android:fillColor="#FFFFFF" android:pathData="M30,60 a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M41,53 a13,13 0 1,0 26,0 a13,13 0 1,0 -26,0 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M57,60 a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M39,62 H69 a7,7 0 0 1 7,7 a7,7 0 0 1 -7,7 H39 a7,7 0 0 1 -7,-7 a7,7 0 0 1 7,-7 Z" />
+</vector>

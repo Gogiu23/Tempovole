@@ -1,0 +1,16 @@
+Tiempo es una app de previsión meteorológica pensada para dar mucha información sin resultar caótica: entras, ves lo que necesitas de un vistazo, y si quieres profundizar, está todo ahí.
+
+PREVISIÓN CLARA, HOY Y LOS PRÓXIMOS 7 DÍAS
+Temperatura actual, máxima y mínima, viento y probabilidad de lluvia, con un gráfico por horas para temperatura, lluvia o viento — tanto para hoy como para cualquier día de la semana. Toca cualquier dato para ver qué significa exactamente, con una explicación clara y sin tecnicismos.
+
+MUCHO MÁS QUE LA TEMPERATURA
+Índice UV, radiación solar, punto de rocío y presión atmosférica. Calidad del aire y niveles de polen (Europa). Amanecer, atardecer y fase lunar. Comparación con la media histórica de ese mismo día. Oleaje en la costa, caudal de ríos cercanos, una proyección de cambio climático a largo plazo, e incluso el rango de incertidumbre entre los distintos modelos meteorológicos. Actívalos o desactívalos como quieras desde Ajustes.
+
+WIDGET Y AVISO DIARIO
+Un widget para la pantalla de inicio con la hora, la temperatura y la probabilidad de lluvia de la próxima hora. Y un aviso cada mañana (a la hora que elijas) con un resumen completo: temperatura actual y media del día, si va a llover, calidad del aire, amanecer/atardecer y fase lunar.
+
+CUALQUIER CIUDAD, A TU MANERA
+Busca y cambia de ubicación cuando quieras — no hace falta activar el GPS. Un fondo de pantalla distinto cada día completa la experiencia.
+
+PRIVACIDAD ANTE TODO
+Sin cuentas, sin anuncios, sin rastreo ni analítica. Los datos meteorológicos vienen de Open-Meteo, un servicio abierto y gratuito. Todo lo que configuras se queda solo en tu dispositivo.
