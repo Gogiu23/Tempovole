@@ -24,6 +24,27 @@ data class ChangelogEntry(
 object Changelog {
     val entries: List<ChangelogEntry> = listOf(
         ChangelogEntry(
+            version = "1.2",
+            date = "20 de septiembre de 2026",
+            changes = listOf(
+                "La semana se ve ahora como un carrusel: cada día es una tarjeta que gira " +
+                    "y se pone de frente al pasar por el centro.",
+                "Cada día de la semana lleva su propia foto, elegida según el tiempo que " +
+                    "hará ese día, y cambia a diario.",
+                "El carrusel se arrastra desde cualquier punto de la pantalla y sigue " +
+                    "rodando al soltar el dedo, en vez de frenar en seco.",
+                "Girando el móvil, la semana entera se ve de un vistazo: la tarjeta del " +
+                    "centro grande y las demás encogiendo hacia los lados.",
+                "Los iconos de la esquina superior se han agrupado en un menú lateral, " +
+                    "ahora con el nombre de cada sección.",
+                "En \"Hoy\", el nombre de la ciudad se queda fijo arriba y se hace más " +
+                    "pequeño según bajas, para dejar sitio al contenido.",
+                "Las tarjetas de \"Hoy\" aparecen con un barrido al entrar en pantalla.",
+                "Los créditos de las fotos se actualizan solos: salen los autores de las " +
+                    "fotos que la app está usando, y desaparecen los que ya no se ven."
+            )
+        ),
+        ChangelogEntry(
             version = "1.1",
             date = "20 de septiembre de 2026",
             changes = listOf(

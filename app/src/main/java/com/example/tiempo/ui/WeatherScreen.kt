@@ -5,11 +5,15 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 import androidx.compose.foundation.gestures.snapping.SnapPosition
@@ -23,6 +27,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,6 +36,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -316,33 +322,57 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
                     WeatherContent(state, selectedTab, currentLocation, innerPadding)
                 }
 
-                Row(
+                // Un unico boton arriba: el resto de accesos viven en el menu lateral.
+                var menuOpen by remember { mutableStateOf(false) }
+
+                // Capa oscura tras el menu: tocarla lo cierra.
+                AnimatedVisibility(
+                    visible = menuOpen,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.55f))
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = { menuOpen = false }
+                            )
+                    )
+                }
+
+                AnimatedVisibility(
+                    visible = menuOpen,
+                    enter = slideInHorizontally(initialOffsetX = { it }),
+                    exit = slideOutHorizontally(targetOffsetX = { it }),
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                ) {
+                    SideMenu(
+                        hasUnseenChanges = hasUnseenChanges,
+                        onSelect = { screen ->
+                            menuOpen = false
+                            if (screen == OverlayScreen.CHANGELOG) {
+                                ChangelogPreferences.markSeen(appContext)
+                                hasUnseenChanges = false
+                            }
+                            overlayIndex = screen.ordinal
+                        }
+                    )
+                }
+
+                // Va el ultimo para quedar por encima del panel: el mismo boton abre y cierra.
+                Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .statusBarsPadding()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
                 ) {
                     IconCircleButton(
-                        emoji = "🔔",
-                        showBadge = hasUnseenChanges,
-                        onClick = {
-                            ChangelogPreferences.markSeen(appContext)
-                            hasUnseenChanges = false
-                            overlayIndex = OverlayScreen.CHANGELOG.ordinal
-                        }
-                    )
-                    IconCircleButton(
-                        emoji = "📰",
-                        onClick = { overlayIndex = OverlayScreen.BLOG.ordinal }
-                    )
-                    IconCircleButton(
-                        emoji = "ℹ️",
-                        onClick = { overlayIndex = OverlayScreen.INFO.ordinal }
-                    )
-                    IconCircleButton(
-                        emoji = "⚙️",
-                        onClick = { overlayIndex = OverlayScreen.SETTINGS.ordinal }
+                        emoji = if (menuOpen) "✕" else "☰",
+                        showBadge = hasUnseenChanges && !menuOpen,
+                        onClick = { menuOpen = !menuOpen }
                     )
                 }
             }
@@ -351,6 +381,66 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
 }
 
 private enum class OverlayScreen { NONE, SETTINGS, BLOG, INFO, CHANGELOG }
+
+/**
+ * Menu lateral con los accesos que antes estaban sueltos arriba: ahora llevan etiqueta,
+ * que es lo que gana el sitio al no tener que caber cuatro iconos en una esquina.
+ */
+@Composable
+private fun SideMenu(hasUnseenChanges: Boolean, onSelect: (OverlayScreen) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxHeight()
+            .width(220.dp)
+            .background(Color(0xF01A1C20))
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(vertical = 20.dp)
+    ) {
+        Text(
+            text = "Menú",
+            color = Color.White.copy(alpha = 0.55f),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 22.dp, vertical = 8.dp)
+        )
+        Spacer(Modifier.height(4.dp))
+        SideMenuItem("🔔", "Novedades", badge = hasUnseenChanges) {
+            onSelect(OverlayScreen.CHANGELOG)
+        }
+        SideMenuItem("📰", "Blog") { onSelect(OverlayScreen.BLOG) }
+        SideMenuItem("ℹ️", "Info") { onSelect(OverlayScreen.INFO) }
+        SideMenuItem("⚙️", "Ajustes") { onSelect(OverlayScreen.SETTINGS) }
+    }
+}
+
+@Composable
+private fun SideMenuItem(
+    emoji: String,
+    label: String,
+    badge: Boolean = false,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 22.dp, vertical = 15.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Text(text = emoji, fontSize = 20.sp)
+        Text(text = label, color = Color.White, fontSize = 17.sp)
+        if (badge) {
+            Box(
+                Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFFFF5252))
+            )
+        }
+    }
+}
 
 @Composable
 fun IconCircleButton(emoji: String, showBadge: Boolean = false, onClick: () -> Unit) {
@@ -1231,6 +1321,73 @@ private fun WeatherContent(
     }
 }
 
+/** Alto del header de "Hoy" con la lista arriba del todo y una vez encogido. */
+private val HEADER_MAX_HEIGHT = 104.dp
+private val HEADER_MIN_HEIGHT = 58.dp
+
+/** Cuanto hay que bajar para que el header termine de encoger. */
+private val HEADER_SHRINK_DISTANCE = 150.dp
+
+/**
+ * Header de "Hoy", fijo arriba: segun bajas, el nombre de la ciudad se hace mas pequeno,
+ * la linea de resumen se desvanece y aparece una sombra debajo, como en el demo
+ * https://scroll-driven-animations.style/demos/shrinking-header-shadow/css/
+ */
+@Composable
+private fun TodayHeader(
+    locationName: String,
+    summary: String,
+    shrink: Float,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                // Arriba del todo el header es transparente y se ve la foto; al encoger se
+                // vuelve opaco para que el contenido no se lea por detras. El fondo va
+                // antes del inset: asi tapa tambien la franja de la barra de estado.
+                .background(Color.Black.copy(alpha = 0.82f * shrink))
+                .statusBarsPadding()
+                .height(HEADER_MAX_HEIGHT * (1f - shrink) + HEADER_MIN_HEIGHT * shrink)
+                // A la derecha, sitio para el boton del menu.
+                .padding(start = 16.dp, end = 74.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    text = "📍 $locationName",
+                    color = Color.White,
+                    fontSize = lerp(30f, 20f, shrink).sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
+                if (shrink < 1f) {
+                    Text(
+                        text = summary,
+                        color = Color.White.copy(alpha = 0.85f * (1f - shrink)),
+                        fontSize = 15.sp,
+                        maxLines = 1
+                    )
+                }
+            }
+            LiveClock()
+        }
+        // La `box-shadow` del demo: aqui, un degradado que aparece al bajar.
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(16.dp)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(Color.Black.copy(alpha = 0.4f * shrink), Color.Transparent)
+                    )
+                )
+        )
+    }
+}
+
 /**
  * Progreso de entrada (0..1) del elemento con esta `key`, equivalente al rango
  * `entry 0% -> entry 80%` de las animaciones CSS guiadas por scroll: vale 0 justo cuando
@@ -1343,147 +1500,88 @@ private fun TodayScreen(
     val detailRows = detailItems.chunked(2)
     val extraRows = extraItems.chunked(2)
 
-    LazyColumn(
-        state = listState,
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .padding(padding)
-            .fadingEdge(bottomFadeBrush),
-        contentPadding = PaddingValues(vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        item(key = "header") {
-            Column(
-                Modifier
-                    .padding(horizontal = 16.dp)
-                    .appearOnScroll(listState, "header")
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    Text(
-                        text = "📍 ${location.name}",
-                        color = Color.White,
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    LiveClock()
-                }
-                Text(
-                    text = "${current.condition.emoji} ${current.temp.roundToInt()}°  ·  " +
-                        today.date.fullDate(),
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 15.sp
-                )
+    // El header deja de ser un elemento mas de la lista: se queda fijo arriba y encoge
+    // segun bajas, como el demo shrinking-header-shadow de scroll-driven-animations.style.
+    val shrinkPx = with(LocalDensity.current) { HEADER_SHRINK_DISTANCE.toPx() }
+    val shrink by remember {
+        derivedStateOf {
+            if (listState.firstVisibleItemIndex > 0) {
+                1f
+            } else {
+                (listState.firstVisibleItemScrollOffset / shrinkPx).coerceIn(0f, 1f)
             }
         }
+    }
 
-        item(key = "condition") {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .appearOnScroll(listState, "condition"),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(text = today.condition.emoji, fontSize = 64.sp)
-                Text(
-                    text = today.condition.label,
-                    color = Color.White,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "${today.tempMax.roundToInt()}° / ${today.tempMin.roundToInt()}°",
-                    color = Color.White,
-                    fontSize = 40.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-
-        if (upcomingHours.isNotEmpty()) {
-            item(key = "chart") {
-                var selectedMetricIndex by rememberSaveable { mutableIntStateOf(0) }
-                val selectedMetric = HourlyMetric.entries[selectedMetricIndex]
-
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .fadingEdge(bottomFadeBrush),
+            // Hueco fijo para el header: el contenido no baila mientras el header encoge.
+            contentPadding = PaddingValues(top = HEADER_MAX_HEIGHT, bottom = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            item(key = "condition") {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
-                        .appearOnScroll(listState, "chart"),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                        .appearOnScroll(listState, "condition"),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    Text(text = today.condition.emoji, fontSize = 64.sp)
                     Text(
-                        text = "Próximas horas",
-                        color = Color.White.copy(alpha = 0.85f),
-                        fontSize = 16.sp,
+                        text = today.condition.label,
+                        color = Color.White,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.SemiBold
                     )
-                    MetricSelector(
-                        selected = selectedMetric,
-                        onSelect = { selectedMetricIndex = it.ordinal }
-                    )
-                    HourlyLineChart(upcomingHours, selectedMetric)
-                }
-            }
-        }
-
-        itemsIndexed(detailRows, key = { i, _ -> "detail-row-$i" }) { rowIndex, rowItems ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .appearOnScroll(listState, "detail-row-$rowIndex"),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                rowItems.forEachIndexed { colIndex, item ->
-                    DetailTile(
-                        item,
-                        modifier = Modifier.weight(1f),
-                        entryIndex = rowIndex * 2 + colIndex,
-                        onClick = { selectedDetail = item }
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "${today.tempMax.roundToInt()}° / ${today.tempMin.roundToInt()}°",
+                        color = Color.White,
+                        fontSize = 40.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
-                if (rowItems.size == 1) {
-                    Spacer(modifier = Modifier.weight(1f))
+            }
+
+            if (upcomingHours.isNotEmpty()) {
+                item(key = "chart") {
+                    var selectedMetricIndex by rememberSaveable { mutableIntStateOf(0) }
+                    val selectedMetric = HourlyMetric.entries[selectedMetricIndex]
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .appearOnScroll(listState, "chart"),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Próximas horas",
+                            color = Color.White.copy(alpha = 0.85f),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        MetricSelector(
+                            selected = selectedMetric,
+                            onSelect = { selectedMetricIndex = it.ordinal }
+                        )
+                        HourlyLineChart(upcomingHours, selectedMetric)
+                    }
                 }
             }
-        }
 
-        if (ExtraFeature.SUN_MOON in enabledExtras) {
-            item(key = "sun-moon") {
-                SunMoonCard(
-                    today = today,
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .appearOnScroll(listState, "sun-moon")
-                )
-            }
-        }
-
-        if (extraRows.isNotEmpty()) {
-            item(key = "extras-title") {
-                Text(
-                    text = "Más datos",
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .appearOnScroll(listState, "extras-title")
-                )
-            }
-            itemsIndexed(extraRows, key = { i, _ -> "extra-row-$i" }) { rowIndex, rowItems ->
+            itemsIndexed(detailRows, key = { i, _ -> "detail-row-$i" }) { rowIndex, rowItems ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
-                        .appearOnScroll(listState, "extra-row-$rowIndex"),
+                        .appearOnScroll(listState, "detail-row-$rowIndex"),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     rowItems.forEachIndexed { colIndex, item ->
@@ -1499,7 +1597,61 @@ private fun TodayScreen(
                     }
                 }
             }
+
+            if (ExtraFeature.SUN_MOON in enabledExtras) {
+                item(key = "sun-moon") {
+                    SunMoonCard(
+                        today = today,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .appearOnScroll(listState, "sun-moon")
+                    )
+                }
+            }
+
+            if (extraRows.isNotEmpty()) {
+                item(key = "extras-title") {
+                    Text(
+                        text = "Más datos",
+                        color = Color.White.copy(alpha = 0.85f),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .appearOnScroll(listState, "extras-title")
+                    )
+                }
+                itemsIndexed(extraRows, key = { i, _ -> "extra-row-$i" }) { rowIndex, rowItems ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .appearOnScroll(listState, "extra-row-$rowIndex"),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        rowItems.forEachIndexed { colIndex, item ->
+                            DetailTile(
+                                item,
+                                modifier = Modifier.weight(1f),
+                                entryIndex = rowIndex * 2 + colIndex,
+                                onClick = { selectedDetail = item }
+                            )
+                        }
+                        if (rowItems.size == 1) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
         }
+
+        TodayHeader(
+            locationName = location.name,
+            summary = "${current.condition.emoji} ${current.temp.roundToInt()}°  ·  " +
+                today.date.fullDate(),
+            shrink = shrink,
+            modifier = Modifier.align(Alignment.TopStart)
+        )
     }
 }
 
@@ -2229,7 +2381,7 @@ private fun WeekScreen(
         Column(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(horizontal = 16.dp, vertical = if (isLandscape) 2.dp else 16.dp)
+                .padding(horizontal = 16.dp, vertical = if (isLandscape) 2.dp else 10.dp)
         ) {
             Text(
                 text = "📍 $locationName",
