@@ -90,6 +90,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.PathOperation
@@ -1915,13 +1916,29 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
                     .width(pointSpacing * hours.size)
                     .height(chartHeight)
             ) {
-                // Fondo: el color de cada franja horaria a lo ancho, apagandose en gris
-                // hacia arriba y dejando ver la foto por debajo.
+                // Fondo: el color de cada franja horaria a lo ancho, desvaneciendose
+                // hacia arriba hasta quedar en un gris translucido que deja ver la foto.
+                //
+                // El desvanecido se hace en una capa aparte: se pinta el color y luego se
+                // le recorta la opacidad con un degradado vertical (DstIn), porque un
+                // Brush por si solo no puede variar de color a lo ancho y de opacidad a
+                // lo alto a la vez.
+                drawContext.canvas.saveLayer(
+                    Rect(0f, 0f, size.width, size.height),
+                    Paint()
+                )
                 if (tints.size > 1) {
                     drawRect(brush = Brush.horizontalGradient(colorStops = tints))
                 } else {
                     drawRect(color = tints.first().second)
                 }
+                drawRect(
+                    brush = Brush.verticalGradient(listOf(Color.Transparent, Color.Black)),
+                    blendMode = BlendMode.DstIn
+                )
+                drawContext.canvas.restore()
+
+                // Y encima, el gris que domina la parte de arriba.
                 drawRect(
                     brush = Brush.verticalGradient(
                         listOf(Color(0xFF9E9E9E).copy(alpha = 0.22f), Color.Transparent)
