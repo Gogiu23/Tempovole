@@ -79,11 +79,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -1355,6 +1357,9 @@ private val HEADER_MIN_HEIGHT = 58.dp
 /** Cuanto hay que bajar para que el header termine de encoger. */
 private val HEADER_SHRINK_DISTANCE = 150.dp
 
+/** A que se queda el nombre de la ciudad al encoger (equivale a pasar de 30sp a 20sp). */
+private const val HEADER_TITLE_SHRINK = 0.67f
+
 /**
  * Header de "Hoy", fijo arriba: segun bajas, el nombre de la ciudad se hace mas pequeno,
  * la linea de resumen se desvanece y aparece una sombra debajo, como en el demo
@@ -1364,54 +1369,84 @@ private val HEADER_SHRINK_DISTANCE = 150.dp
 private fun TodayHeader(
     locationName: String,
     summary: String,
-    shrink: Float,
+    shrink: () -> Float,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            // Fondo y sombra se pintan a mano: cambiar el tamano de un Box en cada
+            // fotograma obligaria a recolocar la pantalla entera mientras haces scroll.
+            .drawBehind {
+                val progress = shrink()
+                if (progress <= 0f) return@drawBehind
+
+                val maxPx = HEADER_MAX_HEIGHT.toPx()
+                val minPx = HEADER_MIN_HEIGHT.toPx()
+                // Lo que sobra por encima del header es la barra de estado.
+                val statusBar = size.height - maxPx
+                val headerHeight = statusBar + (maxPx * (1f - progress) + minPx * progress)
+
+                drawRect(
+                    color = Color.Black.copy(alpha = 0.82f * progress),
+                    size = Size(size.width, headerHeight)
+                )
+                // La `box-shadow` del demo.
+                val shadow = 16.dp.toPx()
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(Color.Black.copy(alpha = 0.4f * progress), Color.Transparent),
+                        startY = headerHeight,
+                        endY = headerHeight + shadow
+                    ),
+                    topLeft = Offset(0f, headerHeight),
+                    size = Size(size.width, shadow)
+                )
+            }
+    ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                // Arriba del todo el header es transparente y se ve la foto; al encoger se
-                // vuelve opaco para que el contenido no se lea por detras. El fondo va
-                // antes del inset: asi tapa tambien la franja de la barra de estado.
-                .background(Color.Black.copy(alpha = 0.82f * shrink))
                 .statusBarsPadding()
-                .height(HEADER_MAX_HEIGHT * (1f - shrink) + HEADER_MIN_HEIGHT * shrink)
+                .fillMaxWidth()
+                .height(HEADER_MAX_HEIGHT)
                 // A la derecha, sitio para el boton del menu.
-                .padding(start = 16.dp, end = 74.dp),
+                .padding(start = 16.dp, end = 74.dp)
+                .graphicsLayer {
+                    // Al encoger el header, el contenido sube para seguir centrado en el.
+                    val progress = shrink()
+                    val lost = (HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT).toPx() * progress
+                    translationY = -lost / 2f
+                },
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
+            Column(
+                modifier = Modifier.graphicsLayer {
+                    // El nombre se hace pequeno escalandolo, no cambiando su tamano de
+                    // letra: asi no hay que volver a medir el texto en cada fotograma.
+                    val scale = lerp(1f, HEADER_TITLE_SHRINK, shrink())
+                    scaleX = scale
+                    scaleY = scale
+                    transformOrigin = TransformOrigin(0f, 0.5f)
+                }
+            ) {
                 Text(
                     text = "📍 $locationName",
                     color = Color.White,
-                    fontSize = lerp(30f, 20f, shrink).sp,
+                    fontSize = 30.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1
                 )
-                if (shrink < 1f) {
-                    Text(
-                        text = summary,
-                        color = Color.White.copy(alpha = 0.85f * (1f - shrink)),
-                        fontSize = 15.sp,
-                        maxLines = 1
-                    )
-                }
+                Text(
+                    text = summary,
+                    color = Color.White.copy(alpha = 0.85f),
+                    fontSize = 15.sp,
+                    maxLines = 1,
+                    modifier = Modifier.graphicsLayer { alpha = 1f - shrink() }
+                )
             }
             LiveClock()
         }
-        // La `box-shadow` del demo: aqui, un degradado que aparece al bajar.
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(16.dp)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(Color.Black.copy(alpha = 0.4f * shrink), Color.Transparent)
-                    )
-                )
-        )
     }
 }
 
@@ -1530,7 +1565,9 @@ private fun TodayScreen(
     // El header deja de ser un elemento mas de la lista: se queda fijo arriba y encoge
     // segun bajas, como el demo shrinking-header-shadow de scroll-driven-animations.style.
     val shrinkPx = with(LocalDensity.current) { HEADER_SHRINK_DISTANCE.toPx() }
-    val shrink by remember {
+    // Sin `by`: el valor se lee dentro de las lambdas de dibujo del header, asi que el
+    // scroll no dispara recomposiciones ni vuelve a medir el texto en cada fotograma.
+    val shrink = remember {
         derivedStateOf {
             if (listState.firstVisibleItemIndex > 0) {
                 1f
@@ -1676,7 +1713,7 @@ private fun TodayScreen(
             locationName = location.name,
             summary = "${current.condition.emoji} ${current.temp.roundToInt()}°  ·  " +
                 today.date.fullDate(),
-            shrink = shrink,
+            shrink = shrink::value,
             modifier = Modifier.align(Alignment.TopStart)
         )
     }
