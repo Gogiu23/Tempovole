@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiempo — app de previsión meteorológica</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 3rem 1.25rem 5rem;
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    text-align: center;
+  }
+  h1 { font-size: 2.2rem; margin-bottom: .25rem; }
+  p.lema { opacity: .75; margin-top: 0; }
+  .capturas { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; margin: 2.5rem 0; }
+  .capturas img { width: 170px; border-radius: 14px; }
+  nav a { display: inline-block; margin: .35rem .6rem; }
+</style>
+</head>
+<body>
+
+<h1>Tiempo</h1>
+<p class="lema">
+  La previsión de los próximos 7 días sobre fotos de paisajes que cambian con la hora
+  y con el tiempo que va a hacer. Sin cuenta, sin anuncios y sin rastreo.
+</p>
+
+<div class="capturas">
+  <img src="screenshots/1_hoy.jpg" alt="Pantalla de hoy">
+  <img src="screenshots/3_semana.jpg" alt="Previsión de 7 días">
+  <img src="screenshots/4_detalle.jpg" alt="Detalle de un día">
+</div>
+
+<nav>
+  <a href="privacidad.html">Política de privacidad y términos de uso</a> ·
+  <a href="https://github.com/Gogiu23/Tempovole">Código fuente</a>
+</nav>
+
+</body>
+</html>
