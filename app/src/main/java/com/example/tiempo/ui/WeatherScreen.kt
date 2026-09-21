@@ -1872,35 +1872,41 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
     val maxValue = values.max()
     val range = (maxValue - minValue).let { if (it < 1f) 1f else it }
 
-    val tint = remember(hours.first().time) { chartTintFor(hours.first().time.hour) }
+    // Un color por hora: el fondo recorre las franjas del dia de izquierda a derecha.
+    val tints = remember(hours) {
+        hours.mapIndexed { index, hour ->
+            (index + 0.5f) / hours.size to chartTintFor(hour.time.hour).copy(alpha = 0.45f)
+        }.toTypedArray()
+    }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(
-                // De abajo arriba: el color de la franja del dia se va apagando en gris.
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFF9E9E9E).copy(alpha = 0.18f),
-                        tint.copy(alpha = 0.45f)
-                    )
-                )
-            ),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.10f))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
-                .padding(vertical = 16.dp, horizontal = 8.dp)
         ) {
             Canvas(
                 modifier = Modifier
                     .width(pointSpacing * hours.size)
                     .height(chartHeight)
             ) {
+                // Fondo: el color de cada franja horaria a lo ancho, apagandose en gris
+                // hacia arriba y dejando ver la foto por debajo.
+                if (tints.size > 1) {
+                    drawRect(brush = Brush.horizontalGradient(colorStops = tints))
+                } else {
+                    drawRect(color = tints.first().second)
+                }
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        listOf(Color(0xFF9E9E9E).copy(alpha = 0.5f), Color.Transparent)
+                    )
+                )
+
                 val stepPx = pointSpacing.toPx()
                 val topPad = 56.dp.toPx()
                 val bottomPad = 26.dp.toPx()

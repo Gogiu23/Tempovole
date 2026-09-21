@@ -44,9 +44,9 @@ object Changelog {
                     "fotos que la app está usando, y desaparecen los que ya no se ven.",
                 "Cada crédito es ahora un enlace: lleva al perfil del autor y a la foto " +
                     "original en Unsplash.",
-                "El gráfico por horas empieza mostrando la lluvia, y su fondo se tiñe " +
-                    "según el momento del día: coral por la mañana, dorado al mediodía, " +
-                    "verde por la tarde y azul de noche."
+                "El gráfico por horas empieza mostrando la lluvia, y su fondo va cambiando " +
+                    "de color a lo largo de las horas: coral por la mañana, dorado al " +
+                    "mediodía, verde por la tarde y azul de noche."
             )
         ),
         ChangelogEntry(
