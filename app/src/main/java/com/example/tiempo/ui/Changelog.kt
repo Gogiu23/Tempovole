@@ -43,7 +43,10 @@ object Changelog {
                 "Los créditos de las fotos se actualizan solos: salen los autores de las " +
                     "fotos que la app está usando, y desaparecen los que ya no se ven.",
                 "Cada crédito es ahora un enlace: lleva al perfil del autor y a la foto " +
-                    "original en Unsplash."
+                    "original en Unsplash.",
+                "El gráfico por horas empieza mostrando la lluvia, y su fondo se tiñe " +
+                    "según el momento del día: coral por la mañana, dorado al mediodía, " +
+                    "verde por la tarde y azul de noche."
             )
         ),
         ChangelogEntry(

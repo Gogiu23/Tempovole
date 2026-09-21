@@ -1808,9 +1808,21 @@ private suspend fun loadExtraItems(
 }
 
 private enum class HourlyMetric(val label: String, val emoji: String, val unit: String) {
-    TEMP("Temperatura", "🌡️", "°"),
     RAIN("Lluvia", "🌧️", "%"),
+    TEMP("Temperatura", "🌡️", "°"),
     WIND("Viento", "💨", "")
+}
+
+/**
+ * Color con el que se tine el fondo del grafico, segun la hora en la que empieza: sigue el
+ * tono de la luz a lo largo del dia — coral por la mañana, dorado al mediodia, verde por
+ * la tarde y azul de noche.
+ */
+private fun chartTintFor(hour: Int): Color = when (hour) {
+    in 6..11 -> Color(0xFFFF7F50)
+    in 12..15 -> Color(0xFFFFD166)
+    in 16..20 -> Color(0xFF06D6A0)
+    else -> Color(0xFF118AB2)
 }
 
 private fun HourWeather.valueFor(metric: HourlyMetric): Float = when (metric) {
@@ -1860,10 +1872,23 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
     val maxValue = values.max()
     val range = (maxValue - minValue).let { if (it < 1f) 1f else it }
 
+    val tint = remember(hours.first().time) { chartTintFor(hours.first().time.hour) }
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                // De abajo arriba: el color de la franja del dia se va apagando en gris.
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFF9E9E9E).copy(alpha = 0.18f),
+                        tint.copy(alpha = 0.45f)
+                    )
+                )
+            ),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.16f))
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Row(
             modifier = Modifier
