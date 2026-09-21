@@ -45,8 +45,8 @@ object Changelog {
                 "Cada crédito es ahora un enlace: lleva al perfil del autor y a la foto " +
                     "original en Unsplash.",
                 "El gráfico por horas empieza mostrando la lluvia, y su fondo va cambiando " +
-                    "de color a lo largo de las horas: coral por la mañana, dorado al " +
-                    "mediodía, verde por la tarde y azul de noche."
+                    "de color a lo largo de las horas: coral de madrugada, dorado " +
+                    "durante el día, verde por la tarde y azul de noche."
             )
         ),
         ChangelogEntry(

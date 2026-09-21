@@ -1814,15 +1814,36 @@ private enum class HourlyMetric(val label: String, val emoji: String, val unit: 
 }
 
 /**
- * Color con el que se tine el fondo del grafico, segun la hora en la que empieza: sigue el
- * tono de la luz a lo largo del dia — coral por la mañana, dorado al mediodia, verde por
- * la tarde y azul de noche.
+ * Momento del dia en el que cada color manda del todo, y su tono. Son los centros de las
+ * franjas: madrugada (hasta las 9), dia (hasta las 18), tarde (hasta las 22) y noche.
  */
-private fun chartTintFor(hour: Int): Color = when (hour) {
-    in 6..11 -> Color(0xFFFF7F50)
-    in 12..15 -> Color(0xFFFFD166)
-    in 16..20 -> Color(0xFF06D6A0)
-    else -> Color(0xFF118AB2)
+private val CHART_TINT_ANCHORS = listOf(
+    4.5f to Color(0xFFFF7F50),
+    13.5f to Color(0xFFFFD166),
+    20f to Color(0xFF06D6A0),
+    23f to Color(0xFF118AB2)
+)
+
+/**
+ * Color con el que se tine el fondo del grafico a una hora dada. Entre franja y franja el
+ * color se mezcla poco a poco en vez de saltar de golpe, y a medianoche enlaza con el
+ * primer tono, asi que el recorrido de un dia entero no tiene ningun corte.
+ */
+private fun chartTintFor(hour: Int): Color {
+    val anchors = CHART_TINT_ANCHORS
+    anchors.forEachIndexed { index, (start, startColor) ->
+        val (nextHour, endColor) = anchors[(index + 1) % anchors.size]
+        val end = if (nextHour > start) nextHour else nextHour + 24f
+        val position = if (hour >= start) hour.toFloat() else hour + 24f
+        if (position in start..end) {
+            return androidx.compose.ui.graphics.lerp(
+                startColor,
+                endColor,
+                (position - start) / (end - start)
+            )
+        }
+    }
+    return anchors.first().second
 }
 
 private fun HourWeather.valueFor(metric: HourlyMetric): Float = when (metric) {
@@ -1903,7 +1924,7 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
                 }
                 drawRect(
                     brush = Brush.verticalGradient(
-                        listOf(Color(0xFF9E9E9E).copy(alpha = 0.5f), Color.Transparent)
+                        listOf(Color(0xFF9E9E9E).copy(alpha = 0.22f), Color.Transparent)
                     )
                 )
 
