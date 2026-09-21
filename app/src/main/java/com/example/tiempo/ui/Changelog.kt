@@ -41,7 +41,9 @@ object Changelog {
                     "pequeño según bajas, para dejar sitio al contenido.",
                 "Las tarjetas de \"Hoy\" aparecen con un barrido al entrar en pantalla.",
                 "Los créditos de las fotos se actualizan solos: salen los autores de las " +
-                    "fotos que la app está usando, y desaparecen los que ya no se ven."
+                    "fotos que la app está usando, y desaparecen los que ya no se ven.",
+                "Cada crédito es ahora un enlace: lleva al perfil del autor y a la foto " +
+                    "original en Unsplash."
             )
         ),
         ChangelogEntry(

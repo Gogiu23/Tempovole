@@ -105,6 +105,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -704,11 +705,11 @@ private fun PhotoCreditsSection() {
             fontWeight = FontWeight.SemiBold
         )
         Text(
-            text = "Las fotos proceden de Unsplash (unsplash.com) y se usan según su " +
-                "licencia. Cada foto es obra de su autor: la app muestra una de fondo por " +
-                "la mañana, la tarde y la noche, y otra en cada tarjeta de la semana según " +
-                "el tiempo que hará ese día. Abajo están los autores de las fotos que la " +
-                "app usa ahora mismo.",
+            text = "Las fotos proceden de Unsplash y se usan según su licencia. Cada foto " +
+                "es obra de su autor: la app muestra una de fondo por la mañana, la tarde " +
+                "y la noche, y otra en cada tarjeta de la semana según el tiempo que hará " +
+                "ese día. Abajo están los autores de las fotos que la app usa ahora mismo; " +
+                "toca cualquiera para ver su perfil.",
             color = Color.White.copy(alpha = 0.8f),
             fontSize = 13.sp,
             lineHeight = 19.sp
@@ -722,14 +723,30 @@ private fun PhotoCreditsSection() {
                 lineHeight = 19.sp
             )
         } else {
+            val uriHandler = LocalUriHandler.current
             credits.forEach { credit ->
-                Text(
-                    text = "· ${credit.authorName}" +
-                        (credit.authorUrl?.let { "\n  $it" } ?: ""),
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = 13.sp,
-                    lineHeight = 19.sp
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    val authorLink = credit.authorUrl?.withUnsplashUtm()
+                    Text(
+                        text = "· Foto de ${credit.authorName}",
+                        color = Color.White.copy(alpha = 0.85f),
+                        fontSize = 13.sp,
+                        lineHeight = 19.sp,
+                        modifier = if (authorLink != null) {
+                            Modifier.clickable { uriHandler.openUri(authorLink) }
+                        } else {
+                            Modifier
+                        }
+                    )
+                    credit.photoUrl?.withUnsplashUtm()?.let { photoLink ->
+                        Text(
+                            text = "   ver la foto en Unsplash",
+                            color = Color.White.copy(alpha = 0.55f),
+                            fontSize = 12.sp,
+                            modifier = Modifier.clickable { uriHandler.openUri(photoLink) }
+                        )
+                    }
+                }
             }
         }
     }
@@ -2239,6 +2256,19 @@ private fun WeekScreen(
         value = UnsplashRepository(appContext).conditionPhotos(days.map { it.condition })
     }
 
+    // Unsplash pide avisar de cada foto que se usa; el repositorio lo hace una vez al dia.
+    LaunchedEffect(photosByCondition, days) {
+        if (photosByCondition.isNotEmpty()) {
+            val shown = days.mapNotNull { day ->
+                UnsplashRepository.photoForDay(
+                    photos = photosByCondition[day.condition].orEmpty(),
+                    date = day.date
+                )
+            }
+            UnsplashRepository(appContext).trackUsage(shown)
+        }
+    }
+
     selectedDay?.let { day ->
         DayDetailScreen(
             day = day,
@@ -2485,6 +2515,18 @@ private fun Modifier.coverFlowItem(
     scaleY = scale
     // Equivalente al `perspective: 40em` del demo: cuanto mas corta, mas acusado el 3D.
     cameraDistance = 6f
+}
+
+/**
+ * Nombre con el que la app esta registrada en Unsplash. Sus normas exigen que los enlaces
+ * de credito lleven este origen para que el fotografo vea de donde le llegan las visitas.
+ */
+private const val UNSPLASH_UTM_SOURCE = "Tiempo"
+
+/** Anade a un enlace de Unsplash los parametros de origen que exigen sus normas. */
+private fun String.withUnsplashUtm(): String {
+    val separator = if ('?' in this) "&" else "?"
+    return "$this${separator}utm_source=$UNSPLASH_UTM_SOURCE&utm_medium=referral"
 }
 
 /** Acelera y frena en vez de ir a velocidad constante: quita los tirones en los enlaces. */

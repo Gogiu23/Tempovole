@@ -1,5 +1,6 @@
 package com.example.tiempo.data.model
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -28,12 +29,20 @@ data class UnsplashUser(
 data class UnsplashUserLinks(val html: String? = null)
 
 @Serializable
-data class UnsplashLinks(val html: String? = null)
+data class UnsplashLinks(
+    val html: String? = null,
+    /**
+     * Endpoint que hay que "pinchar" cada vez que se usa la foto. Unsplash lo exige en sus
+     * normas de uso de la API: es como contabilizan las descargas para sus fotografos.
+     */
+    @SerialName("download_location") val downloadLocation: String? = null
+)
 
 /** Foto de fondo ya resuelta: la URL que se pinta y los datos para dar crédito al autor. */
 data class BackgroundPhoto(
     val url: String,
     val authorName: String?,
     val authorUrl: String?,
-    val photoUrl: String?
+    val photoUrl: String?,
+    val downloadLocation: String? = null
 )

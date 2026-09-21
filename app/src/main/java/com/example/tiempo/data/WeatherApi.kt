@@ -10,8 +10,10 @@ import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import okhttp3.ResponseBody
 import retrofit2.http.GET
 import retrofit2.http.Query
+import retrofit2.http.Url
 
 interface WeatherApi {
     @GET("v1/forecast")
@@ -43,6 +45,16 @@ interface UnsplashApi {
      * Varias fotos aleatorias de un mismo tema en **una sola petición** (`count`, máx. 30).
      * Pedirlas de una en una multiplicaría por [count] el gasto de cuota de la API.
      */
+    /**
+     * Avisa a Unsplash de que una foto se ha usado. La URL viene en `links.download_location`
+     * de la propia foto, por eso se pasa entera con @Url en vez de componerla aqui.
+     */
+    @GET
+    suspend fun trackDownload(
+        @Url downloadLocation: String,
+        @Query("client_id") clientId: String
+    ): ResponseBody
+
     @GET("photos/random")
     suspend fun randomPhotos(
         @Query("query") query: String,

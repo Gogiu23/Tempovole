@@ -31,7 +31,12 @@ class UnsplashRepository(
         val today = LocalDate.now().toString()
 
         val cached = prefs.readPhoto(period)
-        if (prefs.getString(period.dateKey(), null) == today && cached != null) {
+        // Las fotos guardadas por versiones anteriores no traen el enlace de aviso que
+        // exige Unsplash, asi que se tratan como caducadas y se pide una nueva.
+        if (prefs.getString(period.dateKey(), null) == today &&
+            cached != null &&
+            cached.downloadLocation != null
+        ) {
             return cached
         }
 
@@ -41,7 +46,8 @@ class UnsplashRepository(
                 url = photo.urls.regular,
                 authorName = photo.user?.name,
                 authorUrl = photo.user?.links?.html,
-                photoUrl = photo.links?.html
+                photoUrl = photo.links?.html,
+                downloadLocation = photo.links?.downloadLocation
             )
         }.getOrNull()
 
@@ -52,13 +58,46 @@ class UnsplashRepository(
                 .putString(period.authorKey(), fresh.authorName)
                 .putString(period.authorUrlKey(), fresh.authorUrl)
                 .putString(period.photoUrlKey(), fresh.photoUrl)
+                .putString(period.downloadKey(), fresh.downloadLocation)
                 .apply()
+            trackUsage(listOf(fresh))
         }
         return fresh ?: cached
     }
 
     /** Solo la URL, para quien no necesita los datos de autoría (por ejemplo, el widget). */
     suspend fun backgroundUrl(): String? = backgroundPhoto()?.url
+
+    /**
+     * Avisa a Unsplash de que estas fotos se estan usando, como exigen sus normas de uso
+     * de la API: es asi como contabilizan las descargas para sus fotografos.
+     *
+     * Cada foto se avisa una sola vez al dia, porque el aviso tambien gasta cuota: las
+     * mismas siete tarjetas se miran muchas veces al dia y no son siete usos nuevos.
+     */
+    suspend fun trackUsage(photos: List<BackgroundPhoto>) {
+        val key = BuildConfig.UNSPLASH_ACCESS_KEY
+        if (key.isBlank()) return
+
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val today = LocalDate.now().toEpochDay()
+        val alreadyTracked = if (prefs.getLong(KEY_TRACKED_DAY, 0L) == today) {
+            prefs.getStringSet(KEY_TRACKED, emptySet()).orEmpty()
+        } else {
+            emptySet()
+        }
+
+        val pending = photos.mapNotNull { it.downloadLocation }
+            .distinct()
+            .filterNot { it in alreadyTracked }
+        if (pending.isEmpty()) return
+
+        pending.forEach { location -> runCatching { api.trackDownload(location, key) } }
+        prefs.edit()
+            .putLong(KEY_TRACKED_DAY, today)
+            .putStringSet(KEY_TRACKED, alreadyTracked + pending)
+            .apply()
+    }
 
     /**
      * Fotos con las que ilustrar las tarjetas de la semana, agrupadas por el tiempo que
@@ -112,6 +151,8 @@ class UnsplashRepository(
     companion object {
         private const val PREFS_NAME = "unsplash_cache"
         private const val LEGACY_KEY_CREDITS = "credits"
+        private const val KEY_TRACKED = "tracked_downloads"
+        private const val KEY_TRACKED_DAY = "tracked_downloads_day"
         private const val SEPARATOR = "\u001F"
         private const val RECORD_SEPARATOR = "\u001E"
 
@@ -133,9 +174,14 @@ class UnsplashRepository(
                         url = url,
                         authorName = parts.getOrNull(1)?.takeIf { it.isNotBlank() },
                         authorUrl = parts.getOrNull(2)?.takeIf { it.isNotBlank() },
-                        photoUrl = parts.getOrNull(3)?.takeIf { it.isNotBlank() }
+                        photoUrl = parts.getOrNull(3)?.takeIf { it.isNotBlank() },
+                        downloadLocation = parts.getOrNull(4)?.takeIf { it.isNotBlank() }
                     )
                 }
+                // Si vienen de una version anterior les falta el enlace de aviso: se
+                // descartan enteras para que se pida la coleccion otra vez.
+                .takeIf { photos -> photos.all { it.downloadLocation != null } }
+                .orEmpty()
 
         private fun SharedPreferences.readPhoto(
             period: UnsplashConfig.DayPeriod
@@ -145,7 +191,8 @@ class UnsplashRepository(
                 url = url,
                 authorName = getString(period.authorKey(), null),
                 authorUrl = getString(period.authorUrlKey(), null),
-                photoUrl = getString(period.photoUrlKey(), null)
+                photoUrl = getString(period.photoUrlKey(), null),
+                downloadLocation = getString(period.downloadKey(), null)
             )
         }
 
@@ -154,6 +201,7 @@ class UnsplashRepository(
         private fun UnsplashConfig.DayPeriod.authorKey() = "author_$name"
         private fun UnsplashConfig.DayPeriod.authorUrlKey() = "author_url_$name"
         private fun UnsplashConfig.DayPeriod.photoUrlKey() = "photo_url_$name"
+        private fun UnsplashConfig.DayPeriod.downloadKey() = "download_$name"
 
         private fun WeatherCondition.photosKey() = "photos_$name"
         private fun WeatherCondition.fetchedKey() = "photos_fetched_$name"
@@ -164,12 +212,18 @@ class UnsplashRepository(
             url = urls.raw ?: urls.regular,
             authorName = user?.name,
             authorUrl = user?.links?.html,
-            photoUrl = links?.html
+            photoUrl = links?.html,
+            downloadLocation = links?.downloadLocation
         )
 
         private fun List<BackgroundPhoto>.serialize(): String = joinToString(RECORD_SEPARATOR) {
-            listOf(it.url, it.authorName.orEmpty(), it.authorUrl.orEmpty(), it.photoUrl.orEmpty())
-                .joinToString(SEPARATOR)
+            listOf(
+                it.url,
+                it.authorName.orEmpty(),
+                it.authorUrl.orEmpty(),
+                it.photoUrl.orEmpty(),
+                it.downloadLocation.orEmpty()
+            ).joinToString(SEPARATOR)
         }
 
         /**
