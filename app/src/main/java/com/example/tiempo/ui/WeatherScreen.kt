@@ -670,9 +670,11 @@ private fun InfoScreen(onBack: () -> Unit) {
                 "oleaje, ríos, cambio climático, incertidumbre del modelo), las " +
                 "coordenadas de la ubicación elegida se envían a los distintos servicios " +
                 "gratuitos de Open-Meteo. No se envía ningún otro dato.\n\n" +
-                "Fondo de pantalla: si hay una clave de Unsplash configurada, una vez al " +
-                "día se pide una foto a Unsplash (api.unsplash.com); solo se envía el " +
-                "término de búsqueda, no datos personales.\n\n" +
+                "Fotos: si hay una clave de Unsplash configurada, la app pide a Unsplash " +
+                "(api.unsplash.com) la foto de fondo de cada franja del día y las fotos de " +
+                "las tarjetas de la semana, y le avisa de qué fotos usa, como exigen sus " +
+                "normas. Solo se envía el término de búsqueda (por ejemplo \"rain\"), " +
+                "nunca datos personales.\n\n" +
                 "Notificación diaria y widget: se generan en el propio dispositivo y " +
                 "consultan los mismos servicios de Open-Meteo (y Unsplash, para el fondo " +
                 "del widget) descritos arriba para mostrar el tiempo actualizado.\n\n" +
@@ -683,6 +685,14 @@ private fun InfoScreen(onBack: () -> Unit) {
                 "etc.) se guardan solo en el dispositivo y se borran al desinstalar la " +
                 "app.\n\n" +
                 "Contacto: giuliandominici@gmail.com"
+        )
+
+        val uriHandler = LocalUriHandler.current
+        Text(
+            text = "Ver esta política en el navegador",
+            color = Color.White.copy(alpha = 0.75f),
+            fontSize = 14.sp,
+            modifier = Modifier.clickable { uriHandler.openUri(PRIVACY_POLICY_URL) }
         )
     }
 }
@@ -2516,6 +2526,9 @@ private fun Modifier.coverFlowItem(
     // Equivalente al `perspective: 40em` del demo: cuanto mas corta, mas acusado el 3D.
     cameraDistance = 6f
 }
+
+/** Version publica de la politica de privacidad, la que pide Google Play. */
+private const val PRIVACY_POLICY_URL = "https://gogiu23.github.io/Tempovole/privacidad.html"
 
 /**
  * Nombre con el que la app esta registrada en Unsplash. Sus normas exigen que los enlaces
