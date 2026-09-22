@@ -46,7 +46,13 @@ object Changelog {
                     "original en Unsplash.",
                 "El gráfico por horas empieza mostrando la lluvia, y su fondo va cambiando " +
                     "de color a lo largo de las horas: coral de madrugada, dorado " +
-                    "durante el día, verde por la tarde y azul de noche."
+                    "durante el día, verde por la tarde y azul de noche.",
+                "Las tarjetas de datos se reparten ahora en tres columnas y entran con una " +
+                    "animación: una tarjeta grande que se encoge hasta su sitio mientras " +
+                    "las demás van apareciendo alrededor.",
+                "La tarjeta de sol y luna pasa a estar arriba del todo y, al llegar al " +
+                    "centro de la pantalla, el sol o la luna recorren su arco antes de " +
+                    "colocarse en la hora que es."
             )
         ),
         ChangelogEntry(

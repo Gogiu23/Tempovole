@@ -1,6 +1,8 @@
 package com.example.tiempo.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -106,6 +108,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
@@ -1560,8 +1563,6 @@ private fun TodayScreen(
             add(DetailItem("☔", "Prob. lluvia", "$it%", DetailType.RAIN_PROBABILITY))
         }
     }
-    val detailRows = detailItems.chunked(2)
-    val extraRows = extraItems.chunked(2)
 
     // El header deja de ser un elemento mas de la lista: se queda fijo arriba y encoge
     // segun bajas, como el demo shrinking-header-shadow de scroll-driven-animations.style.
@@ -1574,6 +1575,21 @@ private fun TodayScreen(
                 1f
             } else {
                 (listState.firstVisibleItemScrollOffset / shrinkPx).coerceIn(0f, 1f)
+            }
+        }
+    }
+
+    // true cuando la tarjeta de sol y luna esta mas o menos en mitad de la pantalla.
+    val sunMoonCentered by remember {
+        derivedStateOf {
+            val info = listState.layoutInfo
+            val item = info.visibleItemsInfo.firstOrNull { it.key == "sun-moon" }
+            if (item == null) {
+                false
+            } else {
+                val viewportCenter = (info.viewportStartOffset + info.viewportEndOffset) / 2f
+                val itemCenter = item.offset + item.size / 2f
+                abs(itemCenter - viewportCenter) < item.size * 0.6f
             }
         }
     }
@@ -1641,40 +1657,29 @@ private fun TodayScreen(
                 }
             }
 
-            itemsIndexed(detailRows, key = { i, _ -> "detail-row-$i" }) { rowIndex, rowItems ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .appearOnScroll(listState, "detail-row-$rowIndex"),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    rowItems.forEachIndexed { colIndex, item ->
-                        DetailTile(
-                            item,
-                            modifier = Modifier.weight(1f),
-                            entryIndex = rowIndex * 2 + colIndex,
-                            onClick = { selectedDetail = item }
-                        )
-                    }
-                    if (rowItems.size == 1) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
-            }
-
             if (ExtraFeature.SUN_MOON in enabledExtras) {
                 item(key = "sun-moon") {
                     SunMoonCard(
                         today = today,
+                        // El astro hace su recorrido cuando la tarjeta llega al centro.
+                        centered = sunMoonCentered,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
-                            .appearOnScroll(listState, "sun-moon")
+                            .revealOnScroll(listState, "sun-moon")
                     )
                 }
             }
 
-            if (extraRows.isNotEmpty()) {
+            item(key = "detail-tiles") {
+                AppGridReveal(
+                    items = detailItems,
+                    listState = listState,
+                    itemKey = "detail-tiles",
+                    onClick = { selectedDetail = it }
+                )
+            }
+
+            if (extraItems.isNotEmpty()) {
                 item(key = "extras-title") {
                     Text(
                         text = "Más datos",
@@ -1686,26 +1691,13 @@ private fun TodayScreen(
                             .appearOnScroll(listState, "extras-title")
                     )
                 }
-                itemsIndexed(extraRows, key = { i, _ -> "extra-row-$i" }) { rowIndex, rowItems ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .appearOnScroll(listState, "extra-row-$rowIndex"),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        rowItems.forEachIndexed { colIndex, item ->
-                            DetailTile(
-                                item,
-                                modifier = Modifier.weight(1f),
-                                entryIndex = rowIndex * 2 + colIndex,
-                                onClick = { selectedDetail = item }
-                            )
-                        }
-                        if (rowItems.size == 1) {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                    }
+                item(key = "extra-tiles") {
+                    AppGridReveal(
+                        items = extraItems.toList(),
+                        listState = listState,
+                        itemKey = "extra-tiles",
+                        onClick = { selectedDetail = it }
+                    )
                 }
             }
         }
@@ -1886,6 +1878,7 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
     if (hours.isEmpty()) return
 
     val pointSpacing = 52.dp
+    val chartSidePadding = 10.dp
     val chartHeight = 190.dp
     val lineColor = Color.White
 
@@ -1913,7 +1906,9 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
         ) {
             Canvas(
                 modifier = Modifier
-                    .width(pointSpacing * hours.size)
+                    // El ancho extra es el aire de los lados: el fondo sigue llegando a
+                    // los bordes de la tarjeta, pero las horas ya no quedan pegadas.
+                    .width(pointSpacing * hours.size + chartSidePadding * 2)
                     .height(chartHeight)
             ) {
                 // Fondo: el color de cada franja horaria a lo ancho, desvaneciendose
@@ -1946,8 +1941,9 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
                 )
 
                 val stepPx = pointSpacing.toPx()
+                val sidePad = chartSidePadding.toPx()
                 val topPad = 56.dp.toPx()
-                val bottomPad = 26.dp.toPx()
+                val bottomPad = 44.dp.toPx()
                 val usableHeight = size.height - topPad - bottomPad
 
                 fun yFor(v: Float): Float {
@@ -1956,7 +1952,7 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
                 }
 
                 val points = values.mapIndexed { i, v ->
-                    Offset(stepPx * i + stepPx / 2f, yFor(v))
+                    Offset(sidePad + stepPx * i + stepPx / 2f, yFor(v))
                 }
 
                 val fillPath = Path().apply {
@@ -2048,8 +2044,15 @@ private data class DetailItem(
 /**
  * El icono aparece con un pequeño "pop" (escala + fundido) la primera vez que se compone.
  */
+/** Tamano de celda para el que estan pensados los tamanos de letra de la tarjeta. */
+private val DETAIL_TILE_REFERENCE = 170.dp
+
 @Composable
-private fun PoppingIcon(emoji: String, delayMillis: Int = 0) {
+private fun PoppingIcon(
+    emoji: String,
+    delayMillis: Int = 0,
+    size: androidx.compose.ui.unit.TextUnit = 28.sp
+) {
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         delay(delayMillis.toLong())
@@ -2065,7 +2068,7 @@ private fun PoppingIcon(emoji: String, delayMillis: Int = 0) {
             )
         ) + fadeIn(animationSpec = tween(200))
     ) {
-        Text(text = emoji, fontSize = 28.sp)
+        Text(text = emoji, fontSize = size)
     }
 }
 
@@ -2093,11 +2096,203 @@ private fun DetailGrid(items: List<DetailItem>, onClick: (DetailItem) -> Unit) {
     }
 }
 
+/**
+ * La rejilla aparece como en el pen https://codepen.io/jh3y/pen/VYZwOwd:
+ *
+ *  - El bloque ocupa mas de una pantalla de alto (alli, `min-height: 240vh`) y su contenido
+ *    se queda **pegado** en el centro mientras lo recorres (alli, `position: sticky`), de
+ *    forma que la transformacion sucede sin que nada cambie de sitio.
+ *  - Una sola tarjeta arranca ocupando la pantalla entera (`width: 100vw; height: 100vh`)
+ *    y se encoge hasta su celda de la rejilla.
+ *  - Solo entonces brotan las demas desde cero (`scale: 0` + `opacity: 0`), por capas
+ *    segun lo lejos que esten de la protagonista.
+ */
+@Composable
+private fun AppGridReveal(
+    items: List<DetailItem>,
+    listState: LazyListState,
+    itemKey: String,
+    onClick: (DetailItem) -> Unit
+) {
+    if (items.isEmpty()) return
+
+    val spacing = 10.dp
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val stageHeight = screenHeight * GRID_STAGE_SCREENS
+
+    // Tres columnas, como la rejilla del demo en movil.
+    val columns = GRID_COLUMNS
+    val rows = (items.size + columns - 1) / columns
+    // La protagonista es la que cae en el centro de la rejilla.
+    val heroRow = (rows - 1) / 2
+    val heroColumn = (columns - 1) / 2
+    val heroIndex = (heroRow * columns + heroColumn).coerceIn(items.indices)
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(stageHeight)
+            // Sin esto, la protagonista se sale del bloque al crecer y se monta encima de
+            // la tarjeta de sol y luna.
+            .clipToBounds()
+            .padding(horizontal = 16.dp)
+    ) {
+        val tile = (maxWidth - spacing * (columns - 1)) / columns
+        val gridHeight = tile * rows + spacing * (rows - 1)
+
+        // La tarjeta es cuadrada: se mide contra el ancho, no contra el alto, o se saldria
+        // por los lados. Y deja un respiro en los bordes.
+        val heroSide = maxWidth * GRID_HERO_FILL
+        // El contenido reserva el sitio de la tarjeta grande: si la rejilla es mas baja
+        // que ella, la tarjeta se saldria por arriba y por abajo al crecer.
+        val contentHeight = maxOf(gridHeight, heroSide)
+
+        val density = LocalDensity.current
+        val tilePx = with(density) { tile.toPx() }
+        val gridWidthPx = with(density) { maxWidth.toPx() }
+        val gridHeightPx = with(density) { gridHeight.toPx() }
+        val contentHeightPx = with(density) { contentHeight.toPx() }
+        val fullScale = with(density) { heroSide.toPx() } / tilePx
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(contentHeight)
+                .align(Alignment.TopCenter)
+                // El `position: sticky` del demo: el contenido se queda quieto en mitad de
+                // la pantalla mientras el bloque, mas alto, sigue pasando.
+                .graphicsLayer { translationY = stickyOffset(listState, itemKey, contentHeightPx) }
+        ) {
+            Column(
+                modifier = Modifier.align(Alignment.Center),
+                verticalArrangement = Arrangement.spacedBy(spacing)
+            ) {
+                items.chunked(columns).forEachIndexed { row, rowItems ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                        rowItems.forEachIndexed { column, item ->
+                            val index = row * columns + column
+                            val isHero = index == heroIndex
+                            // Anillo al que pertenece: 1 las de al lado, 2 las esquinas...
+                            val ring = maxOf(
+                                abs(row - heroRow),
+                                abs(column - heroColumn)
+                            )
+                            DetailTile(
+                                item = item,
+                                tileSize = tile,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .zIndex(if (isHero) 1f else 0f)
+                                    .graphicsLayer {
+                                        val progress = stageProgress(listState, itemKey)
+                                        if (isHero) {
+                                            val settle = smoothstep(progress / GRID_SETTLE_END)
+                                            val scale = heroScale(listState, itemKey, fullScale)
+                                            scaleX = scale
+                                            scaleY = scale
+                                            // Del centro de la rejilla a su celda.
+                                            translationX = (gridWidthPx / 2f -
+                                                (column * (tilePx + spacing.toPx()) + tilePx / 2f)) *
+                                                (1f - settle)
+                                            translationY = (gridHeightPx / 2f -
+                                                (row * (tilePx + spacing.toPx()) + tilePx / 2f)) *
+                                                (1f - settle)
+                                        } else {
+                                            // Las de fuera brotan antes que las de dentro,
+                                            // como las capas del demo.
+                                            val delay = GRID_SETTLE_END +
+                                                (GRID_MAX_RING - ring) * GRID_LAYER_STEP
+                                            val born = smoothstep(
+                                                (progress - delay) /
+                                                    (1f - delay).coerceAtLeast(0.01f)
+                                            )
+                                            scaleX = born
+                                            scaleY = born
+                                            alpha = born
+                                        }
+                                    },
+                                entryIndex = index,
+                                onClick = { onClick(item) }
+                            )
+                        }
+                        repeat(columns - rowItems.size) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Que parte del ancho llega a ocupar la tarjeta protagonista cuando esta grande. */
+private const val GRID_HERO_FILL = 0.88f
+
+/** Columnas de la rejilla, como el `repeat(3, 1fr)` del demo en movil. */
+private const val GRID_COLUMNS = 3
+
+/** Anillos que se tienen en cuenta para escalonar la aparicion. */
+private const val GRID_MAX_RING = 2
+
+/** A que escala se esta dibujando la tarjeta protagonista en este momento. */
+private fun heroScale(listState: LazyListState, key: Any, fullScale: Float): Float {
+    val settle = smoothstep(stageProgress(listState, key) / GRID_SETTLE_END)
+    return lerp(fullScale, 1f, settle)
+}
+
+/** Alto del bloque, en pantallas. El sobrante sobre 1 es el recorrido de la animacion. */
+private const val GRID_STAGE_SCREENS = 1.7f
+
+/** Cuando termina de encogerse la protagonista y empiezan a brotar las demas. */
+private const val GRID_SETTLE_END = 0.55f
+
+/** Retraso de cada capa de tarjetas respecto a la anterior. */
+private const val GRID_LAYER_STEP = 0.12f
+
+/**
+ * Cuanto se ha recorrido del bloque una vez este ocupa la pantalla, de 0 a 1. Es el
+ * equivalente al `view-timeline` del demo sobre una seccion de varias pantallas de alto.
+ */
+private fun stageProgress(listState: LazyListState, key: Any): Float {
+    val info = listState.layoutInfo
+    val item = info.visibleItemsInfo.firstOrNull { it.key == key } ?: return 0f
+    val viewport = (info.viewportEndOffset - info.viewportStartOffset).toFloat()
+    val runway = (item.size - viewport).coerceAtLeast(1f)
+    return ((-item.offset).toFloat() / runway).coerceIn(0f, 1f)
+}
+
+/**
+ * Desplazamiento que mantiene la rejilla centrada en pantalla mientras el bloque pasa: el
+ * `position: sticky` del demo, que es lo que deja ver la transformacion sin que el
+ * contenido se mueva bajo el dedo.
+ */
+private fun stickyOffset(listState: LazyListState, key: Any, contentHeightPx: Float): Float {
+    val info = listState.layoutInfo
+    val item = info.visibleItemsInfo.firstOrNull { it.key == key } ?: return 0f
+    val viewport = (info.viewportEndOffset - info.viewportStartOffset).toFloat()
+    val centred = (viewport - contentHeightPx) / 2f
+    // Mientras el bloque cruza, el contenido compensa el scroll y se queda quieto.
+    return (-item.offset + centred).coerceIn(0f, (item.size - contentHeightPx).coerceAtLeast(0f))
+}
+
+/** La tarjeta crece desde cero y se funde segun entra en pantalla, como las de la rejilla. */
+private fun Modifier.revealOnScroll(
+    listState: LazyListState,
+    key: Any
+): Modifier = graphicsLayer {
+    val eased = smoothstep(listState.entryProgress(key, rangeFraction = 1f))
+    scaleX = eased
+    scaleY = eased
+    alpha = eased
+}
+
 @Composable
 private fun DetailTile(
     item: DetailItem,
     modifier: Modifier = Modifier,
     entryIndex: Int = 0,
+    /** Lado de la celda: el contenido se ajusta a el en vez de usar tamanos fijos. */
+    tileSize: Dp = DETAIL_TILE_REFERENCE,
     onClick: () -> Unit
 ) {
     val shape = RoundedCornerShape(20.dp)
@@ -2119,23 +2314,26 @@ private fun DetailTile(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
+                .padding(12.dp * (tileSize / DETAIL_TILE_REFERENCE)),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            PoppingIcon(emoji = item.emoji, delayMillis = entryIndex * 40)
-            Spacer(Modifier.height(6.dp))
+            val scale = tileSize / DETAIL_TILE_REFERENCE
+            PoppingIcon(emoji = item.emoji, delayMillis = entryIndex * 40, size = 28.sp * scale)
+            Spacer(Modifier.height(6.dp * scale))
             Text(
                 text = item.value,
                 color = Color.White,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+                fontSize = 20.sp * scale,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
             )
             Text(
                 text = item.label,
                 color = Color.White.copy(alpha = 0.75f),
-                fontSize = 12.sp,
-                textAlign = TextAlign.Center
+                fontSize = 12.sp * scale,
+                textAlign = TextAlign.Center,
+                maxLines = 2
             )
         }
     }
@@ -2143,7 +2341,11 @@ private fun DetailTile(
 
 /** Tarjeta "Sol y luna": arco solar con la posición actual del sol + fase lunar dibujada. */
 @Composable
-private fun SunMoonCard(today: DayWeather, modifier: Modifier = Modifier) {
+private fun SunMoonCard(
+    today: DayWeather,
+    centered: Boolean = false,
+    modifier: Modifier = Modifier
+) {
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -2161,7 +2363,12 @@ private fun SunMoonCard(today: DayWeather, modifier: Modifier = Modifier) {
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold
             )
-            SunArc(sunrise = today.sunrise, sunset = today.sunset, moonPhase = today.moonPhase)
+            SunArc(
+                sunrise = today.sunrise,
+                sunset = today.sunset,
+                moonPhase = today.moonPhase,
+                playIntro = centered
+            )
             val daylight = Duration.between(today.sunrise, today.sunset)
             val (_, moonLabel) = moonPhaseInfo(today.moonPhase)
             Row(
@@ -2193,7 +2400,12 @@ private fun SunMoonCard(today: DayWeather, modifier: Modifier = Modifier) {
  * de noche, el recorrido de la luna entre el atardecer y el próximo amanecer).
  */
 @Composable
-private fun SunArc(sunrise: LocalDateTime, sunset: LocalDateTime, moonPhase: Double) {
+private fun SunArc(
+    sunrise: LocalDateTime,
+    sunset: LocalDateTime,
+    moonPhase: Double,
+    playIntro: Boolean = false
+) {
     val now = remember { LocalDateTime.now() }
     val isDaytime = now.isAfter(sunrise) && now.isBefore(sunset)
 
@@ -2211,7 +2423,21 @@ private fun SunArc(sunrise: LocalDateTime, sunset: LocalDateTime, moonPhase: Dou
     }
     val totalMinutes = Duration.between(arcStart, arcEnd).toMinutes().coerceAtLeast(1)
     val elapsedMinutes = Duration.between(arcStart, now).toMinutes()
-    val progress = (elapsedMinutes.toFloat() / totalMinutes.toFloat()).coerceIn(0f, 1f)
+    val nowProgress = (elapsedMinutes.toFloat() / totalMinutes.toFloat()).coerceIn(0f, 1f)
+
+    // La primera vez que la tarjeta queda centrada en pantalla, el astro recorre el arco
+    // entero y despues se coloca en la hora que es. Despues ya se queda quieto.
+    val marker = remember { Animatable(nowProgress) }
+    var introPlayed by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(playIntro) {
+        if (playIntro && !introPlayed) {
+            introPlayed = true
+            marker.snapTo(0f)
+            marker.animateTo(1f, tween(1500, easing = FastOutSlowInEasing))
+            marker.animateTo(nowProgress, tween(900, easing = FastOutSlowInEasing))
+        }
+    }
+    val progress = marker.value
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Canvas(
