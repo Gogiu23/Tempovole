@@ -140,8 +140,27 @@ fun DetailType.iconRes(): Int? = when (this) {
 
 /** Recurso animado (raw) para el icono hero de un DetailType, o null si no hay versión animada. */
 fun DetailType.animResOrNull(): Int? = when (this) {
-    DetailType.UV_INDEX -> R.raw.anim_clear
-    else -> null
+    DetailType.MAX_TEMP -> R.raw.anim_temp_max
+    DetailType.MIN_TEMP -> R.raw.anim_temp_min
+    DetailType.AVG_TEMP -> R.raw.anim_avg_temp
+    DetailType.WIND -> R.raw.anim_wind
+    DetailType.PRECIPITATION -> R.raw.anim_precipitation
+    DetailType.RAIN_PROBABILITY -> R.raw.anim_rain_probability
+    DetailType.UV_INDEX -> R.raw.anim_uv
+    DetailType.SOLAR_RADIATION -> R.raw.anim_solar_radiation
+    DetailType.DEW_POINT -> R.raw.anim_dew_point
+    DetailType.PRESSURE -> R.raw.anim_pressure
+    DetailType.ELEVATION -> R.raw.anim_elevation
+    DetailType.POLLEN -> R.raw.anim_pollen
+    DetailType.HISTORICAL -> R.raw.anim_historical
+    DetailType.MARINE -> R.raw.anim_marine
+    DetailType.FLOOD -> R.raw.anim_flood
+    DetailType.CLIMATE -> R.raw.anim_climate
+    DetailType.ENSEMBLE -> R.raw.anim_ensemble
+    DetailType.SUNRISE -> R.raw.anim_sunrise
+    DetailType.SUNSET -> R.raw.anim_sunset
+    DetailType.MOON_PHASE -> R.raw.anim_moon_phase
+    DetailType.DAY_LENGTH -> R.raw.anim_day_length
 }
 
 /** El icono fijo de la condición. Para pintarlo dentro de un Canvas. */

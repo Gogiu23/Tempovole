@@ -59,8 +59,11 @@ interese:
 | 🌍 **Cambio climático** | Cuánto subirá la temperatura media en 2050 en tu zona |
 | 🎯 **Incertidumbre** | En qué margen se mueven las distintas simulaciones del modelo |
 
+Cada tarjeta tiene su propio icono animado, y al tocarla se abre con su explicación.
+
 <p align="center">
   <img src="docs/screenshots/2_datos.jpg" width="240" alt="Datos extra">
+  <img src="docs/screenshots/6_dato_detalle.jpg" width="240" alt="Detalle de un dato con icono animado">
 </p>
 
 ### Ponerla en la pantalla de inicio

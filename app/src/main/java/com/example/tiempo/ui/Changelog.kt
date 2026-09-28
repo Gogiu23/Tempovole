@@ -24,6 +24,16 @@ data class ChangelogEntry(
 object Changelog {
     val entries: List<ChangelogEntry> = listOf(
         ChangelogEntry(
+            version = "1.3",
+            date = "29 de septiembre de 2026",
+            changes = listOf(
+                "Todas las tarjetas de datos tienen ya su propio icono animado: precipitación, " +
+                    "probabilidad de lluvia, índice UV, radiación solar, punto de rocío, " +
+                    "presión, altitud, polen, comparación histórica, oleaje, ríos, cambio " +
+                    "climático, incertidumbre, amanecer, atardecer, fase lunar y horas de luz."
+            )
+        ),
+        ChangelogEntry(
             version = "1.2",
             date = "20 de septiembre de 2026",
             changes = listOf(
