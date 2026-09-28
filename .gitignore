@@ -17,3 +17,7 @@ keystore.properties
 # Caches y artefactos de compilacion locales
 .kotlin/
 .icon_preview/
+
+# Herramientas de desarrollo
+graphify-out/
+.serena/

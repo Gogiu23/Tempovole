@@ -100,6 +100,8 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-kotlinx-serialization:2.11.0")
     // Imágenes (fondo de Unsplash)
     implementation("io.coil-kt:coil-compose:2.7.0")
+    // Iconos animados (GIF de Flaticon) — Coil no decodifica GIF sin esto
+    implementation("io.coil-kt:coil-gif:2.7.0")
 
     // Notificaciones diarias en segundo plano
     implementation("androidx.work:work-runtime-ktx:2.9.1")

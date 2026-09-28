@@ -1,6 +1,7 @@
 package com.example.tiempo.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -224,7 +226,17 @@ fun DetailInfoScreen(type: DetailType, value: String, onBack: () -> Unit) {
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = type.heroEmoji, fontSize = 56.sp)
+                val animRes = type.animResOrNull()
+                val iconRes = type.iconRes()
+                when {
+                    animRes != null -> AnimatedRawIcon(animRes, size = 72.dp, contentDescription = null)
+                    iconRes != null -> Image(
+                        painter = painterResource(iconRes),
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp)
+                    )
+                    else -> Text(text = type.heroEmoji, fontSize = 56.sp)
+                }
             }
             Spacer(Modifier.height(16.dp))
             Text(

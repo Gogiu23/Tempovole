@@ -1,5 +1,7 @@
 package com.example.tiempo.ui
 
+import android.annotation.SuppressLint
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -12,6 +14,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -83,6 +86,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -100,21 +104,28 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
@@ -144,6 +155,7 @@ import com.example.tiempo.data.WidgetColor
 import com.example.tiempo.data.WidgetPreferences
 import com.example.tiempo.data.model.BackgroundPhoto
 import com.example.tiempo.data.model.CurrentWeather
+import com.example.tiempo.R
 import com.example.tiempo.data.model.DayWeather
 import com.example.tiempo.data.model.HourWeather
 import com.example.tiempo.data.model.WeatherCondition
@@ -159,6 +171,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.pow
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sign
@@ -237,6 +250,11 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
     var notificationHour by remember { mutableStateOf(NotificationPreferences.getHour(appContext)) }
     var notificationMinute by remember { mutableStateOf(NotificationPreferences.getMinute(appContext)) }
     var hasUnseenChanges by remember { mutableStateOf(ChangelogPreferences.hasUnseenChanges(appContext)) }
+
+    // El gesto de borde izquierdo (o botón atrás) cierra el overlay activo en lugar de salir.
+    BackHandler(enabled = overlay != OverlayScreen.NONE) {
+        overlayIndex = OverlayScreen.NONE.ordinal
+    }
 
     LaunchedEffect(currentLocation) {
         viewModel.load(currentLocation.lat, currentLocation.lon)
@@ -412,18 +430,18 @@ private fun SideMenu(hasUnseenChanges: Boolean, onSelect: (OverlayScreen) -> Uni
             modifier = Modifier.padding(horizontal = 22.dp, vertical = 8.dp)
         )
         Spacer(Modifier.height(4.dp))
-        SideMenuItem("🔔", "Novedades", badge = hasUnseenChanges) {
+        SideMenuItem(R.drawable.ic_bell, "Novedades", badge = hasUnseenChanges) {
             onSelect(OverlayScreen.CHANGELOG)
         }
-        SideMenuItem("📰", "Blog") { onSelect(OverlayScreen.BLOG) }
-        SideMenuItem("ℹ️", "Info") { onSelect(OverlayScreen.INFO) }
-        SideMenuItem("⚙️", "Ajustes") { onSelect(OverlayScreen.SETTINGS) }
+        SideMenuItem(R.drawable.ic_blog, "Blog") { onSelect(OverlayScreen.BLOG) }
+        SideMenuItem(R.drawable.ic_info, "Info") { onSelect(OverlayScreen.INFO) }
+        SideMenuItem(R.drawable.ic_settings, "Ajustes") { onSelect(OverlayScreen.SETTINGS) }
     }
 }
 
 @Composable
 private fun SideMenuItem(
-    emoji: String,
+    iconRes: Int,
     label: String,
     badge: Boolean = false,
     onClick: () -> Unit
@@ -436,7 +454,11 @@ private fun SideMenuItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        Text(text = emoji, fontSize = 20.sp)
+        Image(
+            painter = painterResource(iconRes),
+            contentDescription = null,
+            modifier = Modifier.size(22.dp)
+        )
         Text(text = label, color = Color.White, fontSize = 17.sp)
         if (badge) {
             Box(
@@ -491,8 +513,13 @@ private fun ChangelogScreen(onBack: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             IconCircleButton(emoji = "←", onClick = onBack)
+            Image(
+                painter = painterResource(R.drawable.ic_bell),
+                contentDescription = null,
+                modifier = Modifier.size(26.dp)
+            )
             Text(
-                text = "🔔 Novedades",
+                text = "Novedades",
                 color = Color.White,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold
@@ -587,8 +614,13 @@ private fun BlogScreen(onBack: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             IconCircleButton(emoji = "←", onClick = onBack)
+            Image(
+                painter = painterResource(R.drawable.ic_blog),
+                contentDescription = null,
+                modifier = Modifier.size(26.dp)
+            )
             Text(
-                text = "📰 Blog",
+                text = "Blog",
                 color = Color.White,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold
@@ -619,8 +651,13 @@ private fun InfoScreen(onBack: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             IconCircleButton(emoji = "←", onClick = onBack)
+            Image(
+                painter = painterResource(R.drawable.ic_info),
+                contentDescription = null,
+                modifier = Modifier.size(26.dp)
+            )
             Text(
-                text = "ℹ️ Info",
+                text = "Info",
                 color = Color.White,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold
@@ -662,6 +699,8 @@ private fun InfoScreen(onBack: () -> Unit) {
         )
 
         PhotoCreditsSection()
+
+        IconCreditsSection()
 
         LegalSection(
             title = "Política de privacidad",
@@ -769,6 +808,32 @@ private fun PhotoCreditsSection() {
 }
 
 @Composable
+private fun IconCreditsSection() {
+    val uriHandler = LocalUriHandler.current
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Créditos de los iconos",
+            color = Color.White,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+        Text(
+            text = "Los iconos meteorológicos (animados y estáticos) proceden de Flaticon " +
+                "y se usan bajo su licencia gratuita, que exige atribución.",
+            color = Color.White.copy(alpha = 0.8f),
+            fontSize = 13.sp,
+            lineHeight = 19.sp
+        )
+        Text(
+            text = "· Iconos de Flaticon (flaticon.com)",
+            color = Color.White.copy(alpha = 0.85f),
+            fontSize = 13.sp,
+            modifier = Modifier.clickable { uriHandler.openUri("https://www.flaticon.com") }
+        )
+    }
+}
+
+@Composable
 private fun LegalSection(title: String, body: String) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
@@ -846,12 +911,14 @@ private fun SettingsScreen(
 
         SettingsSection(title = "App") {
             SettingsRow(
-                label = "📍 Ubicación",
+                label = "Ubicación",
+                iconRes = R.drawable.ic_location,
                 value = currentLocation.name,
                 onClick = { showLocationSearch = true }
             )
             SettingsRow(
-                label = "🔔 Morning report",
+                label = "Morning report",
+                iconRes = R.drawable.ic_bell,
                 value = "%02d:%02d".format(notificationHour, notificationMinute),
                 onClick = { showTimePicker = true }
             )
@@ -1010,14 +1077,24 @@ private fun ExpandableFeatureCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "${feature.emoji} ${feature.label}",
-                    color = Color.White.copy(alpha = 0.9f),
-                    fontSize = 14.sp,
+                Row(
                     modifier = Modifier
                         .weight(1f)
-                        .padding(end = 8.dp)
-                )
+                        .padding(end = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Image(
+                        painter = painterResource(feature.iconRes()),
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = feature.label,
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 14.sp
+                    )
+                }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -1145,7 +1222,12 @@ private fun SettingsSection(title: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun SettingsRow(label: String, value: String, onClick: () -> Unit) {
+private fun SettingsRow(
+    label: String,
+    value: String,
+    iconRes: Int? = null,
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1160,7 +1242,19 @@ private fun SettingsRow(label: String, value: String, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = label, color = Color.White.copy(alpha = 0.9f), fontSize = 15.sp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (iconRes != null) {
+                    Image(
+                        painter = painterResource(iconRes),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Text(text = label, color = Color.White.copy(alpha = 0.9f), fontSize = 15.sp)
+            }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -1265,7 +1359,8 @@ private fun LocationSearchScreen(
             else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(results) { result ->
                     SettingsRow(
-                        label = "📍 ${result.displayName}",
+                        label = result.displayName,
+                        iconRes = R.drawable.ic_location,
                         value = "",
                         onClick = {
                             onLocationSelected(
@@ -1299,14 +1394,26 @@ private fun WeatherBottomBar(selected: Int, onSelect: (Int) -> Unit) {
         NavigationBarItem(
             selected = selected == 0,
             onClick = { onSelect(0) },
-            icon = { Text("☀️", fontSize = 20.sp) },
+            icon = {
+                Image(
+                    painter = painterResource(R.drawable.ic_today),
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp)
+                )
+            },
             label = { Text("Hoy") },
             colors = colors
         )
         NavigationBarItem(
             selected = selected == 1,
             onClick = { onSelect(1) },
-            icon = { Text("📅", fontSize = 20.sp) },
+            icon = {
+                Image(
+                    painter = painterResource(R.drawable.ic_week),
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp)
+                )
+            },
             label = { Text("Semana") },
             colors = colors
         )
@@ -1347,7 +1454,14 @@ private fun WeatherContent(
             val today = state.days.firstOrNull()
             when {
                 selectedTab == 0 && today != null ->
-                    TodayScreen(today, state.current, state.hours, state.elevationM, location, padding)
+                    TodayScreen(
+                        today,
+                        state.current,
+                        state.hours,
+                        state.elevationM,
+                        location,
+                        padding
+                    )
                 else -> WeekScreen(state.days, state.hours, location.name, padding)
             }
         }
@@ -1370,11 +1484,15 @@ private const val HEADER_TITLE_SHRINK = 0.67f
  * https://scroll-driven-animations.style/demos/shrinking-header-shadow/css/
  */
 @Composable
-private fun TodayHeader(
-    locationName: String,
-    summary: String,
+private fun ShrinkingHeader(
+    title: String,
+    subtitle: String,
+    titleIconRes: Int? = null,
+    subtitleIconRes: Int? = null,
     shrink: () -> Float,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    leading: (@Composable () -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null
 ) {
     Box(
         modifier = modifier
@@ -1399,7 +1517,10 @@ private fun TodayHeader(
                 val shadow = 16.dp.toPx()
                 drawRect(
                     brush = Brush.verticalGradient(
-                        colors = listOf(Color.Black.copy(alpha = 0.4f * progress), Color.Transparent),
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.4f * progress),
+                            Color.Transparent
+                        ),
                         startY = headerHeight,
                         endY = headerHeight + shadow
                     ),
@@ -1424,9 +1545,11 @@ private fun TodayHeader(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.graphicsLayer {
-                    // El nombre se hace pequeno escalandolo, no cambiando su tamano de
+                    // El titulo se hace pequeno escalandolo, no cambiando su tamano de
                     // letra: asi no hay que volver a medir el texto en cada fotograma.
                     val scale = lerp(1f, HEADER_TITLE_SHRINK, shrink())
                     scaleX = scale
@@ -1434,22 +1557,49 @@ private fun TodayHeader(
                     transformOrigin = TransformOrigin(0f, 0.5f)
                 }
             ) {
-                Text(
-                    text = "📍 $locationName",
-                    color = Color.White,
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1
-                )
-                Text(
-                    text = summary,
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 15.sp,
-                    maxLines = 1,
-                    modifier = Modifier.graphicsLayer { alpha = 1f - shrink() }
-                )
+                leading?.invoke()
+                Column {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (titleIconRes != null) {
+                            Image(
+                                painter = painterResource(titleIconRes),
+                                contentDescription = null,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                        Text(
+                            text = title,
+                            color = Color.White,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.graphicsLayer { alpha = 1f - shrink() }
+                    ) {
+                        if (subtitleIconRes != null) {
+                            Image(
+                                painter = painterResource(subtitleIconRes),
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Text(
+                            text = subtitle,
+                            color = Color.White.copy(alpha = 0.85f),
+                            fontSize = 15.sp,
+                            maxLines = 1
+                        )
+                    }
+                }
             }
-            LiveClock()
+            trailing?.invoke()
         }
     }
 }
@@ -1480,6 +1630,59 @@ private fun LazyListState.entryProgress(key: Any, rangeFraction: Float = 0.8f): 
         0f
     }
     return maxOf(progress, floor)
+}
+
+/**
+ * Version adaptada de un `ScrollTrigger` de GSAP con `start`/`end` (como los de `main.js` en
+ * scroll-driven-animations.style) al hecho de que, aqui, [key] es el UNICO item (y el ultimo)
+ * de un `LazyColumn` normal, no una seccion gigante fijada aparte: su recorrido de scroll real
+ * va desde que su borde superior toca el borde inferior de la pantalla (recien entrando, `t=0`)
+ * hasta que el scroll llega al tope porque su borde inferior ya no puede subir mas (`t=1`) — ese
+ * recorrido total equivale exactamente a su propia altura, sea cual sea el tamano de pantalla.
+ * En el JS original la seccion truco es mucho mas alta que la pantalla, asi que sus porcentajes
+ * se miden en alturas de pantalla; aqui los medimos como fraccion de ese recorrido de `t`, que
+ * es lo unico que este item puede ofrecer.
+ */
+private fun LazyListState.scrollTriggerProgress(
+    key: Any,
+    startFraction: Float,
+    endFraction: Float
+): Float {
+    val info = layoutInfo
+    val item = info.visibleItemsInfo.firstOrNull { it.key == key } ?: return 0f
+    val viewportHeight = (info.viewportEndOffset - info.viewportStartOffset).toFloat()
+    val itemHeight = item.size.toFloat()
+    if (viewportHeight <= 0f || itemHeight <= 0f) return 0f
+
+    val t = ((viewportHeight - item.offset) / itemHeight).coerceIn(0f, 1f)
+    // El principio y el final de la ventana pueden llegar a coincidir (por ejemplo antes
+    // del primer layout, cuando todavia no se sabe el alto del viewport): una ventana de
+    // ancho 0 dividiria por cero y devolveria NaN, que revienta mas tarde en un
+    // roundToInt(). Sin ventana, no hay nada que animar.
+    val span = endFraction - startFraction
+    if (span <= 0f) return 0f
+    return ((t - startFraction) / span).coerceIn(0f, 1f)
+}
+
+/**
+ * `poweri.inOut` de GSAP: quad/cubic/quart/quint segun [power] (1 a 4), simetrica y con
+ * aceleracion-freno en el punto medio. `power` mas alto = se queda mas tiempo cerca de los
+ * extremos y acelera mas de golpe por el medio.
+ */
+private fun easeInOutPower(power: Int, t: Float): Float {
+    val x = t.coerceIn(0f, 1f)
+    val n = (power + 1).toDouble()
+    return if (x < 0.5f) {
+        (0.5 * (2.0 * x).pow(n)).toFloat()
+    } else {
+        (1.0 - 0.5 * (2.0 * (1f - x)).pow(n)).toFloat()
+    }
+}
+
+/** `sine.out` de GSAP: arranca rapido y llega suave al final. */
+private fun easeSineOut(t: Float): Float {
+    val x = t.coerceIn(0f, 1f)
+    return sin(x * (Math.PI / 2.0)).toFloat()
 }
 
 /**
@@ -1526,6 +1729,10 @@ private fun TodayScreen(
 ) {
     var selectedDetail by remember { mutableStateOf<DetailItem?>(null) }
     val listState = rememberLazyListState()
+    val isDay = remember {
+        val now = LocalTime.now()
+        now.isAfter(today.sunrise.toLocalTime()) && now.isBefore(today.sunset.toLocalTime())
+    }
 
     // Se calcula aquí arriba (no dentro de ExtrasSection) para que sobreviva a la
     // navegación a una página de detalle y no vuelva a pedir todo por red al volver.
@@ -1536,6 +1743,12 @@ private fun TodayScreen(
     LaunchedEffect(location, enabledExtras) {
         extraItems.clear()
         extraItems.addAll(loadExtraItems(location, current, elevationM, enabledExtras))
+    }
+
+    // Foto de la ubicacion actual (no la ambiental de fondo): la tarjeta protagonista de
+    // la rejilla la usa mientras es grande. Se vuelve a pedir si se cambia de ubicacion.
+    val heroPhotoUrl by produceState<String?>(initialValue = null, location) {
+        value = UnsplashRepository(context).locationPhoto(location.name)?.url
     }
 
     selectedDetail?.let { detail ->
@@ -1613,7 +1826,7 @@ private fun TodayScreen(
                         .appearOnScroll(listState, "condition"),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(text = today.condition.emoji, fontSize = 64.sp)
+                    WeatherIcon(today.condition, isDay = true, size = 80.dp)
                     Text(
                         text = today.condition.label,
                         color = Color.White,
@@ -1638,7 +1851,7 @@ private fun TodayScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
+                            .padding(horizontal = HOURLY_CHART_SIDE_PADDING)
                             .appearOnScroll(listState, "chart"),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -1670,43 +1883,26 @@ private fun TodayScreen(
                 }
             }
 
+            // Las 15 tarjetas juntas en una sola rejilla de 3 columnas.
             item(key = "detail-tiles") {
                 AppGridReveal(
-                    items = detailItems,
+                    items = (detailItems + extraItems).withHeroAtCenter(DetailType.RAIN_PROBABILITY),
                     listState = listState,
                     itemKey = "detail-tiles",
+                    heroPhotoUrl = heroPhotoUrl,
+                    heroLocationName = location.name,
                     onClick = { selectedDetail = it }
                 )
             }
-
-            if (extraItems.isNotEmpty()) {
-                item(key = "extras-title") {
-                    Text(
-                        text = "Más datos",
-                        color = Color.White.copy(alpha = 0.85f),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .appearOnScroll(listState, "extras-title")
-                    )
-                }
-                item(key = "extra-tiles") {
-                    AppGridReveal(
-                        items = extraItems.toList(),
-                        listState = listState,
-                        itemKey = "extra-tiles",
-                        onClick = { selectedDetail = it }
-                    )
-                }
-            }
         }
 
-        TodayHeader(
-            locationName = location.name,
-            summary = "${current.condition.emoji} ${current.temp.roundToInt()}°  ·  " +
-                today.date.fullDate(),
+        ShrinkingHeader(
+            title = location.name,
+            titleIconRes = R.drawable.ic_location,
+            subtitleIconRes = current.condition.staticIcon(isDay),
+            subtitle = "${current.temp.roundToInt()}°  ·  ${today.date.fullDate()}",
             shrink = shrink::value,
+            trailing = { LiveClock() },
             modifier = Modifier.align(Alignment.TopStart)
         )
     }
@@ -1754,7 +1950,7 @@ private suspend fun loadExtraItems(
                 add(DetailItem("💧", "Punto de rocío", "${it.roundToInt()}°", DetailType.DEW_POINT))
             }
             current.pressureHpa?.let {
-                add(DetailItem("🧭", "Presión", "${it.roundToInt()} hPa", DetailType.PRESSURE))
+                add(DetailItem("", "Presión", "${it.roundToInt()} hPa", DetailType.PRESSURE))
             }
         }
         if (ExtraFeature.ELEVATION in enabled) {
@@ -1800,10 +1996,14 @@ private suspend fun loadExtraItems(
     }
 }
 
-private enum class HourlyMetric(val label: String, val emoji: String, val unit: String) {
-    RAIN("Lluvia", "🌧️", "%"),
-    TEMP("Temperatura", "🌡️", "°"),
-    WIND("Viento", "💨", "")
+private enum class HourlyMetric(
+    val label: String,
+    val unit: String,
+    val iconRes: Int
+) {
+    RAIN("Lluvia", "%", R.drawable.ic_heavy_rain),
+    TEMP("Temperatura", "°", R.drawable.ic_temp_medium),
+    WIND("Viento", "", R.drawable.ic_wind)
 }
 
 /**
@@ -1862,24 +2062,41 @@ private fun MetricSelector(selected: HourlyMetric, onSelect: (HourlyMetric) -> U
                     .padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "${metric.emoji} ${metric.label}",
-                    color = Color.White,
-                    fontSize = 13.sp,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Image(
+                        painter = painterResource(metric.iconRes),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = metric.label,
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                    )
+                }
             }
         }
     }
 }
+
+/** Alto de la tarjeta de "Próximas horas": la protagonista de la rejilla arranca grande
+ * con este mismo tamano (alto y margen lateral), no con uno propio inventado. */
+private val HOURLY_CHART_HEIGHT = 190.dp
+
+/** Margen lateral de la tarjeta de "Próximas horas" respecto a los bordes de la pantalla. */
+private val HOURLY_CHART_SIDE_PADDING = 16.dp
 
 @Composable
 private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
     if (hours.isEmpty()) return
 
     val pointSpacing = 52.dp
-    val chartSidePadding = 10.dp
-    val chartHeight = 190.dp
+    val chartSidePadding = 0.dp
+    val chartHeight = HOURLY_CHART_HEIGHT
     val lineColor = Color.White
 
     val values = remember(hours, metric) { hours.map { it.valueFor(metric) } }
@@ -1899,6 +2116,12 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.10f))
     ) {
+        // Los iconos del grafico se resuelven aqui fuera: imageResource es @Composable y
+        // dentro del Canvas ya no se puede llamar. Uno por condicion distinta, no por hora.
+        // Clave (condicion, es de dia): a las 22:00 con claros toca luna, no sol.
+        val iconosPorHora = hours.map { it.condition to it.isDay }.distinct().associateWith {
+            (cond, esDeDia) -> ImageBitmap.imageResource(cond.staticIcon(esDeDia))
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1993,21 +2216,55 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
                     alpha = 190
                     textSize = 11.sp.toPx()
                 }
+                val rainPaint = android.graphics.Paint(valuePaint).apply {
+                    color = android.graphics.Color.parseColor("#7EC8E3")
+                    isFakeBoldText = false
+                    textSize = 9.sp.toPx()
+                }
                 val iconPaint = android.graphics.Paint().apply {
                     textAlign = android.graphics.Paint.Align.CENTER
                     textSize = 16.sp.toPx()
                     isAntiAlias = true
                 }
 
+                // Altura máxima de las barras de lluvia (en la zona del bottomPad)
+                val rainBarMaxH = 18.dp.toPx()
+                val rainBarWidth = (stepPx * 0.35f).coerceAtMost(10.dp.toPx())
+                val maxPrecip = hours.maxOfOrNull { it.precipitationMm.toFloat() }?.coerceAtLeast(1f) ?: 1f
+                val rainBarBaseY = size.height - 18.dp.toPx() // justo encima de la hora
+
                 points.forEachIndexed { i, p ->
                     drawCircle(lineColor, radius = 3.dp.toPx(), center = p)
 
-                    if (metric != HourlyMetric.TEMP) {
+                    // Barra de precipitación en la zona inferior
+                    val precip = hours[i].precipitationMm.toFloat()
+                    if (precip > 0f) {
+                        val barH = (precip / maxPrecip) * rainBarMaxH
+                        drawRect(
+                            color = Color(0xFF7EC8E3).copy(alpha = 0.75f),
+                            topLeft = Offset(p.x - rainBarWidth / 2f, rainBarBaseY - barH),
+                            size = androidx.compose.ui.geometry.Size(rainBarWidth, barH)
+                        )
                         drawContext.canvas.nativeCanvas.drawText(
-                            hours[i].displayEmoji,
+                            "%.1f".format(precip),
                             p.x,
-                            p.y - 36.dp.toPx(),
-                            iconPaint
+                            rainBarBaseY - barH - 2.dp.toPx(),
+                            rainPaint
+                        )
+                    }
+
+                    if (metric != HourlyMetric.TEMP) {
+                        val icono =
+                            iconosPorHora.getValue(hours[i].condition to hours[i].isDay)
+                        val lado = 22.dp.toPx()
+                        val centroY = p.y - 42.dp.toPx()
+                        drawImage(
+                            image = icono,
+                            dstOffset = IntOffset(
+                                (p.x - lado / 2f).toInt(),
+                                (centroY - lado / 2f).toInt()
+                            ),
+                            dstSize = IntSize(lado.toInt(), lado.toInt())
                         )
                     }
                     drawContext.canvas.nativeCanvas.drawText(
@@ -2044,12 +2301,29 @@ private data class DetailItem(
 /**
  * El icono aparece con un pequeño "pop" (escala + fundido) la primera vez que se compone.
  */
-/** Tamano de celda para el que estan pensados los tamanos de letra de la tarjeta. */
+/** Esquinas de la tarjeta, en proporcion a su lado (50px sobre 200px en el original). */
+private val TILE_CORNER_FRACTION = androidx.compose.foundation.shape.CornerSize(25)
+
+/**
+ * El fondo con el que arranca la tarjeta protagonista, con los mismos colores que el
+ * fondo del grafico por horas (coral, dorado, verde, azul), aqui todos juntos en un solo
+ * degradado en vez de repartidos por franjas horarias.
+ */
+private val HERO_INTRO_GRADIENT = Brush.linearGradient(
+    CHART_TINT_ANCHORS.map { (_, color) -> color }
+)
+
+
+/** Ancho de celda para el que estan pensados los tamanos de letra de la tarjeta. */
 private val DETAIL_TILE_REFERENCE = 170.dp
+
+/** Proporcion de la tarjeta: 4:5, como las imagenes del demo. */
+private const val DETAIL_TILE_ASPECT = 0.8f
 
 @Composable
 private fun PoppingIcon(
     emoji: String,
+    iconRes: Int? = null,
     delayMillis: Int = 0,
     size: androidx.compose.ui.unit.TextUnit = 28.sp
 ) {
@@ -2068,7 +2342,15 @@ private fun PoppingIcon(
             )
         ) + fadeIn(animationSpec = tween(200))
     ) {
-        Text(text = emoji, fontSize = size)
+        if (iconRes != null) {
+            Image(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                modifier = Modifier.size(with(LocalDensity.current) { size.toDp() })
+            )
+        } else {
+            Text(text = emoji, fontSize = size)
+        }
     }
 }
 
@@ -2097,183 +2379,314 @@ private fun DetailGrid(items: List<DetailItem>, onClick: (DetailItem) -> Unit) {
 }
 
 /**
- * La rejilla aparece como en el pen https://codepen.io/jh3y/pen/VYZwOwd:
+ * La rejilla aparece inspirada en el pen https://codepen.io/jh3y/pen/VYZwOwd, adaptada a un
+ * `LazyColumn` normal (sin bloque artificial ni `position: sticky`):
  *
- *  - El bloque ocupa mas de una pantalla de alto (alli, `min-height: 240vh`) y su contenido
- *    se queda **pegado** en el centro mientras lo recorres (alli, `position: sticky`), de
- *    forma que la transformacion sucede sin que nada cambie de sitio.
- *  - Una sola tarjeta arranca ocupando la pantalla entera (`width: 100vw; height: 100vh`)
- *    y se encoge hasta su celda de la rejilla.
- *  - Solo entonces brotan las demas desde cero (`scale: 0` + `opacity: 0`), por capas
- *    segun lo lejos que esten de la protagonista.
+ *  - El grupo se coloca justo despues de Sol y luna, como cualquier otro elemento de la
+ *    lista. La protagonista arranca con el mismo tamano que la tarjeta de "Próximas
+ *    horas" (paisaje, mas ancha que alta): de fondo lleva [heroPhotoUrl] (una foto del
+ *    lugar) y sin el icono ni el texto del dato todavia.
+ *  - Al llegar al centro de la pantalla, la rejilla se engancha ahi (como un
+ *    `position: sticky`) y la protagonista se queda completamente quieta: la pantalla
+ *    sigue bajando por detras, pero ella no se mueve, solo encoge sobre su propio centro
+ *    hasta ocupar su celda normal, mientras la foto se desvanece, aparecen el icono y el
+ *    valor, y las demas brotan desde cero (`scale: 0` + `opacity: 0`) a su alrededor,
+ *    por capas segun lo lejos que esten de ella.
  */
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 private fun AppGridReveal(
     items: List<DetailItem>,
     listState: LazyListState,
     itemKey: String,
+    /** Foto de fondo para la protagonista mientras es grande (null -> sin foto). */
+    heroPhotoUrl: String?,
+    /** Nombre de la ubicacion, escrito sobre la foto mientras la protagonista es grande. */
+    heroLocationName: String,
     onClick: (DetailItem) -> Unit
 ) {
     if (items.isEmpty()) return
 
-    val spacing = 10.dp
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-    val stageHeight = screenHeight * GRID_STAGE_SCREENS
+    val spacing = 13.dp
+    val density = LocalDensity.current
 
     // Tres columnas, como la rejilla del demo en movil.
     val columns = GRID_COLUMNS
     val rows = (items.size + columns - 1) / columns
     // La protagonista es la que cae en el centro de la rejilla.
-    val heroRow = (rows - 1) / 2
-    val heroColumn = (columns - 1) / 2
-    val heroIndex = (heroRow * columns + heroColumn).coerceIn(items.indices)
+    val heroIndex = heroIndexFor(items.size)
+    val heroRow = heroIndex / columns
+    val heroColumn = heroIndex % columns
 
+    // Sin bloque artificial ni "position: sticky": el grupo mide lo que mide su propia
+    // rejilla (nada mas) y se coloca justo despues de Sol y luna, como cualquier otro
+    // elemento de la lista. La protagonista, mientras es grande, se sale visualmente de
+    // esta caja (a proposito: no hay `clipToBounds()`) y monta sobre lo de alrededor.
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
-            .height(stageHeight)
-            // Sin esto, la protagonista se sale del bloque al crecer y se monta encima de
-            // la tarjeta de sol y luna.
-            .clipToBounds()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = GRID_HORIZONTAL_PADDING)
     ) {
         val tile = (maxWidth - spacing * (columns - 1)) / columns
-        val gridHeight = tile * rows + spacing * (rows - 1)
+        // Las celdas son 4:5, asi que son mas altas que anchas.
+        val tileHeight = tile / DETAIL_TILE_ASPECT
+        val gridHeight = tileHeight * rows + spacing * (rows - 1)
 
-        // La tarjeta es cuadrada: se mide contra el ancho, no contra el alto, o se saldria
-        // por los lados. Y deja un respiro en los bordes.
-        val heroSide = maxWidth * GRID_HERO_FILL
-        // El contenido reserva el sitio de la tarjeta grande: si la rejilla es mas baja
-        // que ella, la tarjeta se saldria por arriba y por abajo al crecer.
-        val contentHeight = maxOf(gridHeight, heroSide)
+        // Al arrancar, la protagonista tiene el mismo tamano que la tarjeta de "Próximas
+        // horas" (mismo margen lateral, no el hueco de 1dp de la rejilla).
+        val heroWidth = maxWidth + GRID_HORIZONTAL_PADDING * 2 - HOURLY_CHART_SIDE_PADDING * 2
 
-        val density = LocalDensity.current
         val tilePx = with(density) { tile.toPx() }
+        val tileHeightPx = with(density) { tileHeight.toPx() }
+        val spacingPx = with(density) { spacing.toPx() }
         val gridWidthPx = with(density) { maxWidth.toPx() }
         val gridHeightPx = with(density) { gridHeight.toPx() }
-        val contentHeightPx = with(density) { contentHeight.toPx() }
-        val fullScale = with(density) { heroSide.toPx() } / tilePx
+        val heroWidthPx = with(density) { heroWidth.toPx() }
+        // Mismo alto que la tarjeta de "Próximas horas", no una proporcion inventada.
+        val heroHeightPx = with(density) { HOURLY_CHART_HEIGHT.toPx() }
+        val viewportHeightPx = listState.layoutInfo.let { it.viewportEndOffset - it.viewportStartOffset }
+            .toFloat()
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(contentHeight)
-                .align(Alignment.TopCenter)
-                // El `position: sticky` del demo: el contenido se queda quieto en mitad de
-                // la pantalla mientras el bloque, mas alto, sigue pasando.
-                .graphicsLayer { translationY = stickyOffset(listState, itemKey, contentHeightPx) }
-        ) {
+        // Recorrido de scroll que se consume con la rejilla clavada en pantalla: es lo
+        // que dura el encogido. Equivale al `min-height: 240vh` de la seccion del demo
+        // (alli, 2,4 pantallas para un contenido de 1 pantalla = 1,4 pantallas de scroll
+        // con todo quieto). Se anade como hueco libre DEBAJO de la rejilla dentro de este
+        // mismo elemento de la lista, y el enganche lo va reabsorbiendo empujando la
+        // rejilla hacia abajo: al llegar al tope de scroll la rejilla queda pegada al
+        // fondo y ese hueco ha desaparecido, sin espacio muerto sobrante.
+        val pinRunwayPx = viewportHeightPx * GRID_PIN_RUNWAY_SCREENS
+        val pinRunway = with(density) { pinRunwayPx.toDp() }
+        val itemHeightPx = gridHeightPx + pinRunwayPx
+
+        // Centro de la celda de la protagonista dentro de la rejilla. Es el punto sobre
+        // el que la protagonista escala (crece y encoge sin moverse de ahi, porque
+        // graphicsLayer escala por defecto sobre el centro del propio elemento), asi que
+        // es tambien el punto que hay que clavar en la pantalla.
+        val heroCellCenterPx = heroRow * (tileHeightPx + spacingPx) + tileHeightPx / 2f
+        // Posicion (relativa al viewport) que debe tener el borde superior de la rejilla
+        // para que esa celda quede justo en el centro de la pantalla — fija, no cambia
+        // con el scroll: es el punto en el que la rejilla se "engancha" (el `position:
+        // sticky; top: 0` de `.content`, que por medir 100vh deja su contenido centrado).
+        val pinnedTopPx = viewportHeightPx / 2f - heroCellCenterPx
+        // La protagonista empieza a encogerse justo cuando se engancha y termina justo
+        // cuando el enganche se suelta: asi nunca se la ve moverse y encoger a la vez.
+        // Primero sube con el scroll hasta el centro; a partir de ahi se queda quieta y
+        // solo cambia de tamano mientras se consume pinRunwayPx de scroll.
+        val heroStartT = if (itemHeightPx > 0f) {
+            ((viewportHeightPx - pinnedTopPx) / itemHeightPx).coerceIn(0f, 1f)
+        } else {
+            0f
+        }
+        val heroEndT = if (itemHeightPx > 0f) {
+            (heroStartT + pinRunwayPx / itemHeightPx).coerceIn(0f, 1f)
+        } else {
+            0f
+        }
+
+        Box(modifier = Modifier.height(gridHeight + pinRunway)) {
             Column(
-                modifier = Modifier.align(Alignment.Center),
+                modifier = Modifier
+                    .height(gridHeight)
+                    .graphicsLayer {
+                        // Como `position: sticky`: en cuanto la rejilla llega al punto de
+                        // enganche, toda ella (protagonista y hermanas juntas) se queda
+                        // fija en pantalla — la pantalla sigue desplazandose, pero la
+                        // rejilla no — mientras la protagonista encoge y las hermanas
+                        // aparecen. Se calcula con la posicion actual de la rejilla (no
+                        // con una fraccion 0..1) para que sea reversible sea cual sea la
+                        // velocidad o la direccion del scroll.
+                        //
+                        // El tope es pinRunwayPx: mas empuje que eso sacaria la rejilla
+                        // de su propio hueco en la lista y sus ultimas filas quedarian
+                        // fuera de la pantalla sin scroll que pedir para verlas. Justo en
+                        // ese tope la rejilla queda pegada al fondo del elemento, que es
+                        // donde tiene que acabar.
+                        val liveTopPx = (listState.layoutInfo.visibleItemsInfo
+                            .firstOrNull { it.key == itemKey }?.offset ?: 0).toFloat()
+                        translationY = (pinnedTopPx - liveTopPx)
+                            .coerceIn(0f, pinRunwayPx)
+                    },
                 verticalArrangement = Arrangement.spacedBy(spacing)
             ) {
-                items.chunked(columns).forEachIndexed { row, rowItems ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
-                        rowItems.forEachIndexed { column, item ->
-                            val index = row * columns + column
-                            val isHero = index == heroIndex
-                            // Anillo al que pertenece: 1 las de al lado, 2 las esquinas...
-                            val ring = maxOf(
-                                abs(row - heroRow),
-                                abs(column - heroColumn)
-                            )
-                            DetailTile(
-                                item = item,
-                                tileSize = tile,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .zIndex(if (isHero) 1f else 0f)
-                                    .graphicsLayer {
-                                        val progress = stageProgress(listState, itemKey)
-                                        if (isHero) {
-                                            val settle = smoothstep(progress / GRID_SETTLE_END)
-                                            val scale = heroScale(listState, itemKey, fullScale)
-                                            scaleX = scale
-                                            scaleY = scale
-                                            // Del centro de la rejilla a su celda.
-                                            translationX = (gridWidthPx / 2f -
-                                                (column * (tilePx + spacing.toPx()) + tilePx / 2f)) *
-                                                (1f - settle)
-                                            translationY = (gridHeightPx / 2f -
-                                                (row * (tilePx + spacing.toPx()) + tilePx / 2f)) *
-                                                (1f - settle)
-                                        } else {
-                                            // Las de fuera brotan antes que las de dentro,
-                                            // como las capas del demo.
-                                            val delay = GRID_SETTLE_END +
-                                                (GRID_MAX_RING - ring) * GRID_LAYER_STEP
-                                            val born = smoothstep(
-                                                (progress - delay) /
-                                                    (1f - delay).coerceAtLeast(0.01f)
-                                            )
-                                            scaleX = born
-                                            scaleY = born
-                                            alpha = born
-                                        }
-                                    },
-                                entryIndex = index,
-                                onClick = { onClick(item) }
-                            )
-                        }
-                        repeat(columns - rowItems.size) {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
+            items.chunked(columns).forEachIndexed { row, rowItems ->
+                Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
+                    rowItems.forEachIndexed { column, item ->
+                        val index = row * columns + column
+                        val isHero = index == heroIndex
+                        // Anillo al que pertenece: 1 las de al lado, 2 las esquinas...
+                        val ring = maxOf(
+                            abs(row - heroRow),
+                            abs(column - heroColumn)
+                        )
+                        DetailTile(
+                            item = item,
+                            tileSize = tile,
+                            // El fondo de color usa el mismo ritmo que el ancho de la
+                            // protagonista (`power2.inOut`, igual que `.scaler img`
+                            // width en el JS).
+                            heroStyleProgress = if (isHero) {
+                                {
+                                    easeInOutPower(
+                                        2,
+                                        listState.scrollTriggerProgress(
+                                            itemKey,
+                                            heroStartT,
+                                            heroEndT
+                                        )
+                                    )
+                                }
+                            } else {
+                                null
+                            },
+                            // Ritmo del alto (`power1.inOut`), para poder compensar el
+                            // estirado del ancho y el alto por separado (ver mas abajo,
+                            // donde se usan junto a heroStyleProgress).
+                            heroHeightProgress = if (isHero) {
+                                {
+                                    easeInOutPower(
+                                        1,
+                                        listState.scrollTriggerProgress(
+                                            itemKey,
+                                            heroStartT,
+                                            heroEndT
+                                        )
+                                    )
+                                }
+                            } else {
+                                null
+                            },
+                            heroPhotoUrl = if (isHero) heroPhotoUrl else null,
+                            heroPhotoWidth = if (isHero) heroWidth else null,
+                            heroPhotoHeight = if (isHero) HOURLY_CHART_HEIGHT else null,
+                            heroLocationName = heroLocationName,
+                            modifier = Modifier
+                                .weight(1f)
+                                .zIndex(if (isHero) 1f else 0f)
+                                .graphicsLayer {
+                                    // Adaptacion de los dos ScrollTrigger del JS: `t`
+                                    // recorre 0..1 a lo largo de todo el scroll que la
+                                    // rejilla puede ofrecer (ver scrollTriggerProgress).
+                                    // La protagonista no empieza a encogerse hasta que
+                                    // se queda clavada en el centro de la pantalla
+                                    // (heroStartT); las demas brotan en la misma
+                                    // ventana, justo detras.
+                                    val heroT = listState.scrollTriggerProgress(
+                                        itemKey,
+                                        heroStartT,
+                                        heroEndT
+                                    )
+                                    val siblingsT = listState.scrollTriggerProgress(
+                                        itemKey,
+                                        heroStartT,
+                                        heroEndT
+                                    )
+
+                                    if (isHero) {
+                                        // `.from(..., {height}, "power1.inOut")` y
+                                        // `.from(..., {width}, "power2.inOut")`: cada
+                                        // eje encoge con su propia curva, no con una
+                                        // unica escala que mantendria siempre la misma
+                                        // proporcion 4:5.
+                                        val heightEase = easeInOutPower(1, heroT)
+                                        val widthEase = easeInOutPower(2, heroT)
+
+                                        // Sin desplazamiento vertical propio: la
+                                        // protagonista solo escala, y lo hace sobre el
+                                        // centro de su propia celda (el origen por
+                                        // defecto de graphicsLayer). Como ese centro es
+                                        // justo el punto que la rejilla clava en el
+                                        // centro de la pantalla (vease pinnedTopPx), se
+                                        // la ve quieta: crece y encoge sin moverse, y es
+                                        // el resto de la rejilla el que se coloca a su
+                                        // alrededor hasta que encaja en su celda.
+                                        val toCenterX = gridWidthPx / 2f -
+                                                (column * (tilePx + spacingPx) + tilePx / 2f)
+                                        scaleX = lerp(heroWidthPx / tilePx, 1f, widthEase)
+                                        scaleY = lerp(heroHeightPx / tileHeightPx, 1f, heightEase)
+
+                                        translationX = toCenterX * (1f - widthEase)
+                                        translationY = 0f
+                                    } else {
+                                        // Las tres `.layer` del demo comparten la MISMA
+                                        // ventana de scroll (`layersTl`): lo unico que
+                                        // cambia entre ellas es la curva de aceleracion
+                                        // (`power1/3/4.inOut` para la escala), no cuando
+                                        // empiezan o acaban. Aqui solo hay dos anillos
+                                        // alrededor de la protagonista (la rejilla es de
+                                        // 3 columnas), asi que usan los dos extremos de
+                                        // esa gama: el anillo pegado a la protagonista
+                                        // con la curva mas brusca (se queda pequeño mas
+                                        // tiempo y luego salta), el de las esquinas con
+                                        // la mas suave.
+                                        val scalePower = if (ring <= 1) 4 else 1
+                                        val toCenterX = gridWidthPx / 2f -
+                                                (column * (tilePx + spacingPx) + tilePx / 2f)
+                                        val toCenterY = gridHeightPx / 2f -
+                                                (row * (tileHeightPx + spacingPx) + tileHeightPx / 2f)
+                                        val fadeEase = easeSineOut(siblingsT)
+                                        val scaleEase = easeInOutPower(scalePower, siblingsT)
+
+                                        scaleX = scaleEase
+                                        scaleY = scaleEase
+                                        alpha = fadeEase
+                                        translationX = toCenterX * (1f - scaleEase)
+                                        translationY = toCenterY * (1f - scaleEase)
+                                    }
+                                },
+                            entryIndex = index,
+                            onClick = { onClick(item) }
+                        )
+                    }
+                    repeat(columns - rowItems.size) {
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
+            }
             }
         }
     }
 }
 
-/** Que parte del ancho llega a ocupar la tarjeta protagonista cuando esta grande. */
-private const val GRID_HERO_FILL = 0.88f
+/** Padding horizontal de la rejilla: se recupera (junto con [HOURLY_CHART_SIDE_PADDING])
+ * para que el ancho de la protagonista, al arrancar, iguale al de la tarjeta de
+ * "Próximas horas" en vez de quedarse en el hueco que deja este padding. */
+private val GRID_HORIZONTAL_PADDING = 1.dp
+
+/** Esquinas de la protagonista mientras es la foto grande: un redondeo minimo (frente
+ * al 25% de las celdas normales), para que no se vean completamente a escuadra. */
+private const val HERO_PHOTO_CORNER_PERCENT = 6f
+
+/**
+ * Coloca el dato de [type] en la celda que abre la animacion, si esta en esta tanda: la
+ * del centro de la rejilla, que es la que el demo reserva al `.scaler`.
+ */
+private fun List<DetailItem>.withHeroAtCenter(type: DetailType): List<DetailItem> {
+    val current = indexOfFirst { it.type == type }
+    if (current < 0) return this
+    val target = heroIndexFor(size)
+    if (current == target) return this
+    return toMutableList().apply { add(target, removeAt(current)) }
+}
+
+/** Celda que hace de protagonista en una rejilla de [count] tarjetas. */
+private fun heroIndexFor(count: Int): Int {
+    val rows = (count + GRID_COLUMNS - 1) / GRID_COLUMNS
+    return (((rows - 1) / 2) * GRID_COLUMNS + (GRID_COLUMNS - 1) / 2).coerceIn(0, count - 1)
+}
 
 /** Columnas de la rejilla, como el `repeat(3, 1fr)` del demo en movil. */
 private const val GRID_COLUMNS = 3
 
-/** Anillos que se tienen en cuenta para escalonar la aparicion. */
-private const val GRID_MAX_RING = 2
-
-/** A que escala se esta dibujando la tarjeta protagonista en este momento. */
-private fun heroScale(listState: LazyListState, key: Any, fullScale: Float): Float {
-    val settle = smoothstep(stageProgress(listState, key) / GRID_SETTLE_END)
-    return lerp(fullScale, 1f, settle)
-}
-
-/** Alto del bloque, en pantallas. El sobrante sobre 1 es el recorrido de la animacion. */
-private const val GRID_STAGE_SCREENS = 1.7f
-
-/** Cuando termina de encogerse la protagonista y empiezan a brotar las demas. */
-private const val GRID_SETTLE_END = 0.55f
-
-/** Retraso de cada capa de tarjetas respecto a la anterior. */
-private const val GRID_LAYER_STEP = 0.12f
+/** Tarjetas por tanda: dos filas de tres. */
+private const val GRID_TILES_PER_BLOCK = 6
 
 /**
- * Cuanto se ha recorrido del bloque una vez este ocupa la pantalla, de 0 a 1. Es el
- * equivalente al `view-timeline` del demo sobre una seccion de varias pantallas de alto.
+ * Cuantas pantallas de scroll se consumen con la rejilla clavada en el sitio (que es lo
+ * que dura el encogido de la protagonista). Es el equivalente al `min-height: 240vh` de
+ * la seccion del demo: alli el contenido pegajoso mide 1 pantalla y la seccion 2,4, o
+ * sea 1,4 pantallas de scroll sin que nada se mueva de sitio.
  */
-private fun stageProgress(listState: LazyListState, key: Any): Float {
-    val info = listState.layoutInfo
-    val item = info.visibleItemsInfo.firstOrNull { it.key == key } ?: return 0f
-    val viewport = (info.viewportEndOffset - info.viewportStartOffset).toFloat()
-    val runway = (item.size - viewport).coerceAtLeast(1f)
-    return ((-item.offset).toFloat() / runway).coerceIn(0f, 1f)
-}
-
-/**
- * Desplazamiento que mantiene la rejilla centrada en pantalla mientras el bloque pasa: el
- * `position: sticky` del demo, que es lo que deja ver la transformacion sin que el
- * contenido se mueva bajo el dedo.
- */
-private fun stickyOffset(listState: LazyListState, key: Any, contentHeightPx: Float): Float {
-    val info = listState.layoutInfo
-    val item = info.visibleItemsInfo.firstOrNull { it.key == key } ?: return 0f
-    val viewport = (info.viewportEndOffset - info.viewportStartOffset).toFloat()
-    val centred = (viewport - contentHeightPx) / 2f
-    // Mientras el bloque cruza, el contenido compensa el scroll y se queda quieto.
-    return (-item.offset + centred).coerceIn(0f, (item.size - contentHeightPx).coerceAtLeast(0f))
-}
+private const val GRID_PIN_RUNWAY_SCREENS = 1.2f
 
 /** La tarjeta crece desde cero y se funde segun entra en pantalla, como las de la rejilla. */
 private fun Modifier.revealOnScroll(
@@ -2293,33 +2706,189 @@ private fun DetailTile(
     entryIndex: Int = 0,
     /** Lado de la celda: el contenido se ajusta a el en vez de usar tamanos fijos. */
     tileSize: Dp = DETAIL_TILE_REFERENCE,
+    /**
+     * Solo la protagonista de la rejilla: 0 al principio (la foto de [heroPhotoUrl] se ve
+     * entera y ni el icono ni el valor todavia) y 1 cuando ya ha terminado de encogerse
+     * (para entonces la foto se ha desvanecido del todo y ha aparecido el mismo cristal
+     * translucido, icono y texto que las demas tarjetas). Null en el resto, que siempre
+     * llevan el estilo normal.
+     */
+    heroStyleProgress: (() -> Float)? = null,
+    /** Igual que [heroStyleProgress] pero con el ritmo del alto (`power1.inOut`), no el
+     * del ancho: hace falta el par para compensar el estirado de la foto y el texto por
+     * separado en cada eje (ver mas abajo). Si es null se usa [heroStyleProgress]. */
+    heroHeightProgress: (() -> Float)? = null,
+    /** Foto que se ve de fondo mientras la protagonista es grande; ignorada si es null. */
+    heroPhotoUrl: String? = null,
+    /** Tamano real (no el de la celda) al que debe verse la foto y el texto de encima,
+     * para que ninguno de los dos quede estirado por el escalado no uniforme con el que
+     * la celda pequeña simula ser esta protagonista grande. */
+    heroPhotoWidth: Dp? = null,
+    heroPhotoHeight: Dp? = null,
+    /** Nombre de la ubicacion, escrito abajo a la izquierda sobre [heroPhotoUrl]. */
+    heroLocationName: String? = null,
     onClick: () -> Unit
 ) {
-    val shape = RoundedCornerShape(20.dp)
+    val shape = RoundedCornerShape(TILE_CORNER_FRACTION)
     Box(
         modifier = modifier
-            .aspectRatio(1f)
+            .aspectRatio(DETAIL_TILE_ASPECT)
             .shadow(
                 elevation = 14.dp,
-                shape = shape,
+                // La sombra no puede animarse fotograma a fotograma (a diferencia del
+                // recorte de mas abajo), asi que la protagonista usa directamente la
+                // esquina recta: con esquinas redondas, escalar mucho mas en un eje que
+                // en el otro (ancha y baja, frente a la celda estrecha y alta) las
+                // convertiria en ovaladas.
+                shape = if (heroStyleProgress != null) {
+                    RoundedCornerShape(percent = HERO_PHOTO_CORNER_PERCENT.roundToInt())
+                } else {
+                    shape
+                },
                 ambientColor = Color.Black.copy(alpha = 0.5f),
                 spotColor = Color.Black.copy(alpha = 0.7f)
             )
-            .clip(shape)
-            .background(Color.White.copy(alpha = 0.12f))
-            .background(tileGradient)
-            .border(1.dp, Color.White.copy(alpha = 0.38f), shape)
+            .then(
+                if (heroStyleProgress != null) {
+                    // Esquinas casi rectas mientras es la foto grande; se redondean
+                    // del todo (como las demas) segun se asienta. Animado aqui (no
+                    // con un `.clip()` fijo) para no recomponer en cada fotograma.
+                    Modifier.graphicsLayer {
+                        val settle = heroStyleProgress().coerceIn(0f, 1f)
+                        this.clip = true
+                        this.shape = RoundedCornerShape(
+                            percent = lerp(HERO_PHOTO_CORNER_PERCENT, 25f, settle).roundToInt()
+                        )
+                    }
+                } else {
+                    Modifier.clip(shape)
+                }
+            )
+            .then(
+                if (heroStyleProgress != null) {
+                    // Crossfade: mientras la foto (dibujada como hijo, mas abajo) se
+                    // desvanece, el cristal normal y su borde blanco aparecen encima
+                    // segun avanza el progreso (el borde no se ve mientras es solo
+                    // la foto), en vez de cambiar de golpe de un fondo a otro.
+                    Modifier.drawWithCache {
+                        onDrawBehind {
+                            val settle = heroStyleProgress().coerceIn(0f, 1f)
+                            drawRect(color = Color.White.copy(alpha = 0.12f), alpha = settle)
+                            drawRect(brush = tileGradient, alpha = settle)
+                            val radius = size.minDimension *
+                                lerp(HERO_PHOTO_CORNER_PERCENT, 25f, settle) / 100f
+                            drawRoundRect(
+                                color = Color.White.copy(alpha = 0.38f * settle),
+                                cornerRadius = CornerRadius(radius, radius),
+                                style = Stroke(width = 1.dp.toPx())
+                            )
+                        }
+                    }
+                } else {
+                    Modifier
+                        .background(Color.White.copy(alpha = 0.12f))
+                        .background(tileGradient)
+                        .border(1.dp, Color.White.copy(alpha = 0.38f), shape)
+                }
+            )
             .clickable(onClick = onClick)
     ) {
+        if (heroStyleProgress != null && heroPhotoUrl != null &&
+            heroPhotoWidth != null && heroPhotoHeight != null
+        ) {
+            // El resto de esta tarjeta (fondo, borde) puede estirarse sin problema para
+            // simular el tamano grande porque son formas lisas, pero una foto y un texto
+            // se notarian deformados. Por eso esta caja interior tiene su tamano real
+            // ([heroPhotoWidth] x [heroPhotoHeight], no el de la celda) y una escala
+            // exactamente inversa a la del contenedor en cada instante: al pintarse
+            // dentro de una celda que luego se estira de forma distinta en ancho y alto,
+            // el estirado y esta escala inversa se cancelan y queda sin deformar (el
+            // recorte del contenedor, que si seguimos aplicandose, es lo que la va
+            // "encogiendo" de verdad segun avanza el scroll).
+            val heroWidthRatio = heroPhotoWidth / tileSize
+            val heroHeightRatio = heroPhotoHeight / (tileSize / DETAIL_TILE_ASPECT)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    // requiredSize, no size: la celda ya viene con restricciones fijas
+                    // (min=max=su propio tamano pequeño) desde el aspectRatio()+weight()
+                    // de mas arriba, y un .size() normal se recorta dentro de esas
+                    // restricciones en vez de imponer el suyo — por eso la foto salia
+                    // pequeña pese a pedir el tamano grande.
+                    .requiredSize(heroPhotoWidth, heroPhotoHeight)
+                    .graphicsLayer {
+                        val widthEase = heroStyleProgress().coerceIn(0f, 1f)
+                        val heightEase = (heroHeightProgress?.invoke() ?: widthEase)
+                            .coerceIn(0f, 1f)
+                        scaleX = 1f / lerp(heroWidthRatio, 1f, widthEase)
+                        scaleY = 1f / lerp(heroHeightRatio, 1f, heightEase)
+                    }
+            ) {
+                // La foto se ve entera al principio y se desvanece con el mismo ritmo
+                // con el que aparece el cristal normal (arriba) y el icono+texto (mas
+                // abajo).
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(heroPhotoUrl)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { alpha = 1f - heroStyleProgress().coerceIn(0f, 1f) }
+                )
+                if (!heroLocationName.isNullOrBlank()) {
+                    // Degradado gris oscuro por detras, para que el texto se lea encima
+                    // de cualquier foto por clara que sea.
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .graphicsLayer { alpha = 1f - heroStyleProgress().coerceIn(0f, 1f) }
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.55f))
+                                )
+                            )
+                    )
+                    Text(
+                        text = heroLocationName,
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp)
+                            .graphicsLayer { alpha = 1f - heroStyleProgress().coerceIn(0f, 1f) }
+                    )
+                }
+            }
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp * (tileSize / DETAIL_TILE_REFERENCE)),
+                .padding(12.dp * (tileSize / DETAIL_TILE_REFERENCE))
+                .then(
+                    if (heroStyleProgress != null) {
+                        // El icono y el texto aparecen con el mismo ritmo con el que se
+                        // desvanece la foto: nada de golpes ni recomposicion, solo alpha.
+                        Modifier.graphicsLayer { alpha = heroStyleProgress().coerceIn(0f, 1f) }
+                    } else {
+                        Modifier
+                    }
+                ),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             val scale = tileSize / DETAIL_TILE_REFERENCE
-            PoppingIcon(emoji = item.emoji, delayMillis = entryIndex * 40, size = 28.sp * scale)
+            PoppingIcon(
+                emoji = item.emoji,
+                iconRes = item.type.iconRes(),
+                delayMillis = entryIndex * 40,
+                size = 28.sp * scale
+            )
             Spacer(Modifier.height(6.dp * scale))
             Text(
                 text = item.value,
@@ -2330,8 +2899,11 @@ private fun DetailTile(
             )
             Text(
                 text = item.label,
-                color = Color.White.copy(alpha = 0.75f),
-                fontSize = 12.sp * scale,
+                color = Color.White.copy(alpha = 0.9f),
+                // Con la celda pequena, el tamano proporcional se quedaba en 8sp: por
+                // debajo de 12sp no hay quien lo lea.
+                fontSize = maxOf(13f * scale, 12f).sp,
+                fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
                 maxLines = 2
             )
@@ -2385,7 +2957,7 @@ private fun SunMoonCard(
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = "${daylight.toHours()}h ${daylight.toMinutesPart()}m de luz solar",
+                        text = "${daylight.toHours()}h ${daylight.toMinutes() % 60}m de luz solar",
                         color = Color.White.copy(alpha = 0.7f),
                         fontSize = 13.sp
                     )
@@ -2399,6 +2971,9 @@ private fun SunMoonCard(
  * Arco que representa el recorrido del sol entre el amanecer y el atardecer de hoy (o, si es
  * de noche, el recorrido de la luna entre el atardecer y el próximo amanecer).
  */
+private val ARC_HEIGHT = 84.dp
+private val ASTRO_SIZE = 34.dp
+
 @Composable
 private fun SunArc(
     sunrise: LocalDateTime,
@@ -2440,71 +3015,74 @@ private fun SunArc(
     val progress = marker.value
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Canvas(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(84.dp)
+                .height(ARC_HEIGHT)
         ) {
-            val baselineY = size.height - 2.dp.toPx()
-            // Elipse en vez de círculo: el radio horizontal ocupa todo el ancho, pero el
-            // vertical se ajusta a la altura disponible para que el arco no se salga del recuadro.
-            val horizontalRadius = size.width / 2f
-            val verticalRadius = baselineY
-            val centerX = size.width / 2f
-
-            drawLine(
-                color = Color.White.copy(alpha = 0.3f),
-                start = Offset(0f, baselineY),
-                end = Offset(size.width, baselineY),
-                strokeWidth = 1.dp.toPx(),
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f))
-            )
-
-            val arcTopLeft = Offset(centerX - horizontalRadius, baselineY - verticalRadius)
-            drawArc(
-                color = Color.White.copy(alpha = 0.45f),
-                startAngle = 180f,
-                sweepAngle = 180f,
-                useCenter = false,
-                topLeft = arcTopLeft,
-                size = androidx.compose.ui.geometry.Size(horizontalRadius * 2f, verticalRadius * 2f),
-                style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round)
-            )
-
+            // La misma geometría que usa el Canvas, pero en dp: hace falta fuera de él para
+            // poder colocar encima el icono animado del astro, que es un composable.
+            val baseline = ARC_HEIGHT - 2.dp
+            val horizontalRadius = maxWidth / 2f
             val angleRad = Math.toRadians(180.0 + 180.0 * progress)
-            val markerX = centerX + horizontalRadius * cos(angleRad).toFloat()
-            val markerY = baselineY + verticalRadius * sin(angleRad).toFloat()
+            val markerX = maxWidth / 2f + horizontalRadius * cos(angleRad).toFloat()
+            val markerY = baseline + baseline * sin(angleRad).toFloat()
 
-            if (isDaytime) {
-                drawCircle(
-                    color = Color(0xFFFFD54A).copy(alpha = 0.35f),
-                    radius = 15.dp.toPx(),
-                    center = Offset(markerX, markerY)
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val baselineY = size.height - 2.dp.toPx()
+                // Elipse en vez de círculo: el radio horizontal ocupa todo el ancho, pero el
+                // vertical se ajusta a la altura disponible para que el arco no se salga del recuadro.
+                val horizontalRadiusPx = size.width / 2f
+                val verticalRadiusPx = baselineY
+                val centerX = size.width / 2f
+
+                drawLine(
+                    color = Color.White.copy(alpha = 0.3f),
+                    start = Offset(0f, baselineY),
+                    end = Offset(size.width, baselineY),
+                    strokeWidth = 1.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f))
                 )
-                drawCircle(
-                    color = Color(0xFFFFD54A),
-                    radius = 8.dp.toPx(),
-                    center = Offset(markerX, markerY)
-                )
-            } else {
-                drawCircle(
-                    color = Color(0xFFCBD3E8).copy(alpha = 0.3f),
-                    radius = 14.dp.toPx(),
-                    center = Offset(markerX, markerY)
-                )
-                drawMoonDisc(
-                    center = Offset(markerX, markerY),
-                    radius = 8.dp.toPx(),
-                    phase = moonPhase.toFloat().mod(1f)
+
+                val arcTopLeft = Offset(centerX - horizontalRadiusPx, baselineY - verticalRadiusPx)
+                drawArc(
+                    color = Color.White.copy(alpha = 0.45f),
+                    startAngle = 180f,
+                    sweepAngle = 180f,
+                    useCenter = false,
+                    topLeft = arcTopLeft,
+                    size = androidx.compose.ui.geometry.Size(horizontalRadiusPx * 2f, verticalRadiusPx * 2f),
+                    style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round)
                 )
             }
+
+            // El astro que recorre el arco: sol de día, luna de noche.
+            AnimatedRawIcon(
+                res = if (isDaytime) R.raw.anim_clear else R.raw.anim_moon,
+                size = ASTRO_SIZE,
+                contentDescription = if (isDaytime) "Sol" else "Luna",
+                modifier = Modifier.offset(
+                    x = markerX - ASTRO_SIZE / 2,
+                    y = markerY - ASTRO_SIZE / 2
+                )
+            )
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text(text = "🌅 Amanecer", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.ic_sunrise),
+                        contentDescription = null,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Text(text = "Amanecer", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                }
                 Text(
                     text = sunrise.format(timeFormatter),
                     color = Color.White,
@@ -2513,7 +3091,17 @@ private fun SunArc(
                 )
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(text = "Atardecer 🌇", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    Text(text = "Atardecer", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                    Image(
+                        painter = painterResource(R.drawable.ic_sunset),
+                        contentDescription = null,
+                        modifier = Modifier.size(15.dp)
+                    )
+                }
                 Text(
                     text = sunset.format(timeFormatter),
                     color = Color.White,
@@ -2616,6 +3204,7 @@ private fun WeekScreen(
             day = day,
             hours = hours.forDate(day.date),
             locationName = locationName,
+            padding = padding,
             onBack = { selectedDay = null }
         )
         return
@@ -2755,12 +3344,22 @@ private fun WeekScreen(
                 .align(Alignment.TopStart)
                 .padding(horizontal = 16.dp, vertical = if (isLandscape) 2.dp else 10.dp)
         ) {
-            Text(
-                text = "📍 $locationName",
-                color = Color.White,
-                fontSize = if (isLandscape) 20.sp else 26.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.ic_location),
+                    contentDescription = null,
+                    modifier = Modifier.size(if (isLandscape) 20.dp else 26.dp)
+                )
+                Text(
+                    text = locationName,
+                    color = Color.White,
+                    fontSize = if (isLandscape) 20.sp else 26.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
             if (!isLandscape) {
                 Text(
                     text = "Previsión de 7 días",
@@ -2927,6 +3526,8 @@ private fun DayDetailScreen(
     day: DayWeather,
     hours: List<HourWeather>,
     locationName: String,
+    /** El de la pantalla: sin el, el contenido se mete debajo de la barra de pestanas. */
+    padding: PaddingValues,
     onBack: () -> Unit
 ) {
     var selectedDetail by remember { mutableStateOf<DetailItem?>(null) }
@@ -2941,39 +3542,25 @@ private fun DayDetailScreen(
         return
     }
 
+    val shrinkPx = with(LocalDensity.current) { HEADER_SHRINK_DISTANCE.toPx() }
+    val shrink = remember { derivedStateOf { (scrollState.value / shrinkPx).coerceIn(0f, 1f) } }
+
+    Box(Modifier.fillMaxSize()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
             .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp)
+            // Hueco para el header fijo, y sitio abajo para la barra de pestanas.
+            .padding(top = HEADER_MAX_HEIGHT, bottom = padding.calculateBottomPadding() + 16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            IconCircleButton(emoji = "←", onClick = onBack)
-            Column {
-                Text(
-                    text = "📍 $locationName",
-                    color = Color.White,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = day.date.fullDate(),
-                    color = Color.White.copy(alpha = 0.75f),
-                    fontSize = 14.sp
-                )
-            }
-        }
-
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = day.condition.emoji, fontSize = 64.sp)
+            WeatherIcon(day.condition, isDay = true, size = 80.dp)
             Text(
                 text = day.condition.label,
                 color = Color.White,
@@ -3028,6 +3615,15 @@ private fun DayDetailScreen(
             add(DetailItem(moonEmoji, "Luna", moonLabel, DetailType.MOON_PHASE))
         }
         DetailGrid(detailItems, onClick = { selectedDetail = it })
+    }
+
+        ShrinkingHeader(
+            title = locationName,
+            subtitle = day.date.fullDate(),
+            shrink = shrink::value,
+            leading = { IconCircleButton(emoji = "←", onClick = onBack) },
+            modifier = Modifier.align(Alignment.TopStart)
+        )
     }
 }
 
@@ -3101,7 +3697,11 @@ private fun DayCover(
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1
             )
-            Text(text = day.condition.emoji, fontSize = emojiFont)
+            WeatherIconStatic(
+                condition = day.condition,
+                isDay = true,
+                size = with(LocalDensity.current) { emojiFont.toDp() }
+            )
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "${day.tempMax.roundToInt()}° / ${day.tempMin.roundToInt()}°",
@@ -3110,12 +3710,34 @@ private fun DayCover(
                     fontWeight = FontWeight.Bold,
                     maxLines = 1
                 )
-                Text(
-                    text = "💨 ${day.windKmh.roundToInt()}  ·  🌧️ ${day.precipitationMm}",
-                    color = Color.White.copy(alpha = 0.8f),
-                    fontSize = detailFont,
-                    maxLines = 1
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    val iconoPie = with(LocalDensity.current) { detailFont.toDp() }
+                    Image(
+                        painter = painterResource(R.drawable.ic_wind),
+                        contentDescription = null,
+                        modifier = Modifier.size(iconoPie)
+                    )
+                    Text(
+                        text = "${day.windKmh.roundToInt()}",
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = detailFont,
+                        maxLines = 1
+                    )
+                    Image(
+                        painter = painterResource(R.drawable.ic_heavy_rain),
+                        contentDescription = null,
+                        modifier = Modifier.size(iconoPie)
+                    )
+                    Text(
+                        text = "${day.precipitationMm}",
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = detailFont,
+                        maxLines = 1
+                    )
+                }
             }
         }
     }

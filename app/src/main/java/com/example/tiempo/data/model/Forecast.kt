@@ -46,6 +46,7 @@ data class HourlyForecast(
     val time: List<String>,
     @SerialName("temperature_2m") val temperature: List<Double>,
     @SerialName("precipitation_probability") val precipProbability: List<Int?>,
+    @SerialName("precipitation") val precipitation: List<Double>,
     @SerialName("wind_speed_10m") val windSpeed: List<Double>,
     @SerialName("weather_code") val weatherCode: List<Int>,
     @SerialName("is_day") val isDay: List<Int>
@@ -71,6 +72,7 @@ data class HourWeather(
     val time: LocalDateTime,
     val temp: Double,
     val precipProbability: Int?,
+    val precipitationMm: Double,
     val windKmh: Double,
     val condition: WeatherCondition,
     val isDay: Boolean
@@ -108,7 +110,7 @@ enum class WeatherCondition(
     /** Qué se le pide a Unsplash para ilustrar este tiempo en las tarjetas de la semana. */
     val photoQuery: String
 ) {
-    CLEAR("Despejado", "\u2600\uFE0F", "sunny sky,sunshine landscape"),
+    CLEAR("Despejado", "\u2600\uFE0F", "sunny sky,sunshine"),  // ojo: "sunshine landscape" deja el fondo en 1 sola foto squarish
     PARTLY("Parcial", "\u26C5", "partly cloudy sky,clouds sunshine"),
     CLOUDY("Nublado", "\u2601\uFE0F", "cloudy sky,overcast landscape"),
     FOG("Niebla", "\uD83C\uDF2B\uFE0F", "fog,misty landscape"),
@@ -172,6 +174,7 @@ fun ForecastResponse.toHourWeatherList(): List<HourWeather> =
             time = LocalDateTime.parse(hourly.time[i]),
             temp = hourly.temperature[i],
             precipProbability = hourly.precipProbability.getOrNull(i),
+            precipitationMm = hourly.precipitation.getOrElse(i) { 0.0 },
             windKmh = hourly.windSpeed[i],
             condition = WeatherCondition.fromCode(hourly.weatherCode[i]),
             isDay = hourly.isDay.getOrNull(i) == 1

@@ -69,6 +69,58 @@ class UnsplashRepository(
     suspend fun backgroundUrl(): String? = backgroundPhoto()?.url
 
     /**
+     * Foto de la ubicacion actual (se busca por su nombre), para la tarjeta protagonista
+     * de "Hoy" mientras es grande. Se guarda un dia en una sola plaza, no una por
+     * ubicacion: solo hace falta la de la ciudad que se ve ahora mismo, asi que si el
+     * usuario cambia de ciudad simplemente se pide y se guarda otra encima.
+     */
+    suspend fun locationPhoto(locationName: String): BackgroundPhoto? {
+        val key = BuildConfig.UNSPLASH_ACCESS_KEY
+        if (key.isBlank()) return null
+
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val today = LocalDate.now().toString()
+
+        val cached = prefs.readLocationPhoto()
+        if (prefs.getString(KEY_LOCATION_NAME, null) == locationName &&
+            prefs.getString(KEY_LOCATION_DATE, null) == today &&
+            cached != null &&
+            cached.downloadLocation != null
+        ) {
+            return cached
+        }
+
+        val fresh = runCatching {
+            val photo = api.randomPhoto(
+                orientation = "landscape",
+                query = locationName,
+                clientId = key
+            )
+            BackgroundPhoto(
+                url = photo.urls.regular,
+                authorName = photo.user?.name,
+                authorUrl = photo.user?.links?.html,
+                photoUrl = photo.links?.html,
+                downloadLocation = photo.links?.downloadLocation
+            )
+        }.getOrNull()
+
+        if (fresh != null) {
+            prefs.edit()
+                .putString(KEY_LOCATION_NAME, locationName)
+                .putString(KEY_LOCATION_DATE, today)
+                .putString(KEY_LOCATION_URL, fresh.url)
+                .putString(KEY_LOCATION_AUTHOR, fresh.authorName)
+                .putString(KEY_LOCATION_AUTHOR_URL, fresh.authorUrl)
+                .putString(KEY_LOCATION_PHOTO_URL, fresh.photoUrl)
+                .putString(KEY_LOCATION_DOWNLOAD, fresh.downloadLocation)
+                .apply()
+            trackUsage(listOf(fresh))
+        }
+        return fresh ?: cached
+    }
+
+    /**
      * Avisa a Unsplash de que estas fotos se estan usando, como exigen sus normas de uso
      * de la API: es asi como contabilizan las descargas para sus fotografos.
      *
@@ -81,6 +133,19 @@ class UnsplashRepository(
 
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val today = LocalDate.now().toEpochDay()
+
+        // Registro de las fotos que se estan mostrando hoy: son las unicas que hay que
+        // acreditar. Caduca por fecha, asi que una foto que deja de usarse desaparece
+        // sola de los creditos sin tener que limpiarla a mano.
+        val usedToday = prefs.readUsedToday()
+        val used = (usedToday + photos).distinctBy { it.url }
+        if (used.size != usedToday.size) {
+            prefs.edit()
+                .putLong(KEY_USED_DAY, today)
+                .putString(KEY_USED, used.serialize())
+                .apply()
+        }
+
         val alreadyTracked = if (prefs.getLong(KEY_TRACKED_DAY, 0L) == today) {
             prefs.getStringSet(KEY_TRACKED, emptySet()).orEmpty()
         } else {
@@ -152,7 +217,16 @@ class UnsplashRepository(
         private const val PREFS_NAME = "unsplash_cache"
         private const val LEGACY_KEY_CREDITS = "credits"
         private const val KEY_TRACKED = "tracked_downloads"
+        private const val KEY_USED = "used_photos"
+        private const val KEY_USED_DAY = "used_photos_day"
         private const val KEY_TRACKED_DAY = "tracked_downloads_day"
+        private const val KEY_LOCATION_NAME = "location_photo_name"
+        private const val KEY_LOCATION_DATE = "location_photo_date"
+        private const val KEY_LOCATION_URL = "location_photo_url"
+        private const val KEY_LOCATION_AUTHOR = "location_photo_author"
+        private const val KEY_LOCATION_AUTHOR_URL = "location_photo_author_url"
+        private const val KEY_LOCATION_PHOTO_URL = "location_photo_photo_url"
+        private const val KEY_LOCATION_DOWNLOAD = "location_photo_download"
         private const val SEPARATOR = "\u001F"
         private const val RECORD_SEPARATOR = "\u001E"
 
@@ -162,10 +236,16 @@ class UnsplashRepository(
         /** Cada cuántos días se renueva la colección de fotos de una condición. */
         private const val REFRESH_DAYS = 7L
 
-        private fun SharedPreferences.readConditionPhotos(
-            condition: WeatherCondition
-        ): List<BackgroundPhoto> =
-            getString(condition.photosKey(), null).orEmpty()
+        /** Las fotos que se estan mostrando hoy, o vacio si el registro es de otro dia. */
+        private fun SharedPreferences.readUsedToday(): List<BackgroundPhoto> =
+            if (getLong(KEY_USED_DAY, 0L) == LocalDate.now().toEpochDay()) {
+                getString(KEY_USED, null).parsePhotos()
+            } else {
+                emptyList()
+            }
+
+        private fun String?.parsePhotos(): List<BackgroundPhoto> =
+            orEmpty()
                 .split(RECORD_SEPARATOR)
                 .mapNotNull { entry ->
                     val parts = entry.split(SEPARATOR)
@@ -178,6 +258,11 @@ class UnsplashRepository(
                         downloadLocation = parts.getOrNull(4)?.takeIf { it.isNotBlank() }
                     )
                 }
+
+        private fun SharedPreferences.readConditionPhotos(
+            condition: WeatherCondition
+        ): List<BackgroundPhoto> =
+            getString(condition.photosKey(), null).parsePhotos()
                 // Si vienen de una version anterior les falta el enlace de aviso: se
                 // descartan enteras para que se pida la coleccion otra vez.
                 .takeIf { photos -> photos.all { it.downloadLocation != null } }
@@ -193,6 +278,17 @@ class UnsplashRepository(
                 authorUrl = getString(period.authorUrlKey(), null),
                 photoUrl = getString(period.photoUrlKey(), null),
                 downloadLocation = getString(period.downloadKey(), null)
+            )
+        }
+
+        private fun SharedPreferences.readLocationPhoto(): BackgroundPhoto? {
+            val url = getString(KEY_LOCATION_URL, null) ?: return null
+            return BackgroundPhoto(
+                url = url,
+                authorName = getString(KEY_LOCATION_AUTHOR, null),
+                authorUrl = getString(KEY_LOCATION_AUTHOR_URL, null),
+                photoUrl = getString(KEY_LOCATION_PHOTO_URL, null),
+                downloadLocation = getString(KEY_LOCATION_DOWNLOAD, null)
             )
         }
 
@@ -246,14 +342,17 @@ class UnsplashRepository(
         }
 
         /**
-         * Autores a los que hay que dar crédito: los de las fotos que la app tiene **en
-         * uso ahora mismo** — los fondos de las tres franjas del día y las fotos
-         * guardadas de cada tipo de tiempo.
+         * Autores a los que hay que dar crédito: los de las fotos que la app **enseña**,
+         * que son 11 al día — los tres fondos de las franjas, la de la ubicación y las
+         * siete de las tarjetas de la semana.
          *
-         * No es un histórico: cuando una foto deja de usarse (el fondo cambia de día, o
-         * la colección de una condición se renueva a los [REFRESH_DAYS] días) su autor
-         * desaparece de la lista solo, y ninguna foto que se esté mostrando puede
-         * quedarse fuera.
+         * Se acredita lo mostrado, no lo guardado: de cada condición hay
+         * [PHOTOS_PER_CONDITION] fotos en caché pero solo sale una por tarjeta, y una
+         * foto que duerme en la caché sin verse no se ha usado. Las mostradas las
+         * registra [trackUsage], que es el mismo sitio por el que se avisa a Unsplash.
+         *
+         * No es un histórico: el registro caduca por fecha, así que cuando una foto deja
+         * de usarse su autor desaparece de la lista solo.
          */
         fun credits(context: Context): List<PhotoCredit> {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -262,8 +361,9 @@ class UnsplashRepository(
                 prefs.edit().remove(LEGACY_KEY_CREDITS).apply()
             }
             val background = UnsplashConfig.DayPeriod.entries.mapNotNull { prefs.readPhoto(it) }
-            val conditions = WeatherCondition.entries.flatMap { prefs.readConditionPhotos(it) }
-            return (background + conditions)
+            val location = listOfNotNull(prefs.readLocationPhoto())
+            val shown = prefs.readUsedToday()
+            return (background + location + shown)
                 .mapNotNull { photo ->
                     photo.authorName?.takeIf { it.isNotBlank() }?.let { name ->
                         PhotoCredit(

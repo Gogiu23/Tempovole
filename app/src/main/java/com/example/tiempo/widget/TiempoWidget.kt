@@ -23,12 +23,15 @@ import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.ContentScale
+import androidx.glance.layout.Row
+import androidx.glance.layout.size
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.padding
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import com.example.tiempo.R
 import com.example.tiempo.MainActivity
 import com.example.tiempo.data.LocationRepository
 import com.example.tiempo.data.UnsplashRepository
@@ -173,16 +176,40 @@ private fun WidgetContent(
                 text = LocalDateTime.now().format(timeFormatter),
                 style = TextStyle(color = white, fontSize = 12.sp)
             )
-            Text(
-                text = if (current != null) "${current.condition.emoji} ${current.temp.roundToInt()}°"
-                else "—",
-                style = TextStyle(color = white, fontSize = 30.sp, fontWeight = FontWeight.Bold)
-            )
-            if (rainNextHour != null) {
+            if (current != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        provider = ImageProvider(current.condition.widgetIcon()),
+                        contentDescription = null,
+                        modifier = GlanceModifier.size(30.dp)
+                    )
+                    Text(
+                        text = " ${current.temp.roundToInt()}°",
+                        style = TextStyle(
+                            color = white,
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
+            } else {
                 Text(
-                    text = "☔ $rainNextHour% próx. hora",
-                    style = TextStyle(color = white, fontSize = 12.sp)
+                    text = "—",
+                    style = TextStyle(color = white, fontSize = 30.sp, fontWeight = FontWeight.Bold)
                 )
+            }
+            if (rainNextHour != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        provider = ImageProvider(R.drawable.ic_rain_prob),
+                        contentDescription = null,
+                        modifier = GlanceModifier.size(14.dp)
+                    )
+                    Text(
+                        text = " $rainNextHour% próx. hora",
+                        style = TextStyle(color = white, fontSize = 12.sp)
+                    )
+                }
             }
         }
     }
@@ -258,4 +285,20 @@ private fun sampleSizeFor(width: Int, height: Int, maxDimension: Int): Int {
         sample *= 2
     }
     return sample
+}
+
+/**
+ * Icono de la condición para el widget. Glance no puede pintar WebP animado, así que aquí
+ * van siempre los fijos, y de día: un widget no sabe la hora a la que lo miras.
+ */
+private fun WeatherCondition.widgetIcon(): Int = when (this) {
+    WeatherCondition.CLEAR -> R.drawable.ic_sun
+    WeatherCondition.PARTLY -> R.drawable.ic_cloudy
+    WeatherCondition.CLOUDY -> R.drawable.ic_clouds
+    WeatherCondition.FOG -> R.drawable.ic_fog
+    WeatherCondition.DRIZZLE -> R.drawable.ic_heavy_rain
+    WeatherCondition.RAIN -> R.drawable.ic_heavy_rain
+    WeatherCondition.SNOW -> R.drawable.ic_snow
+    WeatherCondition.STORM -> R.drawable.ic_storm
+    WeatherCondition.UNKNOWN -> R.drawable.ic_weather
 }

@@ -27,7 +27,7 @@ interface WeatherApi {
                 "precipitation_probability_max,wind_speed_10m_max,weather_code," +
                 "sunrise,sunset,moon_phase",
         @Query("hourly") hourly: String =
-            "temperature_2m,precipitation_probability,wind_speed_10m,weather_code,is_day",
+            "temperature_2m,precipitation_probability,precipitation,wind_speed_10m,weather_code,is_day",
         @Query("timezone") timezone: String = "auto",
         @Query("forecast_days") days: Int = 7
     ): ForecastResponse
