@@ -49,7 +49,7 @@ eso se declara aparte, en el formulario de Seguridad de los datos (abajo).
   precisa del dispositivo en ningún momento)*
 - **¿Se recoge?** No queda almacenada en ningún servidor propio (la app no tiene
   backend). Márcalo según lo que ofrezca el formulario: si te obliga a elegir, usa
-  **"Compartida"**, no "Recogida" — Tiempo no guarda ni retiene el dato, solo lo
+  **"Compartida"**, no "Recogida" — Tempovole no guarda ni retiene el dato, solo lo
   reenvía para obtener la respuesta.
 - **¿Se comparte?** Sí, con **Open-Meteo** (previsión, calidad del aire/polen,
   histórico, marina, ríos, clima, ensemble) — todas ellas llamadas independientes al

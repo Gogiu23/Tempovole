@@ -23,7 +23,7 @@ private val DarkColors = darkColorScheme(
 )
 
 @Composable
-fun TiempoTheme(
+fun TempovoleTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit

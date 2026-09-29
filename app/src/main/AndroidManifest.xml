@@ -19,12 +19,12 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Tiempo">
+        android:theme="@style/Theme.Tempovole">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Tiempo">
+            android:theme="@style/Theme.Tempovole">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -52,14 +52,14 @@
 
         <!-- Widget de pantalla de inicio -->
         <receiver
-            android:name=".widget.TiempoWidgetReceiver"
+            android:name=".widget.TempovoleWidgetReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/tiempo_widget_info" />
+                android:resource="@xml/tempovole_widget_info" />
         </receiver>
 
     </application>

@@ -1,4 +1,4 @@
-# Tiempo — Documentación Técnica
+# Tempovole — Documentación Técnica
 
 **Versión:** 1.2  
 **Fecha:** Septiembre 2026  
@@ -23,7 +23,7 @@
 
 ## 1. Visión general
 
-**Tiempo** es una aplicación de previsión meteorológica para Android que muestra el tiempo actual, la previsión por horas y por días (7 días), junto con datos adicionales opcionales (calidad del aire, polen, oleaje, caudal de ríos, comparación histórica, cambio climático e incertidumbre del modelo).
+**Tempovole** es una aplicación de previsión meteorológica para Android que muestra el tiempo actual, la previsión por horas y por días (7 días), junto con datos adicionales opcionales (calidad del aire, polen, oleaje, caudal de ríos, comparación histórica, cambio climático e incertidumbre del modelo).
 
 ### Características principales
 
@@ -504,7 +504,7 @@ object NotificationScheduler {
 Implementado con Jetpack Glance:
 
 ```kotlin
-class TiempoWidget : GlanceAppWidget() {
+class TempovoleWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceAppWidgetId) {
         val forecast = WeatherRepository.fetch(location.lat, location.lon)
         
@@ -609,8 +609,8 @@ app/src/main/java/com/example/tiempo/
 │       ├── Theme.kt
 │       └── Type.kt
 └── widget/
-    ├── TiempoWidget.kt
-    ├── TiempoWidgetReceiver.kt
+    ├── TempovoleWidget.kt
+    ├── TempovoleWidgetReceiver.kt
     └── WidgetUpdater.kt
 ```
 

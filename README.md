@@ -1,4 +1,4 @@
-# Tiempo
+# Tempovole
 
 Una app del tiempo para Android, sencilla y bonita: la previsión de los próximos 7 días
 sobre fotos de paisajes que cambian con la hora del día y con el tiempo que va a hacer.

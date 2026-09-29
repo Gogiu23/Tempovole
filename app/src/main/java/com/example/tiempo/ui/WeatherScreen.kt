@@ -666,7 +666,7 @@ private fun InfoScreen(onBack: () -> Unit) {
 
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                text = "Tiempo",
+                text = "Tempovole",
                 color = Color.White,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold
@@ -686,7 +686,7 @@ private fun InfoScreen(onBack: () -> Unit) {
 
         LegalSection(
             title = "Términos de uso",
-            body = "Tiempo se ofrece \"tal cual\", con fines informativos, sin garantía de " +
+            body = "Tempovole se ofrece \"tal cual\", con fines informativos, sin garantía de " +
                 "disponibilidad ni de exactitud de los datos mostrados.\n\n" +
                 "Los datos meteorológicos proceden de Open-Meteo y pueden contener errores " +
                 "o retrasos; no uses esta app como única fuente para decisiones que " +
@@ -704,7 +704,7 @@ private fun InfoScreen(onBack: () -> Unit) {
 
         LegalSection(
             title = "Política de privacidad",
-            body = "Tiempo no requiere registro ni cuenta, y no recoge datos personales " +
+            body = "Tempovole no requiere registro ni cuenta, y no recoge datos personales " +
                 "identificables.\n\n" +
                 "Ubicación: la app no usa el GPS del dispositivo. Por defecto muestra " +
                 "Barcelona; si buscas otra ciudad en Ajustes, el texto que escribes se " +
@@ -3465,7 +3465,7 @@ private const val PRIVACY_POLICY_URL = "https://gogiu23.github.io/Tempovole/priv
  * Nombre con el que la app esta registrada en Unsplash. Sus normas exigen que los enlaces
  * de credito lleven este origen para que el fotografo vea de donde le llegan las visitas.
  */
-private const val UNSPLASH_UTM_SOURCE = "Tiempo"
+private const val UNSPLASH_UTM_SOURCE = "Tempovole"
 
 /** Anade a un enlace de Unsplash los parametros de origen que exigen sus normas. */
 private fun String.withUnsplashUtm(): String {

@@ -45,10 +45,10 @@ object WidgetUpdater {
                 runCatching {
                     val mode = WidgetPreferences.getBackground(appContext).name
                     val color = WidgetPreferences.getColor(appContext).argb
-                    val widget = TiempoWidget()
+                    val widget = TempovoleWidget()
 
                     GlanceAppWidgetManager(appContext)
-                        .getGlanceIds(TiempoWidget::class.java)
+                        .getGlanceIds(TempovoleWidget::class.java)
                         .forEach { glanceId ->
                             updateAppWidgetState(appContext, glanceId) { prefs ->
                                 prefs[WidgetStateKeys.background] = mode

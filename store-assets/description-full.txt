@@ -1,4 +1,4 @@
-Tiempo es una app de previsión meteorológica pensada para dar mucha información sin resultar caótica: entras, ves lo que necesitas de un vistazo, y si quieres profundizar, está todo ahí.
+Tempovole es una app de previsión meteorológica pensada para dar mucha información sin resultar caótica: entras, ves lo que necesitas de un vistazo, y si quieres profundizar, está todo ahí.
 
 PREVISIÓN CLARA, HOY Y LOS PRÓXIMOS 7 DÍAS
 Temperatura actual, máxima y mínima, viento y probabilidad de lluvia, con un gráfico por horas para temperatura, lluvia o viento — tanto para hoy como para cualquier día de la semana. Toca cualquier dato para ver qué significa exactamente, con una explicación clara y sin tecnicismos.

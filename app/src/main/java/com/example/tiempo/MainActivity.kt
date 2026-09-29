@@ -14,7 +14,7 @@ import com.example.tiempo.notifications.NotificationHelper
 import com.example.tiempo.notifications.NotificationPreferences
 import com.example.tiempo.notifications.NotificationScheduler
 import com.example.tiempo.ui.WeatherScreen
-import com.example.tiempo.ui.theme.TiempoTheme
+import com.example.tiempo.ui.theme.TempovoleTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent {
-            TiempoTheme {
+            TempovoleTheme {
                 WeatherScreen()
             }
         }

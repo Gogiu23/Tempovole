@@ -54,7 +54,7 @@ import kotlin.math.roundToInt
 private val httpClient = OkHttpClient()
 private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-class TiempoWidget : GlanceAppWidget() {
+class TempovoleWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val appContext = context.applicationContext

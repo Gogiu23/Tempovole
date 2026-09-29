@@ -26,7 +26,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.giuliandominici.tiempo"
+        applicationId = "com.giuliandominici.tempovole"
         minSdk = 26
         targetSdk = 35
         // La versión NO se toca en el desarrollo del día a día, solo al sacar versión nueva.
