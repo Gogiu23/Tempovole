@@ -24,8 +24,11 @@ object LanguagePreferences {
     /** Tag de idioma activo (ej. "en"), o null si sigue el idioma del sistema. */
     fun getLanguageTag(context: Context): String? {
         if (Build.VERSION.SDK_INT >= 33) {
-            val tag = context.getSystemService(LocaleManager::class.java).applicationLocales.toLanguageTags()
-            return tag.ifEmpty { null }
+            // toLanguageTags() devuelve la lista entera separada por comas; el selector
+            // de la app solo pone uno, pero Locale.forLanguageTag() no entiende una lista,
+            // asi que se queda con el primero y no con un locale indefinido.
+            val tags = context.getSystemService(LocaleManager::class.java).applicationLocales.toLanguageTags()
+            return tags.substringBefore(',').ifEmpty { null }
         }
         return prefs(context).getString(KEY_LANGUAGE, null)
     }

@@ -89,7 +89,6 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -105,7 +104,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.toArgb
@@ -210,9 +208,32 @@ private val reflectionBrush = Brush.verticalGradient(
 )
 
 /** Degradado diagonal claro-oscuro para el efecto 3D/relieve de las tarjetas de detalle. */
-private val tileGradient = Brush.linearGradient(
-    listOf(Color.White.copy(alpha = 0.32f), Color.White.copy(alpha = 0.06f))
-)
+/**
+ * Lo que tapa el fondo en el centro de una tarjeta. Es el unico mando del cristal: a 0 la
+ * tarjeta desaparece, subiendolo se vuelve mas solida.
+ */
+private const val TILE_GLASS_ALPHA = 0.14f
+
+/**
+ * Fondo de una tarjeta de la rejilla: un unico color que se apaga del centro hacia afuera
+ * hasta quedar transparente antes de llegar a las esquinas. Sin canto ni sombra y sin un
+ * segundo color, asi no se ve el cuadrado alrededor del texto, solo una mancha difusa.
+ * El radio pasa del lado mas largo (0.85) para que el apagado sea lento y no se note el
+ * circulo del degradado.
+ */
+private fun DrawScope.drawTileGlass(alpha: Float = 1f) {
+    drawRect(
+        brush = Brush.radialGradient(
+            colors = listOf(
+                Color.White.copy(alpha = TILE_GLASS_ALPHA),
+                Color.White.copy(alpha = 0f)
+            ),
+            center = center,
+            radius = size.maxDimension * 0.85f
+        ),
+        alpha = alpha
+    )
+}
 
 
 /** Aplica [brush] como máscara de transparencia sobre el contenido ya dibujado. */
@@ -1786,6 +1807,28 @@ private fun Modifier.appearOnScroll(listState: LazyListState, key: Any): Modifie
         }
     }
 
+/**
+ * true mientras el centro del elemento [key] cae en la franja central de la pantalla.
+ * Sirve para no gastar la animacion de un icono con la tarjeta asomando por el borde:
+ * se reproduce al llegar al medio, que es donde se esta mirando.
+ */
+@Composable
+private fun LazyListState.isCenteredInViewport(key: Any, bandFraction: Float = 0.2f): Boolean {
+    val state = this
+    return remember(state, key) {
+        derivedStateOf {
+            val info = state.layoutInfo
+            val item = info.visibleItemsInfo.firstOrNull { it.key == key }
+                ?: return@derivedStateOf false
+            val viewportHeight = (info.viewportEndOffset - info.viewportStartOffset).toFloat()
+            if (viewportHeight <= 0f) return@derivedStateOf false
+            val viewportCenter = info.viewportStartOffset + viewportHeight / 2f
+            val itemCenter = item.offset + item.size / 2f
+            abs(itemCenter - viewportCenter) <= viewportHeight * bandFraction
+        }
+    }.value
+}
+
 @Composable
 private fun TodayScreen(
     today: DayWeather,
@@ -1932,6 +1975,7 @@ private fun TodayScreen(
                 item(key = "sun-moon") {
                     SunMoonCard(
                         today = today,
+                        animateAstro = listState.isCenteredInViewport("sun-moon"),
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .revealOnScroll(listState, "sun-moon")
@@ -2445,12 +2489,14 @@ private fun DetailGrid(items: List<DetailItem>, onClick: (DetailItem) -> Unit) {
  *    lista. La protagonista arranca con el mismo tamano que la tarjeta de "Próximas
  *    horas" (paisaje, mas ancha que alta): de fondo lleva [heroPhotoUrl] (una foto del
  *    lugar) y sin el icono ni el texto del dato todavia.
+ *  - Mientras es grande va pegada a Sol y luna, como otra tarjeta mas de la pila (sin
+ *    el hueco de las filas invisibles de la rejilla por encima de su celda).
  *  - Al llegar al centro de la pantalla, la rejilla se engancha ahi (como un
- *    `position: sticky`) y la protagonista se queda completamente quieta: la pantalla
- *    sigue bajando por detras, pero ella no se mueve, solo encoge sobre su propio centro
- *    hasta ocupar su celda normal, mientras la foto se desvanece, aparecen el icono y el
- *    valor, y las demas brotan desde cero (`scale: 0` + `opacity: 0`) a su alrededor,
- *    por capas segun lo lejos que esten de ella.
+ *    `position: sticky`): la pantalla sigue bajando por detras, pero la rejilla no se
+ *    mueve, y la protagonista encoge y baja a la vez hasta aterrizar en su celda del
+ *    centro, mientras la foto se desvanece, aparecen el icono y el valor, y las demas
+ *    brotan desde cero (`scale: 0` + `opacity: 0`) a su alrededor, por capas segun lo
+ *    lejos que esten de ella.
  */
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
@@ -2649,22 +2695,27 @@ private fun AppGridReveal(
                                         val heightEase = easeInOutPower(1, heroT)
                                         val widthEase = easeInOutPower(2, heroT)
 
-                                        // Sin desplazamiento vertical propio: la
-                                        // protagonista solo escala, y lo hace sobre el
-                                        // centro de su propia celda (el origen por
-                                        // defecto de graphicsLayer). Como ese centro es
-                                        // justo el punto que la rejilla clava en el
-                                        // centro de la pantalla (vease pinnedTopPx), se
-                                        // la ve quieta: crece y encoge sin moverse, y es
-                                        // el resto de la rejilla el que se coloca a su
-                                        // alrededor hasta que encaja en su celda.
+                                        // La celda de la protagonista esta en el centro
+                                        // de la rejilla, asi que si solo escalase sobre
+                                        // su propio centro, la foto grande nacería a
+                                        // media rejilla de Sol y luna con todo el hueco
+                                        // de las filas invisibles en medio. Mientras es
+                                        // grande se la sube hasta que su borde superior
+                                        // coincide con el de la rejilla (toTopY), o sea
+                                        // pegada a la tarjeta de arriba como una mas de
+                                        // la pila; ese tiron se deshace con el mismo
+                                        // ritmo que el alto, asi que al acabar de encoger
+                                        // aterriza justo en el centro de su celda, que es
+                                        // el punto que la rejilla clava en el centro de
+                                        // la pantalla (vease pinnedTopPx).
                                         val toCenterX = gridWidthPx / 2f -
                                                 (column * (tilePx + spacingPx) + tilePx / 2f)
+                                        val toTopY = heroHeightPx / 2f - heroCellCenterPx
                                         scaleX = lerp(heroWidthPx / tilePx, 1f, widthEase)
                                         scaleY = lerp(heroHeightPx / tileHeightPx, 1f, heightEase)
 
                                         translationX = toCenterX * (1f - widthEase)
-                                        translationY = 0f
+                                        translationY = toTopY * (1f - heightEase)
                                     } else {
                                         // Las tres `.layer` del demo comparten la MISMA
                                         // ventana de scroll (`layersTl`): lo unico que
@@ -2792,21 +2843,6 @@ private fun DetailTile(
     Box(
         modifier = modifier
             .aspectRatio(DETAIL_TILE_ASPECT)
-            .shadow(
-                elevation = 14.dp,
-                // La sombra no puede animarse fotograma a fotograma (a diferencia del
-                // recorte de mas abajo), asi que la protagonista usa directamente la
-                // esquina recta: con esquinas redondas, escalar mucho mas en un eje que
-                // en el otro (ancha y baja, frente a la celda estrecha y alta) las
-                // convertiria en ovaladas.
-                shape = if (heroStyleProgress != null) {
-                    RoundedCornerShape(percent = HERO_PHOTO_CORNER_PERCENT.roundToInt())
-                } else {
-                    shape
-                },
-                ambientColor = Color.Black.copy(alpha = 0.5f),
-                spotColor = Color.Black.copy(alpha = 0.7f)
-            )
             .then(
                 if (heroStyleProgress != null) {
                     // Esquinas casi rectas mientras es la foto grande; se redondean
@@ -2818,6 +2854,14 @@ private fun DetailTile(
                         this.shape = RoundedCornerShape(
                             percent = lerp(HERO_PHOTO_CORNER_PERCENT, 25f, settle).roundToInt()
                         )
+                        // La foto grande si lleva sombra, que es lo que la despega del
+                        // fondo mientras es una tarjeta de verdad; se apaga segun se
+                        // asienta para acabar como las demas: sin sombra y sin canto, que
+                        // es lo que dibujaba el cuadrado. Va aqui, y no en un .shadow(),
+                        // porque este bloque se reevalua por fotograma sin recomponer.
+                        shadowElevation = lerp(14.dp.toPx(), 0f, settle)
+                        ambientShadowColor = Color.Black.copy(alpha = 0.5f)
+                        spotShadowColor = Color.Black.copy(alpha = 0.7f)
                     }
                 } else {
                     Modifier.clip(shape)
@@ -2826,28 +2870,15 @@ private fun DetailTile(
             .then(
                 if (heroStyleProgress != null) {
                     // Crossfade: mientras la foto (dibujada como hijo, mas abajo) se
-                    // desvanece, el cristal normal y su borde blanco aparecen encima
-                    // segun avanza el progreso (el borde no se ve mientras es solo
-                    // la foto), en vez de cambiar de golpe de un fondo a otro.
+                    // desvanece, el cristal de las demas aparece por detras segun avanza
+                    // el progreso, en vez de cambiar de golpe de un fondo a otro.
                     Modifier.drawWithCache {
                         onDrawBehind {
-                            val settle = heroStyleProgress().coerceIn(0f, 1f)
-                            drawRect(color = Color.White.copy(alpha = 0.12f), alpha = settle)
-                            drawRect(brush = tileGradient, alpha = settle)
-                            val radius = size.minDimension *
-                                lerp(HERO_PHOTO_CORNER_PERCENT, 25f, settle) / 100f
-                            drawRoundRect(
-                                color = Color.White.copy(alpha = 0.38f * settle),
-                                cornerRadius = CornerRadius(radius, radius),
-                                style = Stroke(width = 1.dp.toPx())
-                            )
+                            drawTileGlass(alpha = heroStyleProgress().coerceIn(0f, 1f))
                         }
                     }
                 } else {
-                    Modifier
-                        .background(Color.White.copy(alpha = 0.12f))
-                        .background(tileGradient)
-                        .border(1.dp, Color.White.copy(alpha = 0.38f), shape)
+                    Modifier.drawBehind { drawTileGlass() }
                 }
             )
             .clickable(onClick = onClick)
@@ -2974,6 +3005,8 @@ private fun DetailTile(
 @Composable
 private fun SunMoonCard(
     today: DayWeather,
+    /** Solo con la tarjeta en el medio de la pantalla se anima el astro del arco. */
+    animateAstro: Boolean,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -2996,7 +3029,8 @@ private fun SunMoonCard(
             SunArc(
                 sunrise = today.sunrise,
                 sunset = today.sunset,
-                moonPhase = today.moonPhase
+                moonPhase = today.moonPhase,
+                animateAstro = animateAstro
             )
             val daylight = Duration.between(today.sunrise, today.sunset)
             val (_, moonLabelRes) = moonPhaseInfo(today.moonPhase)
@@ -3040,7 +3074,8 @@ private val ASTRO_SIZE = 34.dp
 private fun SunArc(
     sunrise: LocalDateTime,
     sunset: LocalDateTime,
-    moonPhase: Double
+    moonPhase: Double,
+    animateAstro: Boolean
 ) {
     val now = remember { LocalDateTime.now() }
     val isDaytime = now.isAfter(sunrise) && now.isBefore(sunset)
@@ -3103,20 +3138,36 @@ private fun SunArc(
                 )
             }
 
-            // El astro que recorre el arco: sol de día, luna de noche.
-            AnimatedRawIcon(
-                res = if (isDaytime) R.raw.anim_clear else R.raw.anim_moon,
-                size = ASTRO_SIZE,
-                contentDescription = if (isDaytime) {
-                    stringResource(R.string.sun_moon_sun_label)
-                } else {
-                    stringResource(R.string.sun_moon_moon_label)
-                },
-                modifier = Modifier.offset(
-                    x = markerX - ASTRO_SIZE / 2,
-                    y = markerY - ASTRO_SIZE / 2
-                )
+            // El astro que recorre el arco: sol de día, luna de noche. La version animada
+            // solo mientras la tarjeta esta en el medio de la pantalla (ver
+            // isCenteredInViewport): el WebP se reproduce una vez y se queda en el ultimo
+            // fotograma, asi que si se compusiera al asomar por el borde ya habria acabado
+            // cuando se mira. Fuera de esa franja, el icono fijo equivalente.
+            val astroDescription = if (isDaytime) {
+                stringResource(R.string.sun_moon_sun_label)
+            } else {
+                stringResource(R.string.sun_moon_moon_label)
+            }
+            val astroModifier = Modifier.offset(
+                x = markerX - ASTRO_SIZE / 2,
+                y = markerY - ASTRO_SIZE / 2
             )
+            if (animateAstro) {
+                AnimatedRawIcon(
+                    res = if (isDaytime) R.raw.anim_clear else R.raw.anim_moon,
+                    size = ASTRO_SIZE,
+                    contentDescription = astroDescription,
+                    modifier = astroModifier
+                )
+            } else {
+                Image(
+                    painter = painterResource(
+                        if (isDaytime) R.drawable.ic_sun else R.drawable.ic_crescent_moon
+                    ),
+                    contentDescription = astroDescription,
+                    modifier = astroModifier.size(ASTRO_SIZE)
+                )
+            }
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
