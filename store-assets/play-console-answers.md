@@ -77,8 +77,10 @@ fijo definido en la app — "landscape,nature,sky" — no es información person
 - **¿Los datos se cifran en tránsito?** Sí.
 - **¿Puedes confirmar que sigues las prácticas del Play Families Policy / Data
   safety?** Sí, si aplica la pregunta.
-- **Enlace a la política de privacidad**: pega aquí la URL del artifact que
-  publicamos (política de privacidad + términos de uso).
+- **Enlace a la política de privacidad**:
+  https://gogiu23.github.io/Tempovole/privacidad.html
+  (GitHub Pages sirviendo `docs/` de este repo; la misma página incluye los términos
+  de uso. Comprobado el 3 de octubre de 2026: responde y tiene el contenido real.)
 
 ---
 
