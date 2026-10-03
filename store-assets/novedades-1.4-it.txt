@@ -1,0 +1,4 @@
+• Nuovo selettore di lingua: l'app in spagnolo, inglese, italiano o russo, qualunque sia la lingua del telefono.
+• Anche l'avviso del mattino e il widget parlano quella lingua, e l'avviso arriva con l'icona del tempo previsto.
+• Schede dei dati più pulite: lo sfondo sfuma e non c'è più il riquadro attorno a ogni valore.
+• La scheda grande della griglia parte accanto alle altre, e il sole di Sole e luna si anima quando la scheda è al centro.

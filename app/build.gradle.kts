@@ -34,7 +34,7 @@ android {
         // correspondiente en ui/Changelog.kt con ese mismo versionName. Si se olvida, la
         // pantalla de Novedades avisa de que van desincronizados.
         versionCode = 5
-        versionName = "1.3"
+        versionName = "1.4"
 
         buildConfigField("String", "UNSPLASH_ACCESS_KEY", "\"$unsplashKey\"")
     }

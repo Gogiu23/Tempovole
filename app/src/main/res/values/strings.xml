@@ -29,6 +29,12 @@
     <string name="changelog_screen_version_label">Versión %1$s</string>
     <string name="changelog_screen_current_badge">Actual</string>
 
+    <string name="changelog_v14_date">3 de octubre de 2026</string>
+    <string name="changelog_v14_item1">La app ya se puede poner en español, inglés, italiano o ruso desde el menú Idioma, sin tocar el idioma del móvil.</string>
+    <string name="changelog_v14_item2">El aviso de la mañana y el widget también hablan en el idioma elegido, y el aviso llega con el icono del tiempo que va a hacer.</string>
+    <string name="changelog_v14_item3">Las tarjetas de datos se ven más limpias: el fondo se difumina y ya no se marca un recuadro alrededor de cada dato.</string>
+    <string name="changelog_v14_item4">La tarjeta grande de la rejilla arranca junto a las demás en vez de aparecer suelta, y el sol del arco de Sol y luna se anima al llegar la tarjeta al centro de la pantalla.</string>
+
     <string name="changelog_v13_date">29 de septiembre de 2026</string>
     <string name="changelog_v13_item1">Todas las tarjetas de datos tienen ya su propio icono animado: precipitación, probabilidad de lluvia, índice UV, radiación solar, punto de rocío, presión, altitud, polen, comparación histórica, oleaje, ríos, cambio climático, incertidumbre, amanecer, atardecer, fase lunar y horas de luz.</string>
 

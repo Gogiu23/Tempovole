@@ -29,6 +29,12 @@
     <string name="changelog_screen_version_label">Version %1$s</string>
     <string name="changelog_screen_current_badge">Current</string>
 
+    <string name="changelog_v14_date">October 3, 2026</string>
+    <string name="changelog_v14_item1">The app can now be set to Spanish, English, Italian or Russian from the Language menu, without changing your phone\'s language.</string>
+    <string name="changelog_v14_item2">The morning report and the widget speak the language you picked too, and the report now arrives with the icon of the weather ahead.</string>
+    <string name="changelog_v14_item3">The data cards look cleaner: the background fades out and there is no longer a box drawn around each value.</string>
+    <string name="changelog_v14_item4">The big card in the grid now starts next to the others instead of floating on its own, and the sun on the Sun and moon arc animates when the card reaches the middle of the screen.</string>
+
     <string name="changelog_v13_date">September 29, 2026</string>
     <string name="changelog_v13_item1">Every data card now has its own animated icon: precipitation, chance of rain, UV index, solar radiation, dew point, pressure, elevation, pollen, historical comparison, swell, rivers, climate change, uncertainty, sunrise, sunset, moon phase and daylight hours.</string>
 

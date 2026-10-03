@@ -9,6 +9,9 @@ MUCHO MÁS QUE LA TEMPERATURA
 WIDGET Y AVISO DIARIO
 Un widget para la pantalla de inicio con la hora, la temperatura y la probabilidad de lluvia de la próxima hora. Y un aviso cada mañana (a la hora que elijas) con un resumen completo: temperatura actual y media del día, si va a llover, calidad del aire, amanecer/atardecer y fase lunar.
 
+EN TU IDIOMA
+Español, inglés, italiano o ruso, elegido dentro de la propia app y con independencia del idioma que tenga el móvil. Cambia todo: los textos de la app, el aviso de cada mañana y el widget.
+
 CUALQUIER CIUDAD, A TU MANERA
 Busca y cambia de ubicación cuando quieras — no hace falta activar el GPS. Un fondo de pantalla distinto cada día completa la experiencia.
 

@@ -1,0 +1,4 @@
+• New language picker: use the app in Spanish, English, Italian or Russian, whatever your phone's language is.
+• The morning report and the widget speak that language too, and the report arrives with the icon of the weather ahead.
+• Cleaner data cards: the background fades out and there is no box around each value any more.
+• The big card in the grid starts next to the others, and the sun on Sun and moon animates once the card is centred.

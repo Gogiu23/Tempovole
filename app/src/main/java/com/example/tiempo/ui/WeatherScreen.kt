@@ -212,7 +212,7 @@ private val reflectionBrush = Brush.verticalGradient(
  * Lo que tapa el fondo en el centro de una tarjeta. Es el unico mando del cristal: a 0 la
  * tarjeta desaparece, subiendolo se vuelve mas solida.
  */
-private const val TILE_GLASS_ALPHA = 0.14f
+private const val TILE_GLASS_ALPHA = 0.22f
 
 /**
  * Fondo de una tarjeta de la rejilla: un unico color que se apaga del centro hacia afuera

@@ -1,0 +1,4 @@
+• Nuevo selector de idioma: la app en español, inglés, italiano o ruso, sin tocar el idioma del móvil.
+• El aviso de la mañana y el widget hablan también ese idioma, y el aviso llega con el icono del tiempo previsto.
+• Tarjetas de datos más limpias: el fondo se difumina y ya no se marca un recuadro alrededor de cada dato.
+• La tarjeta grande de la rejilla arranca junto a las demás, y el sol de Sol y luna se anima al centrarse la tarjeta.

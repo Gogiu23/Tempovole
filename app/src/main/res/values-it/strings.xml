@@ -29,6 +29,12 @@
     <string name="changelog_screen_version_label">Versione %1$s</string>
     <string name="changelog_screen_current_badge">Attuale</string>
 
+    <string name="changelog_v14_date">3 ottobre 2026</string>
+    <string name="changelog_v14_item1">L\'app si può impostare in spagnolo, inglese, italiano o russo dal menu Lingua, senza cambiare la lingua del telefono.</string>
+    <string name="changelog_v14_item2">Anche l\'avviso del mattino e il widget parlano la lingua scelta, e l\'avviso arriva con l\'icona del tempo previsto.</string>
+    <string name="changelog_v14_item3">Le schede dei dati sono più pulite: lo sfondo sfuma e non c\'è più il riquadro attorno a ogni valore.</string>
+    <string name="changelog_v14_item4">La scheda grande della griglia parte accanto alle altre invece di comparire isolata, e il sole dell\'arco di Sole e luna si anima quando la scheda arriva al centro dello schermo.</string>
+
     <string name="changelog_v13_date">29 settembre 2026</string>
     <string name="changelog_v13_item1">Tutte le schede dei dati hanno ora la propria icona animata: precipitazioni, probabilità di pioggia, indice UV, radiazione solare, punto di rugiada, pressione, altitudine, polline, confronto storico, moto ondoso, fiumi, cambiamento climatico, incertezza, alba, tramonto, fase lunare e ore di luce.</string>
 
