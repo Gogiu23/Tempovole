@@ -7,7 +7,10 @@ está ya generado en esta carpeta. Las respuestas de los formularios están en
 ## El artefacto
 
 - **Fichero**: `app/build/outputs/bundle/release/app-release.aab` (16 MB)
-- **versionCode**: 5 · **versionName**: 1.4
+- **versionCode**: 6 · **versionName**: 1.4
+  (el 4 y el 5 ya estan subidos a Prueba cerrada - Alpha, los dos como 1.3, y Play no
+  permite reutilizar un versionCode: de ahi el error de version si se sube un .aab con
+  el 5. El 5 tuvo lanzamiento completo en el canal cerrado el 30 sept 2026.)
 - Firmado con `tiempo-release.jks` (el `signingConfig release` de
   `app/build.gradle.kts`), no con la clave de debug.
 - Se regenera con:
