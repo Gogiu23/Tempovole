@@ -2,12 +2,13 @@ package com.example.tiempo.ui
 
 import android.content.Context
 import com.example.tiempo.BuildConfig
+import com.example.tiempo.R
 
 /** Una versión publicada de la app y lo que cambió en ella. */
 data class ChangelogEntry(
     val version: String,
-    val date: String,
-    val changes: List<String>
+    @androidx.annotation.StringRes val dateRes: Int,
+    val changeRes: List<Int>
 )
 
 /**
@@ -25,71 +26,51 @@ object Changelog {
     val entries: List<ChangelogEntry> = listOf(
         ChangelogEntry(
             version = "1.3",
-            date = "29 de septiembre de 2026",
-            changes = listOf(
-                "Todas las tarjetas de datos tienen ya su propio icono animado: precipitación, " +
-                    "probabilidad de lluvia, índice UV, radiación solar, punto de rocío, " +
-                    "presión, altitud, polen, comparación histórica, oleaje, ríos, cambio " +
-                    "climático, incertidumbre, amanecer, atardecer, fase lunar y horas de luz."
+            dateRes = R.string.changelog_v13_date,
+            changeRes = listOf(
+                R.string.changelog_v13_item1
             )
         ),
         ChangelogEntry(
             version = "1.2",
-            date = "20 de septiembre de 2026",
-            changes = listOf(
-                "La semana se ve ahora como un carrusel: cada día es una tarjeta que gira " +
-                    "y se pone de frente al pasar por el centro.",
-                "Cada día de la semana lleva su propia foto, elegida según el tiempo que " +
-                    "hará ese día, y cambia a diario.",
-                "El carrusel se arrastra desde cualquier punto de la pantalla y sigue " +
-                    "rodando al soltar el dedo, en vez de frenar en seco.",
-                "Girando el móvil, la semana entera se ve de un vistazo: la tarjeta del " +
-                    "centro grande y las demás encogiendo hacia los lados.",
-                "Los iconos de la esquina superior se han agrupado en un menú lateral, " +
-                    "ahora con el nombre de cada sección.",
-                "En \"Hoy\", el nombre de la ciudad se queda fijo arriba y se hace más " +
-                    "pequeño según bajas, para dejar sitio al contenido.",
-                "Las tarjetas de \"Hoy\" aparecen con un barrido al entrar en pantalla.",
-                "Los créditos de las fotos se actualizan solos: salen los autores de las " +
-                    "fotos que la app está usando, y desaparecen los que ya no se ven.",
-                "Cada crédito es ahora un enlace: lleva al perfil del autor y a la foto " +
-                    "original en Unsplash.",
-                "El gráfico por horas empieza mostrando la lluvia, y su fondo va cambiando " +
-                    "de color a lo largo de las horas: coral de madrugada, dorado " +
-                    "durante el día, verde por la tarde y azul de noche.",
-                "Las tarjetas de datos se reparten ahora en tres columnas y entran con una " +
-                    "animación: una tarjeta grande que se encoge hasta su sitio mientras " +
-                    "las demás van apareciendo alrededor.",
-                "La tarjeta de sol y luna pasa a estar arriba del todo y, al llegar al " +
-                    "centro de la pantalla, el sol o la luna recorren su arco antes de " +
-                    "colocarse en la hora que es."
+            dateRes = R.string.changelog_v12_date,
+            changeRes = listOf(
+                R.string.changelog_v12_item1,
+                R.string.changelog_v12_item2,
+                R.string.changelog_v12_item3,
+                R.string.changelog_v12_item4,
+                R.string.changelog_v12_item5,
+                R.string.changelog_v12_item6,
+                R.string.changelog_v12_item7,
+                R.string.changelog_v12_item8,
+                R.string.changelog_v12_item9,
+                R.string.changelog_v12_item10,
+                R.string.changelog_v12_item11,
+                R.string.changelog_v12_item12
             )
         ),
         ChangelogEntry(
             version = "1.1",
-            date = "20 de septiembre de 2026",
-            changes = listOf(
-                "Nueva tarjeta \"Sol y luna\" con el recorrido del sol, las horas de luz " +
-                    "y la fase lunar dibujada.",
-                "El fondo cambia según sea de mañana, tarde o noche.",
-                "El widget ya se puede ver con imagen, transparente o con un color fijo " +
-                    "a elegir.",
-                "Los datos adicionales tardan mucho menos en aparecer.",
-                "Animación de scroll más suave en la pantalla de Hoy.",
-                "Créditos de los autores de las fotos en la pantalla de Info.",
-                "Nueva pantalla de novedades (esta misma)."
+            dateRes = R.string.changelog_v11_date,
+            changeRes = listOf(
+                R.string.changelog_v11_item1,
+                R.string.changelog_v11_item2,
+                R.string.changelog_v11_item3,
+                R.string.changelog_v11_item4,
+                R.string.changelog_v11_item5,
+                R.string.changelog_v11_item6,
+                R.string.changelog_v11_item7
             )
         ),
         ChangelogEntry(
             version = "1.0",
-            date = "17 de septiembre de 2026",
-            changes = listOf(
-                "Primera versión: previsión de hoy y de los próximos 7 días.",
-                "Gráfico por horas de temperatura, lluvia y viento.",
-                "Datos adicionales configurables: UV, polen, oleaje, ríos, comparación " +
-                    "histórica y más.",
-                "Morning report: notificación diaria a la hora que elijas.",
-                "Widget de pantalla de inicio."
+            dateRes = R.string.changelog_v10_date,
+            changeRes = listOf(
+                R.string.changelog_v10_item1,
+                R.string.changelog_v10_item2,
+                R.string.changelog_v10_item3,
+                R.string.changelog_v10_item4,
+                R.string.changelog_v10_item5
             )
         )
     )

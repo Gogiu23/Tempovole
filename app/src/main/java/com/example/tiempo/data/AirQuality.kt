@@ -1,5 +1,7 @@
 package com.example.tiempo.data
 
+import androidx.annotation.StringRes
+import com.example.tiempo.R
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import retrofit2.http.GET
@@ -40,32 +42,33 @@ data class AirQuality(
     val olivePollen: Double? = null,
     val ragweedPollen: Double? = null
 ) {
-    val label: String
+    @get:StringRes
+    val labelRes: Int
         get() = when {
-            europeanAqi <= 20 -> "Buena"
-            europeanAqi <= 40 -> "Aceptable"
-            europeanAqi <= 60 -> "Moderada"
-            europeanAqi <= 80 -> "Mala"
-            europeanAqi <= 100 -> "Muy mala"
-            else -> "Extrema"
+            europeanAqi <= 20 -> R.string.air_quality_good
+            europeanAqi <= 40 -> R.string.air_quality_acceptable
+            europeanAqi <= 60 -> R.string.air_quality_moderate
+            europeanAqi <= 80 -> R.string.air_quality_bad
+            europeanAqi <= 100 -> R.string.air_quality_very_bad
+            else -> R.string.air_quality_extreme
         }
 
-    /** Tipo de polen dominante y su nivel (Bajo/Moderado/Alto), o null si no hay datos (fuera de Europa). */
-    val dominantPollen: Pair<String, String>?
+    /** Tipo de polen dominante (StringRes) y su nivel (StringRes: Bajo/Moderado/Alto), o null si no hay datos (fuera de Europa). */
+    val dominantPollen: Pair<Int, Int>?
         get() {
             val pollens = listOfNotNull(
-                alderPollen?.let { "Aliso" to it },
-                birchPollen?.let { "Abedul" to it },
-                grassPollen?.let { "Gramíneas" to it },
-                mugwortPollen?.let { "Artemisa" to it },
-                olivePollen?.let { "Olivo" to it },
-                ragweedPollen?.let { "Ambrosía" to it }
+                alderPollen?.let { R.string.pollen_alder to it },
+                birchPollen?.let { R.string.pollen_birch to it },
+                grassPollen?.let { R.string.pollen_grass to it },
+                mugwortPollen?.let { R.string.pollen_mugwort to it },
+                olivePollen?.let { R.string.pollen_olive to it },
+                ragweedPollen?.let { R.string.pollen_ragweed to it }
             )
             val top = pollens.maxByOrNull { it.second } ?: return null
             val level = when {
-                top.second < 10 -> "Bajo"
-                top.second < 50 -> "Moderado"
-                else -> "Alto"
+                top.second < 10 -> R.string.pollen_level_low
+                top.second < 50 -> R.string.pollen_level_moderate
+                else -> R.string.pollen_level_high
             }
             return top.first to level
         }

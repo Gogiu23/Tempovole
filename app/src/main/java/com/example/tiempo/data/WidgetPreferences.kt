@@ -1,31 +1,24 @@
 package com.example.tiempo.data
 
 import android.content.Context
+import androidx.annotation.StringRes
+import com.example.tiempo.R
 
 /** Cómo se pinta el fondo del widget de pantalla de inicio. */
-enum class WidgetBackground(val label: String, val description: String) {
-    IMAGE(
-        "Imagen",
-        "Usa la misma foto de fondo que la app, según la franja del día."
-    ),
-    TRANSPARENT(
-        "Transparente",
-        "Sin fondo: se ve el fondo de pantalla de tu móvil a través del widget."
-    ),
-    COLOR(
-        "Color fijo",
-        "Un color sólido a tu elección."
-    )
+enum class WidgetBackground(@StringRes val labelRes: Int, @StringRes val descriptionRes: Int) {
+    IMAGE(R.string.widget_bg_image_label, R.string.widget_bg_image_description),
+    TRANSPARENT(R.string.widget_bg_transparent_label, R.string.widget_bg_transparent_description),
+    COLOR(R.string.widget_bg_color_label, R.string.widget_bg_color_description)
 }
 
 /** Colores disponibles cuando el fondo del widget es de tipo [WidgetBackground.COLOR]. */
-enum class WidgetColor(val label: String, val argb: Int) {
-    NAVY("Azul noche", 0xFF1E3A5F.toInt()),
-    SLATE("Gris pizarra", 0xFF2F3640.toInt()),
-    FOREST("Verde bosque", 0xFF20503C.toInt()),
-    PLUM("Morado", 0xFF3F2B56.toInt()),
-    CRIMSON("Rojo oscuro", 0xFF5C2230.toInt()),
-    BLACK("Negro", 0xFF101114.toInt())
+enum class WidgetColor(@StringRes val labelRes: Int, val argb: Int) {
+    NAVY(R.string.widget_color_navy_label, 0xFF1E3A5F.toInt()),
+    SLATE(R.string.widget_color_slate_label, 0xFF2F3640.toInt()),
+    FOREST(R.string.widget_color_forest_label, 0xFF20503C.toInt()),
+    PLUM(R.string.widget_color_plum_label, 0xFF3F2B56.toInt()),
+    CRIMSON(R.string.widget_color_crimson_label, 0xFF5C2230.toInt()),
+    BLACK(R.string.widget_color_black_label, 0xFF101114.toInt())
 }
 
 /** Ajustes del widget, guardados solo en el dispositivo. */

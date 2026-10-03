@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mismo azul oscuro que BlueDeep en ui/theme/Color.kt (fondo de respaldo cuando no hay
+         foto). Solo se usa como windowBackground, para que el frame en blanco al recrearse la
+         Activity no se note como un parpadeo negro. -->
+    <color name="window_background">#FF1E3A5F</color>
+</resources>

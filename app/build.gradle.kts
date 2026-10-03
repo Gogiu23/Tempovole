@@ -23,17 +23,17 @@ val keystoreProps = Properties().apply {
 
 android {
     namespace = "com.example.tiempo"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.giuliandominici.tempovole"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         // La versión NO se toca en el desarrollo del día a día, solo al sacar versión nueva.
         // Entonces: subir versionCode en 1 (Play lo exige) y versionName, y añadir la entrada
         // correspondiente en ui/Changelog.kt con ese mismo versionName. Si se olvida, la
         // pantalla de Novedades avisa de que van desincronizados.
-        versionCode = 4
+        versionCode = 5
         versionName = "1.3"
 
         buildConfigField("String", "UNSPLASH_ACCESS_KEY", "\"$unsplashKey\"")
@@ -74,6 +74,15 @@ android {
         compose = true
         buildConfig = true
     }
+
+    // El selector de idioma de la app permite cambiar a cualquiera de los 4 idiomas en
+    // tiempo de ejecución. Si Play dividiera el .aab por idioma, un dispositivo instalado
+    // con el split de un idioma no tendría los recursos de los demás y el selector fallaría.
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
 }
 
 dependencies {
@@ -81,6 +90,9 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.activity:activity-compose:1.9.3")
+    // Solo para AppLocalesMetadataHolderService (declarado en el manifest): persiste a nivel
+    // de OS el idioma elegido en la pantalla de Idioma, que usa LocaleManager directamente.
+    implementation("androidx.appcompat:appcompat:1.7.0")
 
     val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
     implementation(composeBom)

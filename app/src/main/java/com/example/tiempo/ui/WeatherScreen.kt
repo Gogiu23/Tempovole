@@ -1,9 +1,10 @@
 package com.example.tiempo.ui
 
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -119,6 +120,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -146,6 +148,7 @@ import com.example.tiempo.data.FloodRepository
 import com.example.tiempo.data.GeocodingRepository
 import com.example.tiempo.data.GeocodingResult
 import com.example.tiempo.data.HistoricalWeatherRepository
+import com.example.tiempo.data.LanguagePreferences
 import com.example.tiempo.data.LocationRepository
 import com.example.tiempo.data.MarineRepository
 import com.example.tiempo.data.SavedLocation
@@ -181,7 +184,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private val esLocale = Locale("es", "ES")
 private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
 /** Degradado para que el contenido se desvanezca en el borde inferior al hacer scroll. */
@@ -308,12 +310,6 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
 
         when (overlay) {
             OverlayScreen.SETTINGS -> SettingsScreen(
-                currentLocation = currentLocation,
-                onLocationSelected = { location ->
-                    LocationRepository.save(appContext, location)
-                    currentLocation = location
-                    WidgetUpdater.requestUpdate(appContext)
-                },
                 notificationHour = notificationHour,
                 notificationMinute = notificationMinute,
                 onNotificationTimeChanged = { hour, minute ->
@@ -326,11 +322,25 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
                 onBack = { overlayIndex = OverlayScreen.NONE.ordinal }
             )
 
+            OverlayScreen.LOCATION -> LocationSearchScreen(
+                onBack = { overlayIndex = OverlayScreen.NONE.ordinal },
+                onLocationSelected = { location ->
+                    LocationRepository.save(appContext, location)
+                    currentLocation = location
+                    WidgetUpdater.requestUpdate(appContext)
+                    overlayIndex = OverlayScreen.NONE.ordinal
+                }
+            )
+
             OverlayScreen.BLOG -> BlogScreen(onBack = { overlayIndex = OverlayScreen.NONE.ordinal })
 
             OverlayScreen.INFO -> InfoScreen(onBack = { overlayIndex = OverlayScreen.NONE.ordinal })
 
             OverlayScreen.CHANGELOG -> ChangelogScreen(
+                onBack = { overlayIndex = OverlayScreen.NONE.ordinal }
+            )
+
+            OverlayScreen.LANGUAGE -> LanguageScreen(
                 onBack = { overlayIndex = OverlayScreen.NONE.ordinal }
             )
 
@@ -405,7 +415,7 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
     }
 }
 
-private enum class OverlayScreen { NONE, SETTINGS, BLOG, INFO, CHANGELOG }
+private enum class OverlayScreen { NONE, SETTINGS, BLOG, INFO, CHANGELOG, LANGUAGE, LOCATION }
 
 /**
  * Menu lateral con los accesos que antes estaban sueltos arriba: ahora llevan etiqueta,
@@ -423,19 +433,23 @@ private fun SideMenu(hasUnseenChanges: Boolean, onSelect: (OverlayScreen) -> Uni
             .padding(vertical = 20.dp)
     ) {
         Text(
-            text = "Menú",
+            text = stringResource(R.string.menu_title),
             color = Color.White.copy(alpha = 0.55f),
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(horizontal = 22.dp, vertical = 8.dp)
         )
         Spacer(Modifier.height(4.dp))
-        SideMenuItem(R.drawable.ic_bell, "Novedades", badge = hasUnseenChanges) {
+        SideMenuItem(R.drawable.ic_location, stringResource(R.string.menu_ubicacion)) {
+            onSelect(OverlayScreen.LOCATION)
+        }
+        SideMenuItem(R.drawable.ic_bell, stringResource(R.string.menu_novedades), badge = hasUnseenChanges) {
             onSelect(OverlayScreen.CHANGELOG)
         }
-        SideMenuItem(R.drawable.ic_blog, "Blog") { onSelect(OverlayScreen.BLOG) }
-        SideMenuItem(R.drawable.ic_info, "Info") { onSelect(OverlayScreen.INFO) }
-        SideMenuItem(R.drawable.ic_settings, "Ajustes") { onSelect(OverlayScreen.SETTINGS) }
+        SideMenuItem(R.drawable.ic_blog, stringResource(R.string.menu_blog)) { onSelect(OverlayScreen.BLOG) }
+        SideMenuItem(R.drawable.ic_info, stringResource(R.string.menu_info)) { onSelect(OverlayScreen.INFO) }
+        SideMenuItem(R.drawable.ic_settings, stringResource(R.string.menu_ajustes)) { onSelect(OverlayScreen.SETTINGS) }
+        SideMenuItem(R.drawable.ic_language, stringResource(R.string.menu_idioma)) { onSelect(OverlayScreen.LANGUAGE) }
     }
 }
 
@@ -519,7 +533,7 @@ private fun ChangelogScreen(onBack: () -> Unit) {
                 modifier = Modifier.size(26.dp)
             )
             Text(
-                text = "Novedades",
+                text = stringResource(R.string.changelog_screen_title),
                 color = Color.White,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold
@@ -530,8 +544,10 @@ private fun ChangelogScreen(onBack: () -> Unit) {
         // "Actual" una versión antigua: así el despiste se ve enseguida al abrir la pantalla.
         if (!Changelog.isInSync) {
             Text(
-                text = "⚠️ Estás usando la versión ${BuildConfig.VERSION_NAME}, que todavía no " +
-                    "tiene entrada en este historial.",
+                text = stringResource(
+                    R.string.changelog_screen_out_of_sync_warning,
+                    BuildConfig.VERSION_NAME
+                ),
                 color = Color(0xFFFFD54A),
                 fontSize = 13.sp,
                 lineHeight = 19.sp
@@ -558,7 +574,7 @@ private fun ChangelogScreen(onBack: () -> Unit) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "Versión ${entry.version}",
+                            text = stringResource(R.string.changelog_screen_version_label, entry.version),
                             color = Color.White,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
@@ -570,16 +586,20 @@ private fun ChangelogScreen(onBack: () -> Unit) {
                                     .background(Color(0xFF4CAF50).copy(alpha = 0.85f))
                                     .padding(horizontal = 8.dp, vertical = 2.dp)
                             ) {
-                                Text(text = "Actual", color = Color.White, fontSize = 11.sp)
+                                Text(
+                                    text = stringResource(R.string.changelog_screen_current_badge),
+                                    color = Color.White,
+                                    fontSize = 11.sp
+                                )
                             }
                         }
                     }
                     Text(
-                        text = entry.date,
+                        text = stringResource(entry.dateRes),
                         color = Color.White.copy(alpha = 0.6f),
                         fontSize = 12.sp
                     )
-                    entry.changes.forEach { change ->
+                    entry.changeRes.forEach { changeRes ->
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
                                 text = "•",
@@ -587,7 +607,7 @@ private fun ChangelogScreen(onBack: () -> Unit) {
                                 fontSize = 14.sp
                             )
                             Text(
-                                text = change,
+                                text = stringResource(changeRes),
                                 color = Color.White.copy(alpha = 0.85f),
                                 fontSize = 14.sp,
                                 lineHeight = 20.sp
@@ -620,7 +640,7 @@ private fun BlogScreen(onBack: () -> Unit) {
                 modifier = Modifier.size(26.dp)
             )
             Text(
-                text = "Blog",
+                text = stringResource(R.string.blog_title),
                 color = Color.White,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold
@@ -628,11 +648,106 @@ private fun BlogScreen(onBack: () -> Unit) {
         }
 
         Text(
-            text = "Todavía no hay blog. Próximamente encontrarás aquí artículos sobre " +
-                "el tiempo y las novedades de la app.",
+            text = stringResource(R.string.blog_placeholder),
             color = Color.White.copy(alpha = 0.8f),
             fontSize = 15.sp
         )
+    }
+}
+
+@Composable
+private fun LanguageScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    val currentTag = LanguagePreferences.getLanguageTag(context) ?: ""
+    val options: List<Triple<String, String?, Int>> = listOf(
+        Triple(stringResource(R.string.language_picker_follow_system), null, R.drawable.ic_language),
+        Triple(stringResource(R.string.language_picker_es), "es", R.drawable.ic_flag_es),
+        Triple(stringResource(R.string.language_picker_en), "en", R.drawable.ic_flag_en),
+        Triple(stringResource(R.string.language_picker_ru), "ru", R.drawable.ic_flag_ru),
+        Triple(stringResource(R.string.language_picker_it), "it", R.drawable.ic_flag_it)
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            IconCircleButton(emoji = "←", onClick = onBack)
+            Image(
+                painter = painterResource(R.drawable.ic_language),
+                contentDescription = null,
+                modifier = Modifier.size(26.dp)
+            )
+            Text(
+                text = stringResource(R.string.menu_idioma),
+                color = Color.White,
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            options.forEach { (label, tag, iconRes) ->
+                val selected = if (tag == null) currentTag.isEmpty() else currentTag.startsWith(tag)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            LanguagePreferences.setLanguageTag(context, tag)
+                            // El widget no es una Activity: aunque el idioma de la app cambie,
+                            // su RemoteViews no se repinta solo. Sin esto se queda en el idioma
+                            // con el que se dibujó la última vez. delayMillis evita pintarlo justo
+                            // antes de que el sistema termine de aplicar el locale nuevo; va en el
+                            // scope propio de WidgetUpdater porque en API <33 la Activity se
+                            // recrea justo después y cancelaría un scope ligado a la composición.
+                            WidgetUpdater.requestUpdate(context, delayMillis = 300)
+                            if (Build.VERSION.SDK_INT < 33) {
+                                (context as? Activity)?.recreate()
+                            }
+                        },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White.copy(alpha = if (selected) 0.28f else 0.16f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Image(
+                                painter = painterResource(iconRes),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clip(CircleShape)
+                            )
+                            Text(
+                                text = label,
+                                color = Color.White,
+                                fontSize = 15.sp,
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
+                            )
+                        }
+                        if (selected) {
+                            Text(text = "✓", color = Color.White, fontSize = 18.sp)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -657,7 +772,7 @@ private fun InfoScreen(onBack: () -> Unit) {
                 modifier = Modifier.size(26.dp)
             )
             Text(
-                text = "Info",
+                text = stringResource(R.string.info_title),
                 color = Color.White,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold
@@ -666,36 +781,31 @@ private fun InfoScreen(onBack: () -> Unit) {
 
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                text = "Tempovole",
+                text = stringResource(R.string.info_app_name_label),
                 color = Color.White,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = "Versión ${BuildConfig.VERSION_NAME}",
+                text = stringResource(R.string.info_version_label, BuildConfig.VERSION_NAME),
                 color = Color.White.copy(alpha = 0.7f),
                 fontSize = 13.sp
             )
             Text(
-                text = "App de previsión meteorológica. Datos de Open-Meteo, " +
-                    "fondos de Unsplash.",
+                text = stringResource(R.string.info_description),
                 color = Color.White.copy(alpha = 0.8f),
                 fontSize = 14.sp
             )
         }
 
         LegalSection(
-            title = "Términos de uso",
-            body = "Tempovole se ofrece \"tal cual\", con fines informativos, sin garantía de " +
-                "disponibilidad ni de exactitud de los datos mostrados.\n\n" +
-                "Los datos meteorológicos proceden de Open-Meteo y pueden contener errores " +
-                "o retrasos; no uses esta app como única fuente para decisiones que " +
-                "afecten a tu seguridad (por ejemplo, alertas por fenómenos graves) — " +
-                "consulta siempre fuentes oficiales para eso.\n\n" +
-                "No está permitido un uso que dañe, sobrecargue o comprometa la app o " +
-                "los servicios de terceros de los que depende (Open-Meteo, Unsplash).\n\n" +
-                "Estos términos pueden actualizarse; el uso continuado de la app tras un " +
-                "cambio implica su aceptación."
+            title = stringResource(R.string.info_terms_title),
+            body = listOf(
+                stringResource(R.string.info_terms_p1),
+                stringResource(R.string.info_terms_p2),
+                stringResource(R.string.info_terms_p3),
+                stringResource(R.string.info_terms_p4)
+            ).joinToString("\n\n")
         )
 
         PhotoCreditsSection()
@@ -703,38 +813,22 @@ private fun InfoScreen(onBack: () -> Unit) {
         IconCreditsSection()
 
         LegalSection(
-            title = "Política de privacidad",
-            body = "Tempovole no requiere registro ni cuenta, y no recoge datos personales " +
-                "identificables.\n\n" +
-                "Ubicación: la app no usa el GPS del dispositivo. Por defecto muestra " +
-                "Barcelona; si buscas otra ciudad en Ajustes, el texto que escribes se " +
-                "envía al geocodificador de Open-Meteo para obtener sus coordenadas, que " +
-                "se guardan solo en tu dispositivo.\n\n" +
-                "Datos meteorológicos: para mostrar la previsión y los datos adicionales " +
-                "que actives en Ajustes (calidad del aire y polen, comparación histórica, " +
-                "oleaje, ríos, cambio climático, incertidumbre del modelo), las " +
-                "coordenadas de la ubicación elegida se envían a los distintos servicios " +
-                "gratuitos de Open-Meteo. No se envía ningún otro dato.\n\n" +
-                "Fotos: si hay una clave de Unsplash configurada, la app pide a Unsplash " +
-                "(api.unsplash.com) la foto de fondo de cada franja del día y las fotos de " +
-                "las tarjetas de la semana, y le avisa de qué fotos usa, como exigen sus " +
-                "normas. Solo se envía el término de búsqueda (por ejemplo \"rain\"), " +
-                "nunca datos personales.\n\n" +
-                "Notificación diaria y widget: se generan en el propio dispositivo y " +
-                "consultan los mismos servicios de Open-Meteo (y Unsplash, para el fondo " +
-                "del widget) descritos arriba para mostrar el tiempo actualizado.\n\n" +
-                "La app no usa cuentas, cookies, identificadores de publicidad ni " +
-                "herramientas de analítica o rastreo, y no comparte datos con terceros " +
-                "más allá de las llamadas a Open-Meteo y Unsplash descritas arriba.\n\n" +
-                "Todos los ajustes (ubicación, hora de notificación, datos activados, " +
-                "etc.) se guardan solo en el dispositivo y se borran al desinstalar la " +
-                "app.\n\n" +
-                "Contacto: giuliandominici@gmail.com"
+            title = stringResource(R.string.info_privacy_title),
+            body = listOf(
+                stringResource(R.string.info_privacy_p1),
+                stringResource(R.string.info_privacy_p2),
+                stringResource(R.string.info_privacy_p3),
+                stringResource(R.string.info_privacy_p4),
+                stringResource(R.string.info_privacy_p5),
+                stringResource(R.string.info_privacy_p6),
+                stringResource(R.string.info_privacy_p7),
+                stringResource(R.string.info_privacy_p8)
+            ).joinToString("\n\n")
         )
 
         val uriHandler = LocalUriHandler.current
         Text(
-            text = "Ver esta política en el navegador",
+            text = stringResource(R.string.info_privacy_policy_link),
             color = Color.White.copy(alpha = 0.75f),
             fontSize = 14.sp,
             modifier = Modifier.clickable { uriHandler.openUri(PRIVACY_POLICY_URL) }
@@ -754,25 +848,20 @@ private fun PhotoCreditsSection() {
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            text = "Créditos de las imágenes",
+            text = stringResource(R.string.photo_credits_title),
             color = Color.White,
             fontSize = 17.sp,
             fontWeight = FontWeight.SemiBold
         )
         Text(
-            text = "Las fotos proceden de Unsplash y se usan según su licencia. Cada foto " +
-                "es obra de su autor: la app muestra una de fondo por la mañana, la tarde " +
-                "y la noche, y otra en cada tarjeta de la semana según el tiempo que hará " +
-                "ese día. Abajo están los autores de las fotos que la app usa ahora mismo; " +
-                "toca cualquiera para ver su perfil.",
+            text = stringResource(R.string.photo_credits_description),
             color = Color.White.copy(alpha = 0.8f),
             fontSize = 13.sp,
             lineHeight = 19.sp
         )
         if (credits.isEmpty()) {
             Text(
-                text = "Todavía no se ha mostrado ninguna foto: aquí aparecerán sus autores " +
-                    "en cuanto se cargue la primera.",
+                text = stringResource(R.string.photo_credits_empty),
                 color = Color.White.copy(alpha = 0.6f),
                 fontSize = 13.sp,
                 lineHeight = 19.sp
@@ -783,7 +872,7 @@ private fun PhotoCreditsSection() {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     val authorLink = credit.authorUrl?.withUnsplashUtm()
                     Text(
-                        text = "· Foto de ${credit.authorName}",
+                        text = stringResource(R.string.photo_credits_author_prefix, credit.authorName),
                         color = Color.White.copy(alpha = 0.85f),
                         fontSize = 13.sp,
                         lineHeight = 19.sp,
@@ -795,7 +884,7 @@ private fun PhotoCreditsSection() {
                     )
                     credit.photoUrl?.withUnsplashUtm()?.let { photoLink ->
                         Text(
-                            text = "   ver la foto en Unsplash",
+                            text = stringResource(R.string.photo_credits_view_on_unsplash),
                             color = Color.White.copy(alpha = 0.55f),
                             fontSize = 12.sp,
                             modifier = Modifier.clickable { uriHandler.openUri(photoLink) }
@@ -812,20 +901,19 @@ private fun IconCreditsSection() {
     val uriHandler = LocalUriHandler.current
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            text = "Créditos de los iconos",
+            text = stringResource(R.string.icon_credits_title),
             color = Color.White,
             fontSize = 17.sp,
             fontWeight = FontWeight.SemiBold
         )
         Text(
-            text = "Los iconos meteorológicos (animados y estáticos) proceden de Flaticon " +
-                "y se usan bajo su licencia gratuita, que exige atribución.",
+            text = stringResource(R.string.icon_credits_description),
             color = Color.White.copy(alpha = 0.8f),
             fontSize = 13.sp,
             lineHeight = 19.sp
         )
         Text(
-            text = "· Iconos de Flaticon (flaticon.com)",
+            text = stringResource(R.string.icon_credits_flaticon_link),
             color = Color.White.copy(alpha = 0.85f),
             fontSize = 13.sp,
             modifier = Modifier.clickable { uriHandler.openUri("https://www.flaticon.com") }
@@ -853,26 +941,12 @@ private fun LegalSection(title: String, body: String) {
 
 @Composable
 private fun SettingsScreen(
-    currentLocation: SavedLocation,
-    onLocationSelected: (SavedLocation) -> Unit,
     notificationHour: Int,
     notificationMinute: Int,
     onNotificationTimeChanged: (Int, Int) -> Unit,
     onBack: () -> Unit
 ) {
-    var showLocationSearch by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
-
-    if (showLocationSearch) {
-        LocationSearchScreen(
-            onBack = { showLocationSearch = false },
-            onLocationSelected = { location ->
-                onLocationSelected(location)
-                showLocationSearch = false
-            }
-        )
-        return
-    }
 
     if (showTimePicker) {
         NotificationTimePickerDialog(
@@ -902,29 +976,23 @@ private fun SettingsScreen(
         ) {
             IconCircleButton(emoji = "←", onClick = onBack)
             Text(
-                text = "Ajustes",
+                text = stringResource(R.string.settings_title),
                 color = Color.White,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold
             )
         }
 
-        SettingsSection(title = "App") {
+        SettingsSection(title = stringResource(R.string.settings_app_section_title)) {
             SettingsRow(
-                label = "Ubicación",
-                iconRes = R.drawable.ic_location,
-                value = currentLocation.name,
-                onClick = { showLocationSearch = true }
-            )
-            SettingsRow(
-                label = "Morning report",
+                label = stringResource(R.string.settings_morning_report_label),
                 iconRes = R.drawable.ic_bell,
                 value = "%02d:%02d".format(notificationHour, notificationMinute),
                 onClick = { showTimePicker = true }
             )
         }
 
-        SettingsSection(title = "Datos adicionales") {
+        SettingsSection(title = stringResource(R.string.settings_extra_data_label)) {
             ExtraFeature.entries.forEach { feature ->
                 var checked by remember { mutableStateOf(FeaturePreferences.isEnabled(context, feature)) }
                 ExpandableFeatureCard(
@@ -938,7 +1006,7 @@ private fun SettingsScreen(
             }
         }
 
-        SettingsSection(title = "Widget") {
+        SettingsSection(title = stringResource(R.string.settings_widget_label)) {
             var widgetBackground by remember { mutableStateOf(WidgetPreferences.getBackground(context)) }
             var widgetColor by remember { mutableStateOf(WidgetPreferences.getColor(context)) }
 
@@ -996,13 +1064,13 @@ private fun WidgetBackgroundOption(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
-                    text = option.label,
+                    text = stringResource(option.labelRes),
                     color = Color.White,
                     fontSize = 15.sp,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
                 )
                 Text(
-                    text = option.description,
+                    text = stringResource(option.descriptionRes),
                     color = Color.White.copy(alpha = 0.7f),
                     fontSize = 12.sp,
                     lineHeight = 16.sp
@@ -1030,7 +1098,7 @@ private fun WidgetColorPicker(selected: WidgetColor, onSelect: (WidgetColor) -> 
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                text = selected.label,
+                text = stringResource(selected.labelRes),
                 color = Color.White.copy(alpha = 0.9f),
                 fontSize = 14.sp
             )
@@ -1090,7 +1158,7 @@ private fun ExpandableFeatureCard(
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = feature.label,
+                        text = stringResource(feature.labelRes),
                         color = Color.White.copy(alpha = 0.9f),
                         fontSize = 14.sp
                     )
@@ -1119,7 +1187,7 @@ private fun ExpandableFeatureCard(
             }
             AnimatedVisibility(visible = expanded) {
                 Text(
-                    text = feature.description,
+                    text = stringResource(feature.descriptionRes),
                     color = Color.White.copy(alpha = 0.75f),
                     fontSize = 13.sp,
                     lineHeight = 18.sp,
@@ -1142,7 +1210,7 @@ private fun NotificationTimePickerDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Hora del morning report") },
+        title = { Text(stringResource(R.string.time_picker_title)) },
         text = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1168,10 +1236,10 @@ private fun NotificationTimePickerDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(hour, minute) }) { Text("Guardar") }
+            TextButton(onClick = { onConfirm(hour, minute) }) { Text(stringResource(R.string.time_picker_save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.time_picker_cancel)) }
         }
     )
 }
@@ -1314,7 +1382,7 @@ private fun LocationSearchScreen(
         ) {
             IconCircleButton(emoji = "←", onClick = onBack)
             Text(
-                text = "Ubicación",
+                text = stringResource(R.string.location_search_title),
                 color = Color.White,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
@@ -1325,7 +1393,7 @@ private fun LocationSearchScreen(
             value = query,
             onValueChange = { query = it },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text("Busca una ciudad…", color = Color.White.copy(alpha = 0.6f)) },
+            placeholder = { Text(stringResource(R.string.location_search_placeholder), color = Color.White.copy(alpha = 0.6f)) },
             singleLine = true,
             shape = RoundedCornerShape(16.dp),
             colors = TextFieldDefaults.colors(
@@ -1345,13 +1413,13 @@ private fun LocationSearchScreen(
             }
 
             searchFailed -> Text(
-                text = "No se pudo buscar. Revisa tu conexión.",
+                text = stringResource(R.string.location_search_network_error),
                 color = Color.White.copy(alpha = 0.8f),
                 fontSize = 14.sp
             )
 
             query.trim().length >= 2 && results.isEmpty() -> Text(
-                text = "Sin resultados para \"$query\".",
+                text = stringResource(R.string.location_search_no_results, query),
                 color = Color.White.copy(alpha = 0.8f),
                 fontSize = 14.sp
             )
@@ -1401,7 +1469,7 @@ private fun WeatherBottomBar(selected: Int, onSelect: (Int) -> Unit) {
                     modifier = Modifier.size(22.dp)
                 )
             },
-            label = { Text("Hoy") },
+            label = { Text(stringResource(R.string.bottom_bar_today)) },
             colors = colors
         )
         NavigationBarItem(
@@ -1414,7 +1482,7 @@ private fun WeatherBottomBar(selected: Int, onSelect: (Int) -> Unit) {
                     modifier = Modifier.size(22.dp)
                 )
             },
-            label = { Text("Semana") },
+            label = { Text(stringResource(R.string.bottom_bar_week)) },
             colors = colors
         )
     }
@@ -1444,7 +1512,7 @@ private fun WeatherContent(
             Alignment.Center
         ) {
             Text(
-                text = "No se pudo cargar el tiempo:\n${state.message}",
+                text = stringResource(R.string.weather_error_prefix, state.message),
                 color = Color.White,
                 modifier = Modifier.padding(24.dp)
             )
@@ -1742,7 +1810,7 @@ private fun TodayScreen(
 
     LaunchedEffect(location, enabledExtras) {
         extraItems.clear()
-        extraItems.addAll(loadExtraItems(location, current, elevationM, enabledExtras))
+        extraItems.addAll(loadExtraItems(location, current, elevationM, enabledExtras, context))
     }
 
     // Foto de la ubicacion actual (no la ambiental de fondo): la tarjeta protagonista de
@@ -1762,18 +1830,23 @@ private fun TodayScreen(
 
     val upcomingHours = hours.upcoming()
 
+    val maxLabel = stringResource(R.string.today_max_label)
+    val minLabel = stringResource(R.string.today_min_label)
+    val windLabel = stringResource(DetailType.WIND.titleRes)
+    val precipitationLabel = stringResource(DetailType.PRECIPITATION.titleRes)
+    val rainProbabilityLabel = stringResource(R.string.today_rain_probability_label)
     val detailItems = buildList {
-        add(DetailItem("🌡️", "Máxima", "${today.tempMax.roundToInt()}°", DetailType.MAX_TEMP))
-        add(DetailItem("🌡️", "Mínima", "${today.tempMin.roundToInt()}°", DetailType.MIN_TEMP))
-        add(DetailItem("💨", "Viento", "${today.windKmh.roundToInt()} km/h", DetailType.WIND))
+        add(DetailItem("🌡️", maxLabel, "${today.tempMax.roundToInt()}°", DetailType.MAX_TEMP))
+        add(DetailItem("🌡️", minLabel, "${today.tempMin.roundToInt()}°", DetailType.MIN_TEMP))
+        add(DetailItem("💨", windLabel, "${today.windKmh.roundToInt()} km/h", DetailType.WIND))
         add(
             DetailItem(
-                "🌧️", "Precipitación", "${today.precipitationMm} mm",
+                "🌧️", precipitationLabel, "${today.precipitationMm} mm",
                 DetailType.PRECIPITATION
             )
         )
         today.precipProbability?.let {
-            add(DetailItem("☔", "Prob. lluvia", "$it%", DetailType.RAIN_PROBABILITY))
+            add(DetailItem("☔", rainProbabilityLabel, "$it%", DetailType.RAIN_PROBABILITY))
         }
     }
 
@@ -1788,21 +1861,6 @@ private fun TodayScreen(
                 1f
             } else {
                 (listState.firstVisibleItemScrollOffset / shrinkPx).coerceIn(0f, 1f)
-            }
-        }
-    }
-
-    // true cuando la tarjeta de sol y luna esta mas o menos en mitad de la pantalla.
-    val sunMoonCentered by remember {
-        derivedStateOf {
-            val info = listState.layoutInfo
-            val item = info.visibleItemsInfo.firstOrNull { it.key == "sun-moon" }
-            if (item == null) {
-                false
-            } else {
-                val viewportCenter = (info.viewportStartOffset + info.viewportEndOffset) / 2f
-                val itemCenter = item.offset + item.size / 2f
-                abs(itemCenter - viewportCenter) < item.size * 0.6f
             }
         }
     }
@@ -1828,7 +1886,7 @@ private fun TodayScreen(
                 ) {
                     WeatherIcon(today.condition, isDay = true, size = 80.dp)
                     Text(
-                        text = today.condition.label,
+                        text = stringResource(today.condition.labelRes),
                         color = Color.White,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.SemiBold
@@ -1856,7 +1914,7 @@ private fun TodayScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "Próximas horas",
+                            text = stringResource(R.string.today_next_hours_title),
                             color = Color.White.copy(alpha = 0.85f),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold
@@ -1874,8 +1932,6 @@ private fun TodayScreen(
                 item(key = "sun-moon") {
                     SunMoonCard(
                         today = today,
-                        // El astro hace su recorrido cuando la tarjeta llega al centro.
-                        centered = sunMoonCentered,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
                             .revealOnScroll(listState, "sun-moon")
@@ -1900,7 +1956,7 @@ private fun TodayScreen(
             title = location.name,
             titleIconRes = R.drawable.ic_location,
             subtitleIconRes = current.condition.staticIcon(isDay),
-            subtitle = "${current.temp.roundToInt()}°  ·  ${today.date.fullDate()}",
+            subtitle = "${current.temp.roundToInt()}°  ·  ${today.date.fullDate(stringResource(R.string.date_full_format))}",
             shrink = shrink::value,
             trailing = { LiveClock() },
             modifier = Modifier.align(Alignment.TopStart)
@@ -1913,7 +1969,8 @@ private suspend fun loadExtraItems(
     location: SavedLocation,
     current: CurrentWeather,
     elevationM: Double,
-    enabled: List<ExtraFeature>
+    enabled: List<ExtraFeature>,
+    context: android.content.Context
 ): List<DetailItem> = coroutineScope {
     val pollenDeferred = if (ExtraFeature.POLLEN in enabled) {
         async { runCatching { AirQualityRepository().get(location.lat, location.lon) }.getOrNull() }
@@ -1941,44 +1998,44 @@ private suspend fun loadExtraItems(
     buildList {
         if (ExtraFeature.ATMOSPHERIC in enabled) {
             current.uvIndex?.let {
-                add(DetailItem("☀️", "Índice UV", "%.1f".format(it), DetailType.UV_INDEX))
+                add(DetailItem("☀️", context.getString(DetailType.UV_INDEX.titleRes), "%.1f".format(it), DetailType.UV_INDEX))
             }
             current.solarRadiation?.let {
-                add(DetailItem("🔆", "Radiación solar", "${it.roundToInt()} W/m²", DetailType.SOLAR_RADIATION))
+                add(DetailItem("🔆", context.getString(DetailType.SOLAR_RADIATION.titleRes), "${it.roundToInt()} W/m²", DetailType.SOLAR_RADIATION))
             }
             current.dewPoint?.let {
-                add(DetailItem("💧", "Punto de rocío", "${it.roundToInt()}°", DetailType.DEW_POINT))
+                add(DetailItem("💧", context.getString(DetailType.DEW_POINT.titleRes), "${it.roundToInt()}°", DetailType.DEW_POINT))
             }
             current.pressureHpa?.let {
-                add(DetailItem("", "Presión", "${it.roundToInt()} hPa", DetailType.PRESSURE))
+                add(DetailItem("", context.getString(R.string.today_pressure_label), "${it.roundToInt()} hPa", DetailType.PRESSURE))
             }
         }
         if (ExtraFeature.ELEVATION in enabled) {
-            add(DetailItem("⛰️", "Altitud", "${elevationM.roundToInt()} m", DetailType.ELEVATION))
+            add(DetailItem("⛰️", context.getString(DetailType.ELEVATION.titleRes), "${elevationM.roundToInt()} m", DetailType.ELEVATION))
         }
-        pollenDeferred?.await()?.dominantPollen?.let { (type, level) ->
-            add(DetailItem("🌾", type, level, DetailType.POLLEN))
+        pollenDeferred?.await()?.dominantPollen?.let { (typeRes, levelRes) ->
+            add(DetailItem("🌾", context.getString(typeRes), context.getString(levelRes), DetailType.POLLEN))
         }
         historicalDeferred?.await()?.let {
             val sign = if (it.diffFromToday >= 0) "+" else ""
             add(
                 DetailItem(
-                    "📊", "Vs. media histórica", "$sign${it.diffFromToday.roundToInt()}°",
+                    "📊", context.getString(R.string.today_historical_label), "$sign${it.diffFromToday.roundToInt()}°",
                     DetailType.HISTORICAL
                 )
             )
         }
         marineDeferred?.await()?.let {
-            add(DetailItem("🌊", "Oleaje", "${it.waveHeightM} m", DetailType.MARINE))
+            add(DetailItem("🌊", context.getString(DetailType.MARINE.titleRes), "${it.waveHeightM} m", DetailType.MARINE))
         }
         floodDeferred?.await()?.let {
-            add(DetailItem("🏞️", "Caudal del río", "${it.roundToInt()} m³/s", DetailType.FLOOD))
+            add(DetailItem("🏞️", context.getString(DetailType.FLOOD.titleRes), "${it.roundToInt()} m³/s", DetailType.FLOOD))
         }
         climateDeferred?.await()?.let {
             val sign = if (it.deltaC >= 0) "+" else ""
             add(
                 DetailItem(
-                    "🌍", "Clima en ${it.projectedYear}", "$sign${it.deltaC.roundToInt()}°",
+                    "🌍", context.getString(R.string.today_climate_label, it.projectedYear), "$sign${it.deltaC.roundToInt()}°",
                     DetailType.CLIMATE
                 )
             )
@@ -1987,7 +2044,7 @@ private suspend fun loadExtraItems(
             add(
                 DetailItem(
                     "🎯",
-                    "Rango de modelos",
+                    context.getString(R.string.today_ensemble_label),
                     "${it.minTemp.roundToInt()}°–${it.maxTemp.roundToInt()}°",
                     DetailType.ENSEMBLE
                 )
@@ -1997,13 +2054,13 @@ private suspend fun loadExtraItems(
 }
 
 private enum class HourlyMetric(
-    val label: String,
+    @androidx.annotation.StringRes val labelRes: Int,
     val unit: String,
     val iconRes: Int
 ) {
-    RAIN("Lluvia", "%", R.drawable.ic_heavy_rain),
-    TEMP("Temperatura", "°", R.drawable.ic_temp_medium),
-    WIND("Viento", "", R.drawable.ic_wind)
+    RAIN(R.string.today_metric_rain_label, "%", R.drawable.ic_heavy_rain),
+    TEMP(R.string.today_metric_temp_label, "°", R.drawable.ic_temp_medium),
+    WIND(DetailType.WIND.titleRes, "", R.drawable.ic_wind)
 }
 
 /**
@@ -2072,7 +2129,7 @@ private fun MetricSelector(selected: HourlyMetric, onSelect: (HourlyMetric) -> U
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
-                        text = metric.label,
+                        text = stringResource(metric.labelRes),
                         color = Color.White,
                         fontSize = 13.sp,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
@@ -2122,6 +2179,8 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
         val iconosPorHora = hours.map { it.condition to it.isDay }.distinct().associateWith {
             (cond, esDeDia) -> ImageBitmap.imageResource(cond.staticIcon(esDeDia))
         }
+        // Mismo motivo que los iconos de arriba: stringResource es @Composable.
+        val nowLabel = stringResource(R.string.today_now_label)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -2274,7 +2333,7 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
                         valuePaint
                     )
                     drawContext.canvas.nativeCanvas.drawText(
-                        hours[i].time.hourLabel(),
+                        hours[i].time.hourLabel(nowLabel),
                         p.x,
                         size.height - 6.dp.toPx(),
                         hourPaint
@@ -2915,7 +2974,6 @@ private fun DetailTile(
 @Composable
 private fun SunMoonCard(
     today: DayWeather,
-    centered: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -2930,7 +2988,7 @@ private fun SunMoonCard(
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             Text(
-                text = "Sol y luna",
+                text = stringResource(R.string.sun_moon_title),
                 color = Color.White.copy(alpha = 0.85f),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold
@@ -2938,11 +2996,11 @@ private fun SunMoonCard(
             SunArc(
                 sunrise = today.sunrise,
                 sunset = today.sunset,
-                moonPhase = today.moonPhase,
-                playIntro = centered
+                moonPhase = today.moonPhase
             )
             val daylight = Duration.between(today.sunrise, today.sunset)
-            val (_, moonLabel) = moonPhaseInfo(today.moonPhase)
+            val (_, moonLabelRes) = moonPhaseInfo(today.moonPhase)
+            val moonLabel = stringResource(moonLabelRes)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -2957,7 +3015,11 @@ private fun SunMoonCard(
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
-                        text = "${daylight.toHours()}h ${daylight.toMinutes() % 60}m de luz solar",
+                        text = stringResource(
+                            R.string.sun_moon_daylight_hours,
+                            daylight.toHours(),
+                            daylight.toMinutes() % 60
+                        ),
                         color = Color.White.copy(alpha = 0.7f),
                         fontSize = 13.sp
                     )
@@ -2978,8 +3040,7 @@ private val ASTRO_SIZE = 34.dp
 private fun SunArc(
     sunrise: LocalDateTime,
     sunset: LocalDateTime,
-    moonPhase: Double,
-    playIntro: Boolean = false
+    moonPhase: Double
 ) {
     val now = remember { LocalDateTime.now() }
     val isDaytime = now.isAfter(sunrise) && now.isBefore(sunset)
@@ -2998,21 +3059,7 @@ private fun SunArc(
     }
     val totalMinutes = Duration.between(arcStart, arcEnd).toMinutes().coerceAtLeast(1)
     val elapsedMinutes = Duration.between(arcStart, now).toMinutes()
-    val nowProgress = (elapsedMinutes.toFloat() / totalMinutes.toFloat()).coerceIn(0f, 1f)
-
-    // La primera vez que la tarjeta queda centrada en pantalla, el astro recorre el arco
-    // entero y despues se coloca en la hora que es. Despues ya se queda quieto.
-    val marker = remember { Animatable(nowProgress) }
-    var introPlayed by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(playIntro) {
-        if (playIntro && !introPlayed) {
-            introPlayed = true
-            marker.snapTo(0f)
-            marker.animateTo(1f, tween(1500, easing = FastOutSlowInEasing))
-            marker.animateTo(nowProgress, tween(900, easing = FastOutSlowInEasing))
-        }
-    }
-    val progress = marker.value
+    val progress = (elapsedMinutes.toFloat() / totalMinutes.toFloat()).coerceIn(0f, 1f)
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         BoxWithConstraints(
@@ -3060,7 +3107,11 @@ private fun SunArc(
             AnimatedRawIcon(
                 res = if (isDaytime) R.raw.anim_clear else R.raw.anim_moon,
                 size = ASTRO_SIZE,
-                contentDescription = if (isDaytime) "Sol" else "Luna",
+                contentDescription = if (isDaytime) {
+                    stringResource(R.string.sun_moon_sun_label)
+                } else {
+                    stringResource(R.string.sun_moon_moon_label)
+                },
                 modifier = Modifier.offset(
                     x = markerX - ASTRO_SIZE / 2,
                     y = markerY - ASTRO_SIZE / 2
@@ -3081,7 +3132,11 @@ private fun SunArc(
                         contentDescription = null,
                         modifier = Modifier.size(15.dp)
                     )
-                    Text(text = "Amanecer", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                    Text(
+                        text = stringResource(DetailType.SUNRISE.titleRes),
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 12.sp
+                    )
                 }
                 Text(
                     text = sunrise.format(timeFormatter),
@@ -3095,7 +3150,11 @@ private fun SunArc(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
-                    Text(text = "Atardecer", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                    Text(
+                        text = stringResource(DetailType.SUNSET.titleRes),
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 12.sp
+                    )
                     Image(
                         painter = painterResource(R.drawable.ic_sunset),
                         contentDescription = null,
@@ -3362,7 +3421,7 @@ private fun WeekScreen(
             }
             if (!isLandscape) {
                 Text(
-                    text = "Previsión de 7 días",
+                    text = stringResource(R.string.week_title),
                     color = Color.White.copy(alpha = 0.7f),
                     fontSize = 14.sp
                 )
@@ -3562,7 +3621,7 @@ private fun DayDetailScreen(
         ) {
             WeatherIcon(day.condition, isDay = true, size = 80.dp)
             Text(
-                text = day.condition.label,
+                text = stringResource(day.condition.labelRes),
                 color = Color.White,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.SemiBold
@@ -3582,7 +3641,7 @@ private fun DayDetailScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "Por horas",
+                    text = stringResource(R.string.day_detail_hourly_label),
                     color = Color.White.copy(alpha = 0.85f),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
@@ -3595,31 +3654,41 @@ private fun DayDetailScreen(
             }
         }
 
-        val (moonEmoji, moonLabel) = moonPhaseInfo(day.moonPhase)
+        val (moonEmoji, moonLabelRes) = moonPhaseInfo(day.moonPhase)
+        val moonLabel = stringResource(moonLabelRes)
+        val dayMaxLabel = stringResource(R.string.day_detail_max)
+        val dayMinLabel = stringResource(R.string.day_detail_min)
+        val dayAvgLabel = stringResource(R.string.day_detail_avg)
+        val dayWindLabel = stringResource(DetailType.WIND.titleRes)
+        val dayPrecipitationLabel = stringResource(DetailType.PRECIPITATION.titleRes)
+        val dayRainProbabilityLabel = stringResource(R.string.day_detail_rain_probability_label)
+        val daySunriseLabel = stringResource(DetailType.SUNRISE.titleRes)
+        val daySunsetLabel = stringResource(DetailType.SUNSET.titleRes)
+        val dayMoonLabel = stringResource(R.string.day_detail_moon_label)
         val detailItems = buildList {
-            add(DetailItem("🌡️", "Máxima", "${day.tempMax.roundToInt()}°", DetailType.MAX_TEMP))
-            add(DetailItem("🌡️", "Mínima", "${day.tempMin.roundToInt()}°", DetailType.MIN_TEMP))
-            add(DetailItem("🌡️", "Media", "${day.tempMean.roundToInt()}°", DetailType.AVG_TEMP))
-            add(DetailItem("💨", "Viento", "${day.windKmh.roundToInt()} km/h", DetailType.WIND))
+            add(DetailItem("🌡️", dayMaxLabel, "${day.tempMax.roundToInt()}°", DetailType.MAX_TEMP))
+            add(DetailItem("🌡️", dayMinLabel, "${day.tempMin.roundToInt()}°", DetailType.MIN_TEMP))
+            add(DetailItem("🌡️", dayAvgLabel, "${day.tempMean.roundToInt()}°", DetailType.AVG_TEMP))
+            add(DetailItem("💨", dayWindLabel, "${day.windKmh.roundToInt()} km/h", DetailType.WIND))
             add(
                 DetailItem(
-                    "🌧️", "Precipitación", "${day.precipitationMm} mm",
+                    "🌧️", dayPrecipitationLabel, "${day.precipitationMm} mm",
                     DetailType.PRECIPITATION
                 )
             )
             day.precipProbability?.let {
-                add(DetailItem("☔", "Prob. lluvia", "$it%", DetailType.RAIN_PROBABILITY))
+                add(DetailItem("☔", dayRainProbabilityLabel, "$it%", DetailType.RAIN_PROBABILITY))
             }
-            add(DetailItem("🌅", "Amanecer", day.sunrise.format(timeFormatter), DetailType.SUNRISE))
-            add(DetailItem("🌇", "Atardecer", day.sunset.format(timeFormatter), DetailType.SUNSET))
-            add(DetailItem(moonEmoji, "Luna", moonLabel, DetailType.MOON_PHASE))
+            add(DetailItem("🌅", daySunriseLabel, day.sunrise.format(timeFormatter), DetailType.SUNRISE))
+            add(DetailItem("🌇", daySunsetLabel, day.sunset.format(timeFormatter), DetailType.SUNSET))
+            add(DetailItem(moonEmoji, dayMoonLabel, moonLabel, DetailType.MOON_PHASE))
         }
         DetailGrid(detailItems, onClick = { selectedDetail = it })
     }
 
         ShrinkingHeader(
             title = locationName,
-            subtitle = day.date.fullDate(),
+            subtitle = day.date.fullDate(stringResource(R.string.date_full_format)),
             shrink = shrink::value,
             leading = { IconCircleButton(emoji = "←", onClick = onBack) },
             modifier = Modifier.align(Alignment.TopStart)
@@ -3744,20 +3813,21 @@ private fun DayCover(
 }
 
 private fun LocalDate.dayName(): String =
-    dayOfWeek.getDisplayName(TextStyle.FULL, esLocale)
+    dayOfWeek.getDisplayName(TextStyle.FULL, Locale.getDefault())
         .replaceFirstChar { it.uppercase() }
 
-private fun LocalDate.fullDate(): String {
-    val day = dayOfWeek.getDisplayName(TextStyle.FULL, esLocale)
+private fun LocalDate.fullDate(format: String): String {
+    val locale = Locale.getDefault()
+    val day = dayOfWeek.getDisplayName(TextStyle.FULL, locale)
         .replaceFirstChar { it.uppercase() }
-    val monthName = month.getDisplayName(TextStyle.FULL, esLocale)
-    return "$day, $dayOfMonth de $monthName"
+    val monthName = month.getDisplayName(TextStyle.FULL, locale)
+    return String.format(locale, format, day, dayOfMonth, monthName)
 }
 
-private fun LocalDateTime.hourLabel(): String {
+private fun LocalDateTime.hourLabel(nowLabel: String): String {
     val now = LocalDateTime.now()
     return if (hour == now.hour && toLocalDate() == now.toLocalDate()) {
-        "Ahora"
+        nowLabel
     } else {
         "%02d:00".format(hour)
     }

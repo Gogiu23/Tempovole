@@ -3,6 +3,7 @@ package com.example.tiempo.notifications
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import com.example.tiempo.R
 
 object NotificationHelper {
     const val CHANNEL_ID = "daily_weather"
@@ -13,10 +14,10 @@ object NotificationHelper {
         if (manager.getNotificationChannel(CHANNEL_ID) == null) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Previsión diaria",
+                context.getString(R.string.notif_channel_name),
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
-                description = "Resumen del tiempo cada mañana"
+                description = context.getString(R.string.notif_channel_description)
             }
             manager.createNotificationChannel(channel)
         }

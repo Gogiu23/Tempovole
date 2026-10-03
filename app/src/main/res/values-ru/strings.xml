@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tempovole</string>
+    <string name="widget_description">Прогноз погоды</string>
+    <string name="widget_home_loading">Tempovole…</string>
+
+    <!-- Fecha completa: %1$s=día de la semana, %2$d=día del mes, %3$s=mes.
+         El orden/conector cambia por idioma (gramática de fechas distinta). -->
+    <string name="date_full_format">%1$s, %2$d %3$s</string>
+
+    <!-- Menú lateral -->
+    <string name="menu_title">Меню</string>
+    <string name="menu_novedades">Новости</string>
+    <string name="menu_blog">Блог</string>
+    <string name="menu_info">Инфо</string>
+    <string name="menu_ajustes">Настройки</string>
+    <string name="menu_idioma">Язык</string>
+
+    <!-- Selector de idioma -->
+    <string name="language_picker_follow_system">Seguir idioma del sistema</string>
+    <string name="language_picker_es">Español</string>
+    <string name="language_picker_en">English</string>
+    <string name="language_picker_ru">Русский</string>
+    <string name="language_picker_it">Italiano</string>
+
+    <!-- Pantalla de Novedades -->
+    <string name="changelog_screen_title">Новости</string>
+    <string name="changelog_screen_out_of_sync_warning">⚠️ Вы используете версию %1$s, для которой пока нет записи в этой истории.</string>
+    <string name="changelog_screen_version_label">Версия %1$s</string>
+    <string name="changelog_screen_current_badge">Текущая</string>
+
+    <string name="changelog_v13_date">29 сентября 2026 г.</string>
+    <string name="changelog_v13_item1">Теперь у всех карточек данных есть собственная анимированная иконка: осадки, вероятность дождя, индекс УФ-излучения, солнечная радиация, точка росы, давление, высота над уровнем моря, пыльца, историческое сравнение, волнение моря, реки, изменение климата, неопределённость модели, восход, закат, фаза Луны и продолжительность светового дня.</string>
+
+    <string name="changelog_v12_date">20 сентября 2026 г.</string>
+    <string name="changelog_v12_item1">Неделя теперь отображается в виде карусели: каждый день — это карточка, которая поворачивается лицом к вам, проходя через центр экрана.</string>
+    <string name="changelog_v12_item2">У каждого дня недели теперь своя фотография, подобранная по прогнозу погоды на этот день, и она обновляется ежедневно.</string>
+    <string name="changelog_v12_item3">Карусель можно прокручивать, коснувшись в любой точке экрана, и после отпускания пальца она продолжает вращаться по инерции, а не останавливается резко.</string>
+    <string name="changelog_v12_item4">Повернув телефон, можно увидеть всю неделю сразу: центральная карточка крупная, а остальные уменьшаются по бокам.</string>
+    <string name="changelog_v12_item5">Иконки в верхнем углу теперь собраны в боковое меню с названием каждого раздела.</string>
+    <string name="changelog_v12_item6">На экране «Сегодня» название города остаётся закреплённым сверху и уменьшается при прокрутке вниз, освобождая место для содержимого.</string>
+    <string name="changelog_v12_item7">Карточки на экране «Сегодня» появляются с эффектом плавного выезда.</string>
+    <string name="changelog_v12_item8">Титры к фотографиям обновляются автоматически: появляются авторы используемых сейчас фотографий и пропадают те, что больше не отображаются.</string>
+    <string name="changelog_v12_item9">Каждый титр теперь является ссылкой: она ведёт на профиль автора и на оригинал фотографии на Unsplash.</string>
+    <string name="changelog_v12_item10">Почасовой график теперь по умолчанию показывает дождь, а его фон меняет цвет в течение суток: коралловый на рассвете, золотистый днём, зелёный вечером и синий ночью.</string>
+    <string name="changelog_v12_item11">Карточки данных теперь располагаются в три колонки и появляются с анимацией: одна крупная карточка уменьшается до своего места, пока вокруг неё появляются остальные.</string>
+    <string name="changelog_v12_item12">Карточка «Солнце и Луна» теперь находится в самом верху, и при попадании в центр экрана солнце или луна проходят свою дугу, прежде чем остановиться на текущем часе.</string>
+
+    <string name="changelog_v11_date">20 сентября 2026 г.</string>
+    <string name="changelog_v11_item1">Новая карточка «Солнце и Луна» с траекторией солнца, продолжительностью светового дня и изображением фазы Луны.</string>
+    <string name="changelog_v11_item2">Фон меняется в зависимости от времени суток: утро, день или ночь.</string>
+    <string name="changelog_v11_item3">Виджет теперь можно отображать с фотографией, прозрачным фоном или сплошным цветом на выбор.</string>
+    <string name="changelog_v11_item4">Дополнительные данные теперь загружаются значительно быстрее.</string>
+    <string name="changelog_v11_item5">Более плавная анимация прокрутки на экране «Сегодня».</string>
+    <string name="changelog_v11_item6">Титры авторов фотографий на экране «Инфо».</string>
+    <string name="changelog_v11_item7">Новый экран новостей (тот самый, что вы сейчас читаете).</string>
+
+    <string name="changelog_v10_date">17 сентября 2026 г.</string>
+    <string name="changelog_v10_item1">Первая версия: прогноз на сегодня и на ближайшие 7 дней.</string>
+    <string name="changelog_v10_item2">Почасовой график температуры, дождя и ветра.</string>
+    <string name="changelog_v10_item3">Настраиваемые дополнительные данные: УФ-излучение, пыльца, волнение моря, реки, историческое сравнение и другое.</string>
+    <string name="changelog_v10_item4">Morning report: ежедневное уведомление в выбранное вами время.</string>
+    <string name="changelog_v10_item5">Виджет для главного экрана.</string>
+
+    <!-- Blog -->
+    <string name="blog_title">Блог</string>
+    <string name="blog_placeholder">Блога пока нет. Скоро здесь появятся статьи о погоде и новостях приложения.</string>
+
+    <!-- Info -->
+    <string name="info_title">Инфо</string>
+    <string name="info_app_name_label">Tempovole</string>
+    <string name="info_version_label">Версия %1$s</string>
+    <string name="info_description">Приложение прогноза погоды. Данные Open-Meteo, фоновые изображения Unsplash.</string>
+    <string name="info_terms_title">Условия использования</string>
+    <string name="info_terms_p1">Tempovole предоставляется «как есть», в информационных целях, без каких-либо гарантий доступности или точности отображаемых данных.</string>
+    <string name="info_terms_p2">Метеорологические данные предоставляются сервисом Open-Meteo и могут содержать ошибки или задержки; не используйте это приложение как единственный источник для решений, затрагивающих вашу безопасность (например, предупреждений об опасных явлениях) — для этого всегда обращайтесь к официальным источникам.</string>
+    <string name="info_terms_p3">Запрещается использование, которое наносит вред, перегружает или ставит под угрозу приложение либо сторонние сервисы, от которых оно зависит (Open-Meteo, Unsplash).</string>
+    <string name="info_terms_p4">Данные условия могут обновляться; продолжение использования приложения после внесения изменений означает их принятие.</string>
+    <string name="info_privacy_title">Политика конфиденциальности</string>
+    <string name="info_privacy_p1">Tempovole не требует регистрации или учётной записи и не собирает персональные данные, позволяющие установить личность.</string>
+    <string name="info_privacy_p2">Местоположение: приложение не использует GPS устройства. По умолчанию показывается Барселона; если вы ищете другой город в Настройках, введённый текст отправляется в сервис геокодирования Open-Meteo для получения координат, которые сохраняются только на вашем устройстве.</string>
+    <string name="info_privacy_p3">Метеорологические данные: для отображения прогноза и дополнительных данных, включённых в Настройках (качество воздуха и пыльца, историческое сравнение, волнение моря, реки, изменение климата, неопределённость модели), координаты выбранного местоположения отправляются в различные бесплатные сервисы Open-Meteo. Никакие другие данные не передаются.</string>
+    <string name="info_privacy_p4">Фотографии: если настроен ключ Unsplash, приложение запрашивает у Unsplash (api.unsplash.com) фоновое изображение для каждого времени суток и фотографии для карточек недели, а также сообщает сервису, какие фотографии используются, как того требуют его правила. Отправляется только поисковый запрос (например, «rain»), но никогда — личные данные.</string>
+    <string name="info_privacy_p5">Ежедневное уведомление и виджет: формируются непосредственно на устройстве и обращаются к тем же сервисам Open-Meteo (и Unsplash — для фона виджета), описанным выше, чтобы показать актуальную погоду.</string>
+    <string name="info_privacy_p6">Приложение не использует учётные записи, файлы cookie, рекламные идентификаторы или инструменты аналитики и отслеживания, а также не передаёт данные третьим лицам, помимо описанных выше обращений к Open-Meteo и Unsplash.</string>
+    <string name="info_privacy_p7">Все настройки (местоположение, время уведомления, включённые данные и т. д.) сохраняются только на устройстве и удаляются при удалении приложения.</string>
+    <string name="info_privacy_p8">Контакт: giuliandominici@gmail.com</string>
+    <string name="info_privacy_policy_link">Открыть эту политику в браузере</string>
+
+    <!-- Créditos -->
+    <string name="photo_credits_title">Авторы фотографий</string>
+    <string name="photo_credits_description">Фотографии взяты с Unsplash и используются в соответствии с его лицензией. Каждая фотография — работа своего автора: приложение показывает одну фоновую фотографию утром, днём и вечером, а также ещё одну на каждой карточке недели в зависимости от прогнозируемой погоды. Ниже перечислены авторы фотографий, которые приложение использует прямо сейчас; нажмите на любого из них, чтобы увидеть его профиль.</string>
+    <string name="photo_credits_empty">Пока не показано ни одной фотографии: авторы появятся здесь, как только загрузится первая.</string>
+    <string name="photo_credits_author_prefix">· Фото: %1$s</string>
+    <string name="photo_credits_view_on_unsplash">"   посмотреть фото на Unsplash"</string>
+    <string name="icon_credits_title">Авторы иконок</string>
+    <string name="icon_credits_description">Иконки погоды (анимированные и статичные) взяты с Flaticon и используются по его бесплатной лицензии, которая требует указания авторства.</string>
+    <string name="icon_credits_flaticon_link">· Иконки от Flaticon (flaticon.com)</string>
+
+    <!-- Ajustes -->
+    <string name="settings_title">Настройки</string>
+    <string name="settings_app_section_title">Приложение</string>
+    <string name="menu_ubicacion">Местоположение</string>
+    <string name="settings_morning_report_label">Morning report</string>
+    <string name="settings_extra_data_label">Дополнительные данные</string>
+    <string name="settings_widget_label">Виджет</string>
+    <string name="time_picker_title">Время Morning report</string>
+    <string name="time_picker_save">Сохранить</string>
+    <string name="time_picker_cancel">Отмена</string>
+
+    <!-- Búsqueda de ubicación -->
+    <string name="location_search_title">Местоположение</string>
+    <string name="location_search_placeholder">Найдите город…</string>
+    <string name="location_search_network_error">Не удалось выполнить поиск. Проверьте подключение к интернету.</string>
+    <string name="location_search_no_results">Ничего не найдено по запросу «%1$s».</string>
+
+    <!-- Barra inferior / error general -->
+    <string name="bottom_bar_today">Сегодня</string>
+    <string name="bottom_bar_week">Неделя</string>
+    <string name="weather_error_prefix">Не удалось загрузить погоду:\n%1$s</string>
+
+    <!-- Hoy -->
+    <string name="today_max_label">Максимум</string>
+    <string name="today_min_label">Минимум</string>
+    <string name="today_rain_probability_label">Вер. дождя</string>
+    <string name="today_next_hours_title">Ближайшие часы</string>
+    <string name="today_pressure_label">Давление</string>
+    <string name="today_historical_label">Vs. норма</string>
+    <string name="today_climate_label">Климат в %1$d году</string>
+    <string name="today_ensemble_label">Разброс моделей</string>
+    <string name="today_metric_rain_label">Дождь</string>
+    <string name="today_metric_temp_label">Температура</string>
+    <string name="today_now_label">Сейчас</string>
+
+    <!-- Sol y luna -->
+    <string name="sun_moon_title">Солнце и Луна</string>
+    <string name="sun_moon_sun_label">Солнце</string>
+    <string name="sun_moon_moon_label">Луна</string>
+    <string name="sun_moon_daylight_hours">%1$d ч %2$d мин светового дня</string>
+
+    <!-- Semana -->
+    <string name="week_title">Прогноз на 7 дней</string>
+
+    <!-- Detalle de día -->
+    <string name="day_detail_hourly_label">По часам</string>
+    <string name="day_detail_max">Максимум</string>
+    <string name="day_detail_min">Минимум</string>
+    <string name="day_detail_avg">Среднее</string>
+    <string name="day_detail_rain_probability_label">Вер. дождя</string>
+    <string name="day_detail_moon_label">Луна</string>
+
+    <!-- DetailType (tarjetas de datos) -->
+    <string name="detail_type_max_temp_title">Максимальная температура</string>
+    <string name="detail_type_max_temp_explanation">Самая высокая температура, ожидаемая сегодня; обычно она устанавливается в начале второй половины дня. Это поможет решить, как одеться и стоит ли избегать часов наибольшей жары.</string>
+    <string name="detail_type_min_temp_title">Минимальная температура</string>
+    <string name="detail_type_min_temp_explanation">Самая низкая температура, ожидаемая сегодня; обычно она наблюдается ранним утром или на рассвете. Полезно знать, понадобится ли тёплая одежда при раннем выходе из дома.</string>
+    <string name="detail_type_wind_title">Ветер</string>
+    <string name="detail_type_wind_explanation">Максимальная скорость ветра, ожидаемая сегодня, измеренная на высоте 10 метров. При 40–50 км/ч может быть трудно идти или держать зонт; выше 60 км/ч порывы считаются сильными.</string>
+    <string name="detail_type_precipitation_title">Осадки</string>
+    <string name="detail_type_precipitation_explanation">Общее количество дождя (или других осадков), ожидаемое за весь день, в миллиметрах. 1 мм соответствует 1 литру воды на квадратный метр: менее 1 мм практически незаметно, более 10 мм — уже заметный дождь.</string>
+    <string name="detail_type_rain_probability_title">Вероятность дождя</string>
+    <string name="detail_type_rain_probability_explanation">Вероятность того, что в какой-то момент дня пойдёт дождь, по данным метеорологической модели. Выше 50%% стоит взять зонт; ниже 20%% дождь маловероятен.</string>
+    <string name="detail_type_uv_index_title">Индекс УФ-излучения</string>
+    <string name="detail_type_uv_index_explanation">Показывает интенсивность ультрафиолетового излучения солнца по шкале от 0 до 11+. При индексе 6 и выше рекомендуется солнцезащита; начиная с 8 стоит избегать прямого солнца в середине дня.</string>
+    <string name="detail_type_solar_radiation_title">Солнечная радиация</string>
+    <string name="detail_type_solar_radiation_explanation">Солнечная энергия, достигающая поверхности прямо сейчас, в ваттах на квадратный метр (Вт/м²). Значения выше 700–800 Вт/м² говорят об очень сильном солнце, типичном для полудня ясным летним днём.</string>
+    <string name="detail_type_dew_point_title">Точка росы</string>
+    <string name="detail_type_dew_point_explanation">Температура, при которой воздух насыщается влагой и начинается конденсация. Ниже 10° воздух ощущается сухим; выше 20° становится душно, даже если сама температура воздуха не очень высока.</string>
+    <string name="detail_type_pressure_title">Атмосферное давление</string>
+    <string name="detail_type_pressure_explanation">Давление воздуха на уровне поверхности, в гектопаскалях (гПа). Около 1013 гПа — среднее давление; более низкие значения обычно связаны с плохой погодой, а более высокие — с устойчивой ясной погодой.</string>
+    <string name="detail_type_elevation_title">Высота над уровнем моря</string>
+    <string name="detail_type_elevation_explanation">Высота выбранного местоположения над уровнем моря. Влияет на температуру (чем выше, тем прохладнее) и на солнечную радиацию, которая усиливается с высотой.</string>
+    <string name="detail_type_pollen_title">Пыльца</string>
+    <string name="detail_type_pollen_explanation">Концентрация преобладающего в воздухе типа пыльцы прямо сейчас, измеряемая в количестве частиц на кубический метр. Доступно только для Европы. Высокие уровни могут влиять на людей с сезонной аллергией.</string>
+    <string name="detail_type_historical_title">Историческое сравнение</string>
+    <string name="detail_type_historical_explanation">Разница между средней температурой сегодня и средней исторической температурой в этот же день за последние 15 лет. Положительное значение означает, что сегодня теплее обычного для этой даты; отрицательное — что холоднее.</string>
+    <string name="detail_type_marine_title">Волнение моря</string>
+    <string name="detail_type_marine_explanation">Высота волн в ближайшем к этому местоположению море, в метрах. Данные доступны, только если местоположение находится на побережье или очень близко к морю. Выше 2 метров море уже считается неспокойным.</string>
+    <string name="detail_type_flood_title">Речной сток</string>
+    <string name="detail_type_flood_explanation">Расчётный расход воды ближайшей реки по данным глобальной гидрологической модели, в кубических метрах в секунду. Доступно только вблизи рек, охваченных моделью; это справочное значение, а не официальное предупреждение о паводке.</string>
+    <string name="detail_type_climate_title">Изменение климата</string>
+    <string name="detail_type_climate_explanation">Разница между среднегодовой температурой, прогнозируемой на 2050 год (по климатической модели), и температурой одного из последних реальных лет. Даёт представление о том, насколько может потеплеть в этом регионе в долгосрочной перспективе.</string>
+    <string name="detail_type_ensemble_title">Неопределённость модели</string>
+    <string name="detail_type_ensemble_explanation">Диапазон температуры на текущий час по данным разных реализаций (членов) ансамблевой метеорологической модели. Чем шире диапазон, тем менее уверенно модель определяет точный результат.</string>
+    <string name="detail_type_avg_temp_title">Средняя температура</string>
+    <string name="detail_type_avg_temp_explanation">Среднее значение всех температур за день. Это более показательный способ оценить, «какая была погода» в целом, чем смотреть только на максимум или минимум.</string>
+    <string name="detail_type_sunrise_title">Восход</string>
+    <string name="detail_type_sunrise_explanation">Время, когда сегодня в этом месте восходит солнце. Меняется в течение года в зависимости от сезона и широты местности.</string>
+    <string name="detail_type_sunset_title">Закат</string>
+    <string name="detail_type_sunset_explanation">Время, когда сегодня в этом месте заходит солнце, отмечая конец светового дня.</string>
+    <string name="detail_type_moon_phase_title">Фаза Луны</string>
+    <string name="detail_type_moon_phase_explanation">Луна проходит 8 фаз в течение цикла продолжительностью около 29,5 суток, чередуя новолуние (почти невидимое) и полнолуние (видимое полностью). Полезно, чтобы узнать, будет ли ночью немного светлее.</string>
+    <string name="detail_type_day_length_title">Продолжительность светового дня</string>
+    <string name="detail_type_day_length_explanation">Общее время между восходом и закатом сегодня. Меняется в течение года в зависимости от сезона и широты: летом дни длиннее, зимой короче.</string>
+
+    <string name="scale_band_low">Низкий</string>
+    <string name="scale_band_moderate">Умеренный</string>
+    <string name="scale_band_high">Высокий</string>
+    <string name="scale_band_very_high">Очень высокий</string>
+    <string name="scale_band_extreme">Экстремальный</string>
+
+    <!-- Condición meteorológica -->
+    <string name="weather_condition_clear">Ясно</string>
+    <string name="weather_condition_partly">Переменная облачность</string>
+    <string name="weather_condition_cloudy">Облачно</string>
+    <string name="weather_condition_fog">Туман</string>
+    <string name="weather_condition_drizzle">Морось</string>
+    <string name="weather_condition_rain">Дождь</string>
+    <string name="weather_condition_snow">Снег</string>
+    <string name="weather_condition_storm">Гроза</string>
+    <string name="weather_condition_unknown">—</string>
+
+    <!-- Fases lunares -->
+    <string name="moon_phase_new">Новолуние</string>
+    <string name="moon_phase_waxing_crescent">Растущий серп</string>
+    <string name="moon_phase_first_quarter">Первая четверть</string>
+    <string name="moon_phase_waxing_gibbous">Прибывающая Луна</string>
+    <string name="moon_phase_full">Полнолуние</string>
+    <string name="moon_phase_waning_gibbous">Убывающая Луна</string>
+    <string name="moon_phase_last_quarter">Последняя четверть</string>
+    <string name="moon_phase_waning_crescent">Убывающий серп</string>
+
+    <!-- Datos adicionales (Ajustes) -->
+    <string name="feature_sun_moon_label">Солнце и Луна</string>
+    <string name="feature_sun_moon_description">Показывает на экране «Сегодня»: время восхода и заката, продолжительность светового дня и текущую фазу Луны.</string>
+    <string name="feature_atmospheric_label">Атмосферные данные (УФ-излучение, радиация, точка росы, давление)</string>
+    <string name="feature_atmospheric_description">Отображаются на экране «Сегодня»: индекс УФ-излучения, солнечная радиация, точка росы и атмосферное давление.</string>
+    <string name="feature_pollen_label">Пыльца (только Европа)</string>
+    <string name="feature_pollen_description">Показывает преобладающий тип пыльцы и его уровень. Данные доступны только для Европы.</string>
+    <string name="feature_elevation_label">Высота над уровнем моря</string>
+    <string name="feature_elevation_description">Добавляет высоту выбранного местоположения над уровнем моря.</string>
+    <string name="feature_historical_label">Сравнение со средним историческим значением</string>
+    <string name="feature_historical_description">Сравнивает температуру сегодня со средним значением за последние 15 лет на эту дату.</string>
+    <string name="feature_marine_label">Волнение моря (только побережье)</string>
+    <string name="feature_marine_description">Высота волн в ближайшем море. Данные доступны, только если вы находитесь на побережье.</string>
+    <string name="feature_flood_label">Реки / паводки</string>
+    <string name="feature_flood_description">Расчётный расход воды ближайшей реки, если она охвачена моделью.</string>
+    <string name="feature_climate_label">Долгосрочное изменение климата</string>
+    <string name="feature_climate_description">Разница между прогнозируемой средней температурой на 2050 год и температурой одного из последних лет.</string>
+    <string name="feature_ensemble_label">Неопределённость модели</string>
+    <string name="feature_ensemble_description">Диапазон температуры по данным различных реализаций метеорологической модели.</string>
+
+    <!-- Widget: fondo y color -->
+    <string name="widget_bg_image_label">Изображение</string>
+    <string name="widget_bg_image_description">Использует тот же фон, что и в приложении, в зависимости от времени суток.</string>
+    <string name="widget_bg_transparent_label">Прозрачный</string>
+    <string name="widget_bg_transparent_description">Без фона: сквозь виджет видны обои рабочего стола вашего телефона.</string>
+    <string name="widget_bg_color_label">Сплошной цвет</string>
+    <string name="widget_bg_color_description">Один сплошной цвет на ваш выбор.</string>
+    <string name="widget_color_navy_label">Ночной синий</string>
+    <string name="widget_color_slate_label">Грифельно-серый</string>
+    <string name="widget_color_forest_label">Лесной зелёный</string>
+    <string name="widget_color_plum_label">Фиолетовый</string>
+    <string name="widget_color_crimson_label">Тёмно-красный</string>
+    <string name="widget_color_black_label">Чёрный</string>
+
+    <!-- Calidad del aire y polen -->
+    <string name="air_quality_good">Хорошее</string>
+    <string name="air_quality_acceptable">Приемлемое</string>
+    <string name="air_quality_moderate">Умеренное</string>
+    <string name="air_quality_bad">Плохое</string>
+    <string name="air_quality_very_bad">Очень плохое</string>
+    <string name="air_quality_extreme">Экстремальное</string>
+
+    <string name="pollen_alder">Ольха</string>
+    <string name="pollen_birch">Берёза</string>
+    <string name="pollen_grass">Злаки</string>
+    <string name="pollen_mugwort">Полынь</string>
+    <string name="pollen_olive">Олива</string>
+    <string name="pollen_ragweed">Амброзия</string>
+
+    <string name="pollen_level_low">Низкий</string>
+    <string name="pollen_level_moderate">Умеренный</string>
+    <string name="pollen_level_high">Высокий</string>
+
+    <!-- Notificaciones -->
+    <string name="notif_channel_name">Ежедневный прогноз</string>
+    <string name="notif_channel_description">Сводка погоды каждое утро</string>
+    <string name="notif_daily_title">🌅 Доброе утро · %1$s</string>
+    <string name="notif_daily_short_text">%1$d° сейчас  ·  Средняя %2$d°  ·  %3$s</string>
+    <string name="notif_daily_body_now_avg">🌡️ Сейчас %1$d°  ·  Среднее за день %2$d°\n</string>
+    <string name="notif_air_quality">🌬️ Качество воздуха: %1$s (AQI %2$d)\n</string>
+    <string name="notif_action_view_all">Показать всё</string>
+    <string name="notif_action_dismiss">Скрыть</string>
+    <string name="notif_rain_likely">Вероятен дождь (%1$d%%)</string>
+    <string name="notif_rain_possible_percent">Возможен дождь (%1$d%%)</string>
+    <string name="notif_rain_possible_mm">Возможен дождь (%1$s мм)</string>
+    <string name="notif_rain_unlikely">Дождь не ожидается</string>
+
+    <!-- Widget de pantalla de inicio -->
+    <string name="widget_placeholder_dash">—</string>
+    <string name="widget_rain_next_hour"> %1$d%% ближ. час</string>
+</resources>

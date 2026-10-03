@@ -61,19 +61,35 @@ class WeatherNotificationWorker(
             ) != PackageManager.PERMISSION_GRANTED
         ) return
 
-        val title = "🌅 Buenos días · $locationName"
+        val title = applicationContext.getString(R.string.notif_daily_title, locationName)
         val rain = rainSummary(day)
-        val (moonEmoji, moonLabel) = moonPhaseInfo(day.moonPhase)
+        val (moonEmoji, moonLabelRes) = moonPhaseInfo(day.moonPhase)
+        val moonLabel = applicationContext.getString(moonLabelRes)
 
-        val shortText = "${current.temp.roundToInt()}° ahora  ·  " +
-            "Media ${day.tempMean.roundToInt()}°  ·  $rain"
+        val shortText = applicationContext.getString(
+            R.string.notif_daily_short_text,
+            current.temp.roundToInt(),
+            day.tempMean.roundToInt(),
+            rain
+        )
 
         val bigText = buildString {
-            append("🌡️ Ahora ${current.temp.roundToInt()}°  ·  ")
-            append("Media del día ${day.tempMean.roundToInt()}°\n")
+            append(
+                applicationContext.getString(
+                    R.string.notif_daily_body_now_avg,
+                    current.temp.roundToInt(),
+                    day.tempMean.roundToInt()
+                )
+            )
             append("${day.condition.emoji} $rain\n")
             if (airQuality != null) {
-                append("🌬️ Calidad del aire: ${airQuality.label} (AQI ${airQuality.europeanAqi})\n")
+                append(
+                    applicationContext.getString(
+                        R.string.notif_air_quality,
+                        applicationContext.getString(airQuality.labelRes),
+                        airQuality.europeanAqi
+                    )
+                )
             }
             append("🌅 ${day.sunrise.formatHour()}   🌇 ${day.sunset.formatHour()}\n")
             append("$moonEmoji $moonLabel")
@@ -100,8 +116,16 @@ class WeatherNotificationWorker(
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .setContentIntent(openAppIntent)
-            .addAction(R.drawable.ic_launcher_foreground, "Ver todo", openAppIntent)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Descartar", dismissIntent)
+            .addAction(
+                R.drawable.ic_launcher_foreground,
+                applicationContext.getString(R.string.notif_action_view_all),
+                openAppIntent
+            )
+            .addAction(
+                android.R.drawable.ic_menu_close_clear_cancel,
+                applicationContext.getString(R.string.notif_action_dismiss),
+                dismissIntent
+            )
             .build()
 
         NotificationManagerCompat.from(applicationContext)
@@ -111,10 +135,13 @@ class WeatherNotificationWorker(
     private fun rainSummary(day: DayWeather): String {
         val prob = day.precipProbability
         return when {
-            prob != null && prob >= 50 -> "Lluvia probable ($prob%)"
-            prob != null && prob > 0 -> "Posible lluvia ($prob%)"
-            day.precipitationMm > 0 -> "Posible lluvia (${day.precipitationMm} mm)"
-            else -> "Sin lluvia prevista"
+            prob != null && prob >= 50 ->
+                applicationContext.getString(R.string.notif_rain_likely, prob)
+            prob != null && prob > 0 ->
+                applicationContext.getString(R.string.notif_rain_possible_percent, prob)
+            day.precipitationMm > 0 ->
+                applicationContext.getString(R.string.notif_rain_possible_mm, day.precipitationMm.toString())
+            else -> applicationContext.getString(R.string.notif_rain_unlikely)
         }
     }
 

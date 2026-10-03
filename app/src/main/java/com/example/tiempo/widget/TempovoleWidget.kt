@@ -33,6 +33,7 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.example.tiempo.R
 import com.example.tiempo.MainActivity
+import com.example.tiempo.data.LanguagePreferences
 import com.example.tiempo.data.LocationRepository
 import com.example.tiempo.data.UnsplashRepository
 import com.example.tiempo.data.WeatherRepository
@@ -84,20 +85,31 @@ class TempovoleWidget : GlanceAppWidget() {
             ?.let { loadCachedBitmap(appContext, it) }
 
         provideContent {
-            // El aspecto se lee del estado de Glance (ver [WidgetUpdater]): así, cuando la
-            // app lo cambia, la composición se entera y el widget se repinta. Si todavía no
-            // hay nada en el estado (widget recién añadido), se cae a las preferencias.
+            // El aspecto y el idioma se leen del estado de Glance (ver [WidgetUpdater]): así,
+            // cuando la app los cambia, la composición se entera y el widget se repinta sin
+            // esperar a que el sistema vuelva a invocar provideGlance por su cuenta. El Context
+            // de aquí puede venir de una sesión creada antes del último cambio de idioma y no
+            // reflejarlo (a diferencia de una Activity, el framework no se lo reaplica solo),
+            // así que el idioma para resolver los strings sale del estado, no del Context.
             val state = currentState<Preferences>()
             val backgroundMode = state[WidgetStateKeys.background]
                 ?.let { runCatching { WidgetBackground.valueOf(it) }.getOrNull() }
                 ?: WidgetPreferences.getBackground(appContext)
             val solidColor = state[WidgetStateKeys.color]
                 ?: WidgetPreferences.getColor(appContext).argb
+            val languageTag = state[WidgetStateKeys.languageTag]
+                ?.takeIf { it.isNotEmpty() }
+                ?: LanguagePreferences.getLanguageTag(appContext)
+            val localizedContext = LanguagePreferences.localizedContextForTag(appContext, languageTag)
 
             WidgetContent(
                 locationName = location.name,
                 current = current,
                 rainNextHour = rainNextHour,
+                rainNextHourText = rainNextHour?.let {
+                    localizedContext.getString(R.string.widget_rain_next_hour, it)
+                },
+                placeholderDash = localizedContext.getString(R.string.widget_placeholder_dash),
                 photo = photo.takeIf { backgroundMode == WidgetBackground.IMAGE },
                 backgroundMode = backgroundMode,
                 solidColor = solidColor
@@ -133,6 +145,8 @@ private fun WidgetContent(
     locationName: String,
     current: CurrentWeather?,
     rainNextHour: Int?,
+    rainNextHourText: String?,
+    placeholderDash: String,
     photo: Bitmap?,
     backgroundMode: WidgetBackground,
     solidColor: Int
@@ -194,11 +208,11 @@ private fun WidgetContent(
                 }
             } else {
                 Text(
-                    text = "—",
+                    text = placeholderDash,
                     style = TextStyle(color = white, fontSize = 30.sp, fontWeight = FontWeight.Bold)
                 )
             }
-            if (rainNextHour != null) {
+            if (rainNextHourText != null) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Image(
                         provider = ImageProvider(R.drawable.ic_rain_prob),
@@ -206,7 +220,7 @@ private fun WidgetContent(
                         modifier = GlanceModifier.size(14.dp)
                     )
                     Text(
-                        text = " $rainNextHour% próx. hora",
+                        text = rainNextHourText,
                         style = TextStyle(color = white, fontSize = 12.sp)
                     )
                 }

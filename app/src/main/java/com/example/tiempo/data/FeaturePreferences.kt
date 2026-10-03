@@ -1,47 +1,24 @@
 package com.example.tiempo.data
 
 import android.content.Context
+import androidx.annotation.StringRes
+import com.example.tiempo.R
 
 /** Cada uno de los datos extra de Open-Meteo que el usuario puede activar/desactivar en Ajustes. */
-enum class ExtraFeature(val emoji: String, val label: String, val description: String) {
-    SUN_MOON(
-        "🌅", "Sol y luna",
-        "Muestra en \"Hoy\": hora del amanecer y el atardecer, horas de luz del día y la " +
-            "fase lunar actual."
-    ),
-    ATMOSPHERIC(
-        "🌤️", "Datos atmosféricos (UV, radiación, punto de rocío, presión)",
-        "Se muestran en \"Hoy\": índice UV, radiación solar, punto de rocío y presión " +
-            "atmosférica."
-    ),
-    POLLEN(
-        "🌾", "Polen (solo Europa)",
-        "Muestra el tipo de polen predominante y su nivel. Solo hay datos en Europa."
-    ),
-    ELEVATION(
-        "⛰️", "Altitud",
-        "Añade la altitud sobre el nivel del mar de la ubicación elegida."
-    ),
-    HISTORICAL(
-        "📊", "Comparación con la media histórica",
-        "Compara la temperatura de hoy con la media de los últimos 15 años en esa fecha."
-    ),
-    MARINE(
-        "🌊", "Oleaje / marina (solo costa)",
-        "Altura del oleaje del mar más cercano. Solo hay datos si estás en la costa."
-    ),
-    FLOOD(
-        "🏞️", "Ríos / crecidas",
-        "Caudal estimado del río más cercano, si hay uno con cobertura del modelo."
-    ),
-    CLIMATE(
-        "🌍", "Cambio climático a largo plazo",
-        "Diferencia de temperatura media proyectada para 2050 frente a un año reciente."
-    ),
-    ENSEMBLE(
-        "🎯", "Incertidumbre del modelo",
-        "Rango de temperatura según las distintas simulaciones del modelo meteorológico."
-    )
+enum class ExtraFeature(
+    val emoji: String,
+    @StringRes val labelRes: Int,
+    @StringRes val descriptionRes: Int
+) {
+    SUN_MOON("🌅", R.string.feature_sun_moon_label, R.string.feature_sun_moon_description),
+    ATMOSPHERIC("🌤️", R.string.feature_atmospheric_label, R.string.feature_atmospheric_description),
+    POLLEN("🌾", R.string.feature_pollen_label, R.string.feature_pollen_description),
+    ELEVATION("⛰️", R.string.feature_elevation_label, R.string.feature_elevation_description),
+    HISTORICAL("📊", R.string.feature_historical_label, R.string.feature_historical_description),
+    MARINE("🌊", R.string.feature_marine_label, R.string.feature_marine_description),
+    FLOOD("🏞️", R.string.feature_flood_label, R.string.feature_flood_description),
+    CLIMATE("🌍", R.string.feature_climate_label, R.string.feature_climate_description),
+    ENSEMBLE("🎯", R.string.feature_ensemble_label, R.string.feature_ensemble_description)
 }
 
 object FeaturePreferences {

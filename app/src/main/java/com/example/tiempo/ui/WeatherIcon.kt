@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import coil.ImageLoader
@@ -50,7 +51,7 @@ fun WeatherIcon(
         Text(text = condition.emoji, fontSize = (size.value * 0.8f).sp, modifier = modifier)
         return
     }
-    AnimatedRawIcon(res, size, condition.label, modifier)
+    AnimatedRawIcon(res, size, stringResource(condition.labelRes), modifier)
 }
 
 /** Un WebP animado de res/raw, una sola pasada, congelado en el ultimo fotograma. */
@@ -104,7 +105,7 @@ fun WeatherIconStatic(
 ) {
     Image(
         painter = painterResource(condition.staticRes(isDay)),
-        contentDescription = condition.label,
+        contentDescription = stringResource(condition.labelRes),
         modifier = modifier.size(size)
     )
 }

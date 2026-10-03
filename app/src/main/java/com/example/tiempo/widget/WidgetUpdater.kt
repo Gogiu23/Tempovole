@@ -5,10 +5,12 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
+import com.example.tiempo.data.LanguagePreferences
 import com.example.tiempo.data.WidgetPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -17,6 +19,7 @@ import kotlinx.coroutines.sync.withLock
 object WidgetStateKeys {
     val background = stringPreferencesKey("background")
     val color = intPreferencesKey("color")
+    val languageTag = stringPreferencesKey("language_tag")
 }
 
 /**
@@ -38,13 +41,16 @@ object WidgetUpdater {
     // el widget pintado con el ajuste anterior.
     private val mutex = Mutex()
 
-    fun requestUpdate(context: Context) {
+    fun requestUpdate(context: Context, delayMillis: Long = 0) {
         val appContext = context.applicationContext
         scope.launch {
+            if (delayMillis > 0) delay(delayMillis)
             mutex.withLock {
                 runCatching {
                     val mode = WidgetPreferences.getBackground(appContext).name
                     val color = WidgetPreferences.getColor(appContext).argb
+                    // "" = seguir el idioma del sistema (DataStore no admite null en un string key).
+                    val languageTag = LanguagePreferences.getLanguageTag(appContext) ?: ""
                     val widget = TempovoleWidget()
 
                     GlanceAppWidgetManager(appContext)
@@ -53,6 +59,7 @@ object WidgetUpdater {
                             updateAppWidgetState(appContext, glanceId) { prefs ->
                                 prefs[WidgetStateKeys.background] = mode
                                 prefs[WidgetStateKeys.color] = color
+                                prefs[WidgetStateKeys.languageTag] = languageTag
                             }
                             widget.update(appContext, glanceId)
                         }

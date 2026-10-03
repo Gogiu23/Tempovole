@@ -1,5 +1,7 @@
 package com.example.tiempo.data.model
 
+import androidx.annotation.StringRes
+import com.example.tiempo.R
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.time.LocalDate
@@ -105,20 +107,20 @@ data class WeatherForecast(
 )
 
 enum class WeatherCondition(
-    val label: String,
+    @StringRes val labelRes: Int,
     val emoji: String,
     /** Qué se le pide a Unsplash para ilustrar este tiempo en las tarjetas de la semana. */
     val photoQuery: String
 ) {
-    CLEAR("Despejado", "\u2600\uFE0F", "sunny sky,sunshine"),  // ojo: "sunshine landscape" deja el fondo en 1 sola foto squarish
-    PARTLY("Parcial", "\u26C5", "partly cloudy sky,clouds sunshine"),
-    CLOUDY("Nublado", "\u2601\uFE0F", "cloudy sky,overcast landscape"),
-    FOG("Niebla", "\uD83C\uDF2B\uFE0F", "fog,misty landscape"),
-    DRIZZLE("Llovizna", "\uD83C\uDF26\uFE0F", "drizzle,light rain"),
-    RAIN("Lluvia", "\uD83C\uDF27\uFE0F", "rain,rainy day"),
-    SNOW("Nieve", "\u2744\uFE0F", "snow,winter landscape"),
-    STORM("Tormenta", "\u26C8\uFE0F", "thunderstorm,lightning"),
-    UNKNOWN("\u2014", "\u2753", "landscape,nature");
+    CLEAR(R.string.weather_condition_clear, "\u2600\uFE0F", "sunny sky,sunshine"),  // ojo: "sunshine landscape" deja el fondo en 1 sola foto squarish
+    PARTLY(R.string.weather_condition_partly, "\u26C5", "partly cloudy sky,clouds sunshine"),
+    CLOUDY(R.string.weather_condition_cloudy, "\u2601\uFE0F", "cloudy sky,overcast landscape"),
+    FOG(R.string.weather_condition_fog, "\uD83C\uDF2B\uFE0F", "fog,misty landscape"),
+    DRIZZLE(R.string.weather_condition_drizzle, "\uD83C\uDF26\uFE0F", "drizzle,light rain"),
+    RAIN(R.string.weather_condition_rain, "\uD83C\uDF27\uFE0F", "rain,rainy day"),
+    SNOW(R.string.weather_condition_snow, "\u2744\uFE0F", "snow,winter landscape"),
+    STORM(R.string.weather_condition_storm, "\u26C8\uFE0F", "thunderstorm,lightning"),
+    UNKNOWN(R.string.weather_condition_unknown, "\u2753", "landscape,nature");
 
     companion object {
         fun fromCode(code: Int): WeatherCondition = when (code) {
@@ -135,17 +137,17 @@ enum class WeatherCondition(
     }
 }
 
-/** Nombre y emoji de la fase lunar a partir de la fracción 0..1 (0/1 = nueva, 0.5 = llena). */
-fun moonPhaseInfo(fraction: Double): Pair<String, String> {
+/** Emoji y nombre (StringRes) de la fase lunar a partir de la fracción 0..1 (0/1 = nueva, 0.5 = llena). */
+fun moonPhaseInfo(fraction: Double): Pair<String, Int> {
     val phases = listOf(
-        "🌑" to "Luna nueva",
-        "🌒" to "Luna creciente",
-        "🌓" to "Cuarto creciente",
-        "🌔" to "Gibosa creciente",
-        "🌕" to "Luna llena",
-        "🌖" to "Gibosa menguante",
-        "🌗" to "Cuarto menguante",
-        "🌘" to "Luna menguante"
+        "🌑" to R.string.moon_phase_new,
+        "🌒" to R.string.moon_phase_waxing_crescent,
+        "🌓" to R.string.moon_phase_first_quarter,
+        "🌔" to R.string.moon_phase_waxing_gibbous,
+        "🌕" to R.string.moon_phase_full,
+        "🌖" to R.string.moon_phase_waning_gibbous,
+        "🌗" to R.string.moon_phase_last_quarter,
+        "🌘" to R.string.moon_phase_waning_crescent
     )
     val index = (fraction * 8).roundToInt() % 8
     return phases[index]

@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Tema de la ventana. La UI real la dibuja Compose (TempovoleTheme). -->
+    <!-- Tema de la ventana. La UI real la dibuja Compose (TempovoleTheme). El fondo se ve un
+         instante al recrearse la Activity (p. ej. al cambiar de idioma) antes de que Compose
+         pinte su primer frame; con negro puro se notaba como un parpadeo, con el azul oscuro
+         del propio fondo de la app es casi imperceptible. -->
     <style name="Theme.Tempovole" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:windowBackground">@color/window_background</item>
     </style>
 </resources>

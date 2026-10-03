@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tempovole</string>
+    <string name="widget_description">Previsione del tempo</string>
+    <string name="widget_home_loading">Tempovole…</string>
+
+    <!-- Data completa: %1$s=giorno della settimana, %2$d=giorno del mese, %3$s=mese.
+         L\'ordine/connettore cambia per lingua (grammatica delle date diversa). -->
+    <string name="date_full_format">%1$s %2$d %3$s</string>
+
+    <!-- Menu laterale -->
+    <string name="menu_title">Menu</string>
+    <string name="menu_novedades">Novità</string>
+    <string name="menu_blog">Blog</string>
+    <string name="menu_info">Info</string>
+    <string name="menu_ajustes">Impostazioni</string>
+    <string name="menu_idioma">Lingua</string>
+
+    <!-- Selettore di lingua -->
+    <string name="language_picker_follow_system">Seguir idioma del sistema</string>
+    <string name="language_picker_es">Español</string>
+    <string name="language_picker_en">English</string>
+    <string name="language_picker_ru">Русский</string>
+    <string name="language_picker_it">Italiano</string>
+
+    <!-- Schermata Novità -->
+    <string name="changelog_screen_title">Novità</string>
+    <string name="changelog_screen_out_of_sync_warning">⚠️ Stai usando la versione %1$s, che non ha ancora una voce in questo registro.</string>
+    <string name="changelog_screen_version_label">Versione %1$s</string>
+    <string name="changelog_screen_current_badge">Attuale</string>
+
+    <string name="changelog_v13_date">29 settembre 2026</string>
+    <string name="changelog_v13_item1">Tutte le schede dei dati hanno ora la propria icona animata: precipitazioni, probabilità di pioggia, indice UV, radiazione solare, punto di rugiada, pressione, altitudine, polline, confronto storico, moto ondoso, fiumi, cambiamento climatico, incertezza, alba, tramonto, fase lunare e ore di luce.</string>
+
+    <string name="changelog_v12_date">20 settembre 2026</string>
+    <string name="changelog_v12_item1">La settimana ora si presenta come una giostra: ogni giorno è una scheda che ruota e si mette di fronte passando per il centro.</string>
+    <string name="changelog_v12_item2">Ogni giorno della settimana ha la propria foto, scelta in base al tempo previsto per quel giorno, e cambia quotidianamente.</string>
+    <string name="changelog_v12_item3">La giostra si trascina da qualsiasi punto dello schermo e continua a scorrere quando sollevi il dito, invece di fermarsi di colpo.</string>
+    <string name="changelog_v12_item4">Ruotando il telefono, l\'intera settimana si vede a colpo d\'occhio: la scheda al centro grande e le altre che si rimpiccioliscono ai lati.</string>
+    <string name="changelog_v12_item5">Le icone nell\'angolo superiore sono state raggruppate in un menu laterale, ora con il nome di ogni sezione.</string>
+    <string name="changelog_v12_item6">In \"Oggi\", il nome della città resta fisso in alto e si rimpicciolisce scorrendo verso il basso, per lasciare spazio ai contenuti.</string>
+    <string name="changelog_v12_item7">Le schede di \"Oggi\" appaiono con un effetto di scorrimento quando entrano nello schermo.</string>
+    <string name="changelog_v12_item8">I crediti delle foto si aggiornano da soli: compaiono gli autori delle foto che l\'app sta usando e scompaiono quelli non più visibili.</string>
+    <string name="changelog_v12_item9">Ogni credito è ora un link: porta al profilo dell\'autore e alla foto originale su Unsplash.</string>
+    <string name="changelog_v12_item10">Il grafico orario inizia mostrando la pioggia, e il suo sfondo cambia colore nel corso delle ore: corallo all\'alba, dorato durante il giorno, verde nel pomeriggio e blu di notte.</string>
+    <string name="changelog_v12_item11">Le schede dei dati sono ora distribuite su tre colonne ed entrano con un\'animazione: una scheda grande che si rimpicciolisce fino al suo posto mentre le altre compaiono intorno.</string>
+    <string name="changelog_v12_item12">La scheda di sole e luna passa a trovarsi in cima a tutto e, arrivando al centro dello schermo, il sole o la luna percorrono il proprio arco prima di posizionarsi all\'ora attuale.</string>
+
+    <string name="changelog_v11_date">20 settembre 2026</string>
+    <string name="changelog_v11_item1">Nuova scheda \"Sole e luna\" con il percorso del sole, le ore di luce e la fase lunare disegnata.</string>
+    <string name="changelog_v11_item2">Lo sfondo cambia a seconda che sia mattina, pomeriggio o notte.</string>
+    <string name="changelog_v11_item3">Il widget ora si può vedere con immagine, trasparente o con un colore fisso a scelta.</string>
+    <string name="changelog_v11_item4">I dati aggiuntivi impiegano molto meno tempo a comparire.</string>
+    <string name="changelog_v11_item5">Animazione di scorrimento più fluida nella schermata Oggi.</string>
+    <string name="changelog_v11_item6">Crediti degli autori delle foto nella schermata Info.</string>
+    <string name="changelog_v11_item7">Nuova schermata delle novità (questa stessa).</string>
+
+    <string name="changelog_v10_date">17 settembre 2026</string>
+    <string name="changelog_v10_item1">Prima versione: previsioni di oggi e dei prossimi 7 giorni.</string>
+    <string name="changelog_v10_item2">Grafico orario di temperatura, pioggia e vento.</string>
+    <string name="changelog_v10_item3">Dati aggiuntivi configurabili: UV, polline, moto ondoso, fiumi, confronto storico e altro.</string>
+    <string name="changelog_v10_item4">Morning report: notifica giornaliera all\'ora che scegli.</string>
+    <string name="changelog_v10_item5">Widget per la schermata home.</string>
+
+    <!-- Blog -->
+    <string name="blog_title">Blog</string>
+    <string name="blog_placeholder">Il blog non è ancora disponibile. Presto troverai qui articoli sul meteo e sulle novità dell\'app.</string>
+
+    <!-- Info -->
+    <string name="info_title">Info</string>
+    <string name="info_app_name_label">Tempovole</string>
+    <string name="info_version_label">Versione %1$s</string>
+    <string name="info_description">App di previsioni meteo. Dati di Open-Meteo, sfondi di Unsplash.</string>
+    <string name="info_terms_title">Termini di utilizzo</string>
+    <string name="info_terms_p1">Tempovole è offerta \"così com\'è\", a scopo informativo, senza garanzia di disponibilità né di esattezza dei dati mostrati.</string>
+    <string name="info_terms_p2">I dati meteorologici provengono da Open-Meteo e possono contenere errori o ritardi; non usare questa app come unica fonte per decisioni che riguardano la tua sicurezza (ad esempio, allerte per fenomeni gravi) — consulta sempre le fonti ufficiali per questo.</string>
+    <string name="info_terms_p3">Non è consentito un uso che danneggi, sovraccarichi o comprometta l\'app o i servizi di terze parti da cui dipende (Open-Meteo, Unsplash).</string>
+    <string name="info_terms_p4">Questi termini possono essere aggiornati; l\'uso continuato dell\'app dopo una modifica implica la sua accettazione.</string>
+    <string name="info_privacy_title">Informativa sulla privacy</string>
+    <string name="info_privacy_p1">Tempovole non richiede registrazione né account e non raccoglie dati personali identificabili.</string>
+    <string name="info_privacy_p2">Posizione: l\'app non usa il GPS del dispositivo. Per impostazione predefinita mostra Barcellona; se cerchi un\'altra città in Impostazioni, il testo che scrivi viene inviato al geocodificatore di Open-Meteo per ottenere le sue coordinate, che vengono salvate solo sul tuo dispositivo.</string>
+    <string name="info_privacy_p3">Dati meteorologici: per mostrare le previsioni e i dati aggiuntivi che attivi in Impostazioni (qualità dell\'aria e polline, confronto storico, moto ondoso, fiumi, cambiamento climatico, incertezza del modello), le coordinate della posizione scelta vengono inviate ai vari servizi gratuiti di Open-Meteo. Non viene inviato nessun altro dato.</string>
+    <string name="info_privacy_p4">Foto: se è configurata una chiave Unsplash, l\'app richiede a Unsplash (api.unsplash.com) la foto di sfondo per ogni fascia del giorno e le foto delle schede della settimana, e la informa di quali foto utilizza, come richiesto dalle sue norme. Viene inviato solo il termine di ricerca (ad esempio \"rain\"), mai dati personali.</string>
+    <string name="info_privacy_p5">Notifica giornaliera e widget: vengono generati sul dispositivo stesso e consultano gli stessi servizi di Open-Meteo (e Unsplash, per lo sfondo del widget) descritti sopra per mostrare il meteo aggiornato.</string>
+    <string name="info_privacy_p6">L\'app non usa account, cookie, identificatori pubblicitari né strumenti di analisi o tracciamento, e non condivide dati con terze parti al di là delle chiamate a Open-Meteo e Unsplash descritte sopra.</string>
+    <string name="info_privacy_p7">Tutte le impostazioni (posizione, orario della notifica, dati attivati, ecc.) vengono salvate solo sul dispositivo e cancellate alla disinstallazione dell\'app.</string>
+    <string name="info_privacy_p8">Contatto: giuliandominici@gmail.com</string>
+    <string name="info_privacy_policy_link">Visualizza questa informativa nel browser</string>
+
+    <!-- Crediti -->
+    <string name="photo_credits_title">Crediti delle immagini</string>
+    <string name="photo_credits_description">Le foto provengono da Unsplash e sono utilizzate secondo la loro licenza. Ogni foto è opera del suo autore: l\'app ne mostra una di sfondo al mattino, al pomeriggio e alla notte, e un\'altra in ogni scheda della settimana in base al tempo previsto per quel giorno. Di seguito gli autori delle foto che l\'app usa in questo momento; tocca uno qualsiasi per vedere il suo profilo.</string>
+    <string name="photo_credits_empty">Non è stata ancora mostrata nessuna foto: qui compariranno i loro autori non appena verrà caricata la prima.</string>
+    <string name="photo_credits_author_prefix">· Foto di %1$s</string>
+    <string name="photo_credits_view_on_unsplash">"   vedi la foto su Unsplash"</string>
+    <string name="icon_credits_title">Crediti delle icone</string>
+    <string name="icon_credits_description">Le icone meteorologiche (animate e statiche) provengono da Flaticon e sono utilizzate secondo la loro licenza gratuita, che richiede l\'attribuzione.</string>
+    <string name="icon_credits_flaticon_link">· Icone di Flaticon (flaticon.com)</string>
+
+    <!-- Impostazioni -->
+    <string name="settings_title">Impostazioni</string>
+    <string name="settings_app_section_title">App</string>
+    <string name="menu_ubicacion">Posizione</string>
+    <string name="settings_morning_report_label">Morning report</string>
+    <string name="settings_extra_data_label">Dati aggiuntivi</string>
+    <string name="settings_widget_label">Widget</string>
+    <string name="time_picker_title">Orario del morning report</string>
+    <string name="time_picker_save">Salva</string>
+    <string name="time_picker_cancel">Annulla</string>
+
+    <!-- Ricerca posizione -->
+    <string name="location_search_title">Posizione</string>
+    <string name="location_search_placeholder">Cerca una città…</string>
+    <string name="location_search_network_error">Impossibile effettuare la ricerca. Controlla la tua connessione.</string>
+    <string name="location_search_no_results">Nessun risultato per \"%1$s\".</string>
+
+    <!-- Barra inferiore / errore generale -->
+    <string name="bottom_bar_today">Oggi</string>
+    <string name="bottom_bar_week">Settimana</string>
+    <string name="weather_error_prefix">Impossibile caricare il meteo:\n%1$s</string>
+
+    <!-- Oggi -->
+    <string name="today_max_label">Massima</string>
+    <string name="today_min_label">Minima</string>
+    <string name="today_rain_probability_label">Prob. pioggia</string>
+    <string name="today_next_hours_title">Prossime ore</string>
+    <string name="today_pressure_label">Pressione</string>
+    <string name="today_historical_label">Vs. media storica</string>
+    <string name="today_climate_label">Clima nel %1$d</string>
+    <string name="today_ensemble_label">Spread del modello</string>
+    <string name="today_metric_rain_label">Pioggia</string>
+    <string name="today_metric_temp_label">Temperatura</string>
+    <string name="today_now_label">Ora</string>
+
+    <!-- Sole e luna -->
+    <string name="sun_moon_title">Sole e luna</string>
+    <string name="sun_moon_sun_label">Sole</string>
+    <string name="sun_moon_moon_label">Luna</string>
+    <string name="sun_moon_daylight_hours">%1$dh %2$dm di luce solare</string>
+
+    <!-- Settimana -->
+    <string name="week_title">Previsioni di 7 giorni</string>
+
+    <!-- Dettaglio del giorno -->
+    <string name="day_detail_hourly_label">Ora per ora</string>
+    <string name="day_detail_max">Massima</string>
+    <string name="day_detail_min">Minima</string>
+    <string name="day_detail_avg">Media</string>
+    <string name="day_detail_rain_probability_label">Prob. pioggia</string>
+    <string name="day_detail_moon_label">Luna</string>
+
+    <!-- DetailType (schede dei dati) -->
+    <string name="detail_type_max_temp_title">Temperatura massima</string>
+    <string name="detail_type_max_temp_explanation">La temperatura più alta prevista per oggi, solitamente raggiunta nelle prime ore del pomeriggio. Aiuta a decidere come vestirsi e se conviene evitare le ore più calde.</string>
+    <string name="detail_type_min_temp_title">Temperatura minima</string>
+    <string name="detail_type_min_temp_explanation">La temperatura più bassa prevista per oggi, tipica delle prime ore del mattino o dell\'alba. Utile per sapere se servirà una giacca uscendo presto.</string>
+    <string name="detail_type_wind_title">Vento</string>
+    <string name="detail_type_wind_explanation">Velocità massima del vento prevista per oggi, misurata a 10 metri di altezza. Da 40-50 km/h in su può rendere difficile camminare o tenere l\'ombrello; oltre i 60 km/h si considerano raffiche forti.</string>
+    <string name="detail_type_precipitation_title">Precipitazione</string>
+    <string name="detail_type_precipitation_explanation">Quantità totale di pioggia (o altra precipitazione) prevista per l\'intera giornata, in millimetri. 1 mm equivale a 1 litro d\'acqua per metro quadrato: meno di 1 mm è quasi impercettibile, oltre i 10 mm è già pioggia consistente.</string>
+    <string name="detail_type_rain_probability_title">Probabilità di pioggia</string>
+    <string name="detail_type_rain_probability_explanation">Probabilità che piova in un qualsiasi momento della giornata, secondo il modello meteorologico. Sopra il 50%% conviene portare l\'ombrello; sotto il 20%% è poco probabile che piova.</string>
+    <string name="detail_type_uv_index_title">Indice UV</string>
+    <string name="detail_type_uv_index_explanation">Misura l\'intensità della radiazione ultravioletta del sole, su una scala da 0 a 11+. Indici pari o superiori a 6 raccomandano una protezione solare; a partire da 8 conviene evitare il sole diretto nelle ore centrali della giornata.</string>
+    <string name="detail_type_solar_radiation_title">Radiazione solare</string>
+    <string name="detail_type_solar_radiation_explanation">Energia solare che raggiunge la superficie in questo momento, in watt per metro quadrato (W/m²). Valori superiori a 700-800 W/m² indicano sole molto intenso, tipico di un mezzogiorno estivo sereno.</string>
+    <string name="detail_type_dew_point_title">Punto di rugiada</string>
+    <string name="detail_type_dew_point_explanation">Temperatura alla quale l\'aria si satura di umidità e inizia a condensarsi. Sotto i 10° si percepisce secco; sopra i 20° l\'ambiente risulta afoso, anche se la temperatura dell\'aria non è molto alta.</string>
+    <string name="detail_type_pressure_title">Pressione atmosferica</string>
+    <string name="detail_type_pressure_explanation">Pressione dell\'aria a livello della superficie, in ettopascal (hPa). Circa 1013 hPa è la pressione media; valori più bassi sono solitamente associati al maltempo, e più alti a tempo stabile e sereno.</string>
+    <string name="detail_type_elevation_title">Altitudine</string>
+    <string name="detail_type_elevation_explanation">Influisce sulla temperatura (a maggiore altitudine, più fresco) e sulla radiazione solare, più intensa quanto più in alto ci si trova. Altezza sul livello del mare della posizione scelta.</string>
+    <string name="detail_type_pollen_title">Polline</string>
+    <string name="detail_type_pollen_explanation">Concentrazione del tipo di polline predominante nell\'aria in questo momento, misurata in granuli per metro cubo. Disponibile solo in Europa. Livelli alti possono colpire le persone con allergie stagionali.</string>
+    <string name="detail_type_historical_title">Confronto storico</string>
+    <string name="detail_type_historical_explanation">Differenza tra la temperatura media di oggi e la media storica dello stesso giorno negli ultimi 15 anni. Un valore positivo indica che oggi fa più caldo del solito per questa data; uno negativo, che fa più freddo.</string>
+    <string name="detail_type_marine_title">Moto ondoso</string>
+    <string name="detail_type_marine_explanation">Altezza delle onde nel mare più vicino a questa posizione, in metri. I dati sono disponibili solo se la posizione si trova sulla costa o molto vicino al mare. Oltre i 2 metri si considera già mare mosso.</string>
+    <string name="detail_type_flood_title">Portata del fiume</string>
+    <string name="detail_type_flood_explanation">Portata stimata del fiume più vicino secondo un modello idrologico globale, in metri cubi al secondo. Disponibile solo vicino a fiumi coperti dal modello; è un riferimento, non un\'allerta ufficiale di piena.</string>
+    <string name="detail_type_climate_title">Cambiamento climatico</string>
+    <string name="detail_type_climate_explanation">Differenza tra la temperatura media annuale prevista per il 2050 (secondo un modello climatico) e quella di un anno recente reale. Dà un\'idea di quanto potrebbe riscaldarsi questa zona nel lungo periodo.</string>
+    <string name="detail_type_ensemble_title">Incertezza del modello</string>
+    <string name="detail_type_ensemble_explanation">Intervallo di temperatura per l\'ora attuale secondo le diverse simulazioni (membri) del modello meteorologico d\'insieme. Quanto più ampio è l\'intervallo, meno sicuro è il modello sul risultato esatto.</string>
+    <string name="detail_type_avg_temp_title">Temperatura media</string>
+    <string name="detail_type_avg_temp_explanation">Media tra tutte le temperature della giornata. È un modo più rappresentativo di \"com\'è andata\" in generale rispetto a guardare solo il massimo o il minimo.</string>
+    <string name="detail_type_sunrise_title">Alba</string>
+    <string name="detail_type_sunrise_explanation">Ora in cui sorge il sole oggi in questa posizione. Cambia nel corso dell\'anno in base alla stagione e alla latitudine del luogo.</string>
+    <string name="detail_type_sunset_title">Tramonto</string>
+    <string name="detail_type_sunset_explanation">Ora in cui tramonta il sole oggi in questa posizione, segnando la fine delle ore di luce naturale.</string>
+    <string name="detail_type_moon_phase_title">Fase lunare</string>
+    <string name="detail_type_moon_phase_explanation">La luna attraversa 8 fasi nel corso di un ciclo di circa 29,5 giorni, alternandosi tra luna nuova (quasi invisibile) e luna piena (visibile per intero). Utile per sapere se ci sarà un po\' più di luce durante la notte.</string>
+    <string name="detail_type_day_length_title">Ore di luce</string>
+    <string name="detail_type_day_length_explanation">Tempo totale tra l\'alba e il tramonto di oggi. Varia nel corso dell\'anno in base alla stagione e alla latitudine: i giorni sono più lunghi in estate e più corti in inverno.</string>
+
+    <string name="scale_band_low">Basso</string>
+    <string name="scale_band_moderate">Moderato</string>
+    <string name="scale_band_high">Alto</string>
+    <string name="scale_band_very_high">Molto alto</string>
+    <string name="scale_band_extreme">Estremo</string>
+
+    <!-- Condizione meteorologica -->
+    <string name="weather_condition_clear">Sereno</string>
+    <string name="weather_condition_partly">Parziale</string>
+    <string name="weather_condition_cloudy">Nuvoloso</string>
+    <string name="weather_condition_fog">Nebbia</string>
+    <string name="weather_condition_drizzle">Pioviggine</string>
+    <string name="weather_condition_rain">Pioggia</string>
+    <string name="weather_condition_snow">Neve</string>
+    <string name="weather_condition_storm">Temporale</string>
+    <string name="weather_condition_unknown">—</string>
+
+    <!-- Fasi lunari -->
+    <string name="moon_phase_new">Luna nuova</string>
+    <string name="moon_phase_waxing_crescent">Luna crescente</string>
+    <string name="moon_phase_first_quarter">Primo quarto</string>
+    <string name="moon_phase_waxing_gibbous">Gibbosa crescente</string>
+    <string name="moon_phase_full">Luna piena</string>
+    <string name="moon_phase_waning_gibbous">Gibbosa calante</string>
+    <string name="moon_phase_last_quarter">Ultimo quarto</string>
+    <string name="moon_phase_waning_crescent">Luna calante</string>
+
+    <!-- Dati aggiuntivi (Impostazioni) -->
+    <string name="feature_sun_moon_label">Sole e luna</string>
+    <string name="feature_sun_moon_description">Mostra in \"Oggi\": ora dell\'alba e del tramonto, ore di luce diurna e fase lunare attuale.</string>
+    <string name="feature_atmospheric_label">Dati atmosferici (UV, radiazione, punto di rugiada, pressione)</string>
+    <string name="feature_atmospheric_description">Vengono mostrati in \"Oggi\": indice UV, radiazione solare, punto di rugiada e pressione atmosferica.</string>
+    <string name="feature_pollen_label">Polline (solo Europa)</string>
+    <string name="feature_pollen_description">Mostra il tipo di polline predominante e il suo livello. I dati sono disponibili solo in Europa.</string>
+    <string name="feature_elevation_label">Altitudine</string>
+    <string name="feature_elevation_description">Aggiunge l\'altitudine sul livello del mare della posizione scelta.</string>
+    <string name="feature_historical_label">Confronto con la media storica</string>
+    <string name="feature_historical_description">Confronta la temperatura di oggi con la media degli ultimi 15 anni in quella data.</string>
+    <string name="feature_marine_label">Moto ondoso / mare (solo costa)</string>
+    <string name="feature_marine_description">Altezza del moto ondoso del mare più vicino. I dati sono disponibili solo se ti trovi sulla costa.</string>
+    <string name="feature_flood_label">Fiumi / piene</string>
+    <string name="feature_flood_description">Portata stimata del fiume più vicino, se ce n\'è uno coperto dal modello.</string>
+    <string name="feature_climate_label">Cambiamento climatico a lungo termine</string>
+    <string name="feature_climate_description">Differenza di temperatura media prevista per il 2050 rispetto a un anno recente.</string>
+    <string name="feature_ensemble_label">Incertezza del modello</string>
+    <string name="feature_ensemble_description">Intervallo di temperatura secondo le diverse simulazioni del modello meteorologico.</string>
+
+    <!-- Widget: sfondo e colore -->
+    <string name="widget_bg_image_label">Immagine</string>
+    <string name="widget_bg_image_description">Usa la stessa foto di sfondo dell\'app, in base alla fascia del giorno.</string>
+    <string name="widget_bg_transparent_label">Trasparente</string>
+    <string name="widget_bg_transparent_description">Senza sfondo: si vede lo sfondo del tuo telefono attraverso il widget.</string>
+    <string name="widget_bg_color_label">Colore fisso</string>
+    <string name="widget_bg_color_description">Un colore pieno a tua scelta.</string>
+    <string name="widget_color_navy_label">Blu notte</string>
+    <string name="widget_color_slate_label">Grigio ardesia</string>
+    <string name="widget_color_forest_label">Verde foresta</string>
+    <string name="widget_color_plum_label">Viola</string>
+    <string name="widget_color_crimson_label">Rosso scuro</string>
+    <string name="widget_color_black_label">Nero</string>
+
+    <!-- Qualità dell\'aria e polline -->
+    <string name="air_quality_good">Buona</string>
+    <string name="air_quality_acceptable">Accettabile</string>
+    <string name="air_quality_moderate">Moderata</string>
+    <string name="air_quality_bad">Scarsa</string>
+    <string name="air_quality_very_bad">Molto scarsa</string>
+    <string name="air_quality_extreme">Estrema</string>
+
+    <string name="pollen_alder">Ontano</string>
+    <string name="pollen_birch">Betulla</string>
+    <string name="pollen_grass">Graminacee</string>
+    <string name="pollen_mugwort">Artemisia</string>
+    <string name="pollen_olive">Olivo</string>
+    <string name="pollen_ragweed">Ambrosia</string>
+
+    <string name="pollen_level_low">Basso</string>
+    <string name="pollen_level_moderate">Moderato</string>
+    <string name="pollen_level_high">Alto</string>
+
+    <!-- Notifiche -->
+    <string name="notif_channel_name">Previsione giornaliera</string>
+    <string name="notif_channel_description">Riepilogo del meteo ogni mattina</string>
+    <string name="notif_daily_title">🌅 Buongiorno · %1$s</string>
+    <string name="notif_daily_short_text">%1$d° ora  ·  Media %2$d°  ·  %3$s</string>
+    <string name="notif_daily_body_now_avg">🌡️ Ora %1$d°  ·  Media del giorno %2$d°\n</string>
+    <string name="notif_air_quality">🌬️ Qualità dell\'aria: %1$s (AQI %2$d)\n</string>
+    <string name="notif_action_view_all">Vedi tutto</string>
+    <string name="notif_action_dismiss">Ignora</string>
+    <string name="notif_rain_likely">Pioggia probabile (%1$d%%)</string>
+    <string name="notif_rain_possible_percent">Possibile pioggia (%1$d%%)</string>
+    <string name="notif_rain_possible_mm">Possibile pioggia (%1$s mm)</string>
+    <string name="notif_rain_unlikely">Nessuna pioggia prevista</string>
+
+    <!-- Widget della schermata home -->
+    <string name="widget_placeholder_dash">—</string>
+    <string name="widget_rain_next_hour"> %1$d%% prossima ora</string>
+</resources>
