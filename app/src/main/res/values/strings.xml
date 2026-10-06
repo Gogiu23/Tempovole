@@ -296,4 +296,36 @@
     <!-- Widget de pantalla de inicio -->
     <string name="widget_placeholder_dash">—</string>
     <string name="widget_rain_next_hour"> %1$d%% próx. hora</string>
+
+    <!-- Que me pongo -->
+    <string name="bottom_bar_outfit">Qué me pongo</string>
+    <string name="outfit_title">Qué me pongo hoy</string>
+    <string name="outfit_decided_with">Calculado con %1$d° de sensación térmica</string>
+    <string name="outfit_band_freezing">Hace un frío de verdad</string>
+    <string name="outfit_band_cold">Hace frío</string>
+    <string name="outfit_band_cool">Fresco</string>
+    <string name="outfit_band_mild">Templado</string>
+    <string name="outfit_band_warm">Temperatura agradable</string>
+    <string name="outfit_band_hot">Hace calor</string>
+    <string name="garment_coat">Abrigo</string>
+    <string name="garment_raincoat">Chubasquero</string>
+    <string name="garment_jacket">Chaqueta</string>
+    <string name="garment_hoodie">Sudadera</string>
+    <string name="garment_long_sleeve">Manga larga</string>
+    <string name="garment_short_sleeve">Manga corta</string>
+    <string name="garment_trousers">Pantalón largo</string>
+    <string name="garment_shorts">Pantalón corto</string>
+    <string name="garment_boots">Botas</string>
+    <string name="garment_sneakers">Calzado ligero</string>
+    <string name="garment_scarf">Bufanda</string>
+    <string name="garment_beanie">Gorro</string>
+    <string name="garment_gloves">Guantes</string>
+    <string name="garment_umbrella">Paraguas</string>
+    <string name="garment_sunglasses">Gafas de sol</string>
+    <string name="garment_cap">Gorra</string>
+    <string name="garment_sunscreen">Crema solar</string>
+    <string name="outfit_tip_umbrella_useless">Con este viento el paraguas se te va a dar la vuelta: mejor capucha.</string>
+    <string name="outfit_tip_wind">Va a hacer viento: mejor algo que lo corte que algo suelto.</string>
+    <string name="outfit_tip_uv_high">El sol pega fuerte hoy, aunque no lo notes en la temperatura.</string>
+    <string name="outfit_tip_layers">Entre la mínima y la máxima hay mucha diferencia: ve por capas.</string>
 </resources>

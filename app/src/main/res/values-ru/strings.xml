@@ -296,4 +296,36 @@
     <!-- Widget de pantalla de inicio -->
     <string name="widget_placeholder_dash">—</string>
     <string name="widget_rain_next_hour"> %1$d%% ближ. час</string>
+
+    <!-- Que me pongo -->
+    <string name="bottom_bar_outfit">Что надеть</string>
+    <string name="outfit_title">Что надеть сегодня</string>
+    <string name="outfit_decided_with">Рассчитано по ощущаемым %1$d°</string>
+    <string name="outfit_band_freezing">По-настоящему холодно</string>
+    <string name="outfit_band_cold">Холодно</string>
+    <string name="outfit_band_cool">Прохладно</string>
+    <string name="outfit_band_mild">Умеренно</string>
+    <string name="outfit_band_warm">Комфортная температура</string>
+    <string name="outfit_band_hot">Жарко</string>
+    <string name="garment_coat">Пальто</string>
+    <string name="garment_raincoat">Дождевик</string>
+    <string name="garment_jacket">Куртка</string>
+    <string name="garment_hoodie">Худи</string>
+    <string name="garment_long_sleeve">Длинный рукав</string>
+    <string name="garment_short_sleeve">Короткий рукав</string>
+    <string name="garment_trousers">Брюки</string>
+    <string name="garment_shorts">Шорты</string>
+    <string name="garment_boots">Ботинки</string>
+    <string name="garment_sneakers">Лёгкая обувь</string>
+    <string name="garment_scarf">Шарф</string>
+    <string name="garment_beanie">Шапка</string>
+    <string name="garment_gloves">Перчатки</string>
+    <string name="garment_umbrella">Зонт</string>
+    <string name="garment_sunglasses">Солнечные очки</string>
+    <string name="garment_cap">Кепка</string>
+    <string name="garment_sunscreen">Крем от солнца</string>
+    <string name="outfit_tip_umbrella_useless">При таком ветре зонт вывернет наизнанку: лучше капюшон.</string>
+    <string name="outfit_tip_wind">Будет ветрено: лучше что-то плотное, чем свободное.</string>
+    <string name="outfit_tip_uv_high">Сегодня солнце сильное, даже если по температуре не скажешь.</string>
+    <string name="outfit_tip_layers">Между минимумом и максимумом большая разница: одевайтесь слоями.</string>
 </resources>

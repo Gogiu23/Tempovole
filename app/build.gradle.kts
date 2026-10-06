@@ -94,6 +94,9 @@ dependencies {
     // de OS el idioma elegido en la pantalla de Idioma, que usa LocaleManager directamente.
     implementation("androidx.appcompat:appcompat:1.7.0")
 
+    // Solo para el test de la tabla de "Que me pongo" (app/src/test). No entra en el APK.
+    testImplementation("junit:junit:4.13.2")
+
     val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")

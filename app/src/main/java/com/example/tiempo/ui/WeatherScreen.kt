@@ -1506,6 +1506,19 @@ private fun WeatherBottomBar(selected: Int, onSelect: (Int) -> Unit) {
             label = { Text(stringResource(R.string.bottom_bar_week)) },
             colors = colors
         )
+        NavigationBarItem(
+            selected = selected == 2,
+            onClick = { onSelect(2) },
+            icon = {
+                Image(
+                    painter = painterResource(R.drawable.ic_outfit),
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp)
+                )
+            },
+            label = { Text(stringResource(R.string.bottom_bar_outfit)) },
+            colors = colors
+        )
     }
 }
 
@@ -1551,6 +1564,8 @@ private fun WeatherContent(
                         location,
                         padding
                     )
+                selectedTab == 2 && today != null ->
+                    OutfitScreen(today, state.current, location.name, padding)
                 else -> WeekScreen(state.days, state.hours, location.name, padding)
             }
         }

@@ -296,4 +296,36 @@
     <!-- Widget della schermata home -->
     <string name="widget_placeholder_dash">—</string>
     <string name="widget_rain_next_hour"> %1$d%% prossima ora</string>
+
+    <!-- Que me pongo -->
+    <string name="bottom_bar_outfit">Come vestirsi</string>
+    <string name="outfit_title">Come vestirsi oggi</string>
+    <string name="outfit_decided_with">Calcolato su %1$d° percepiti</string>
+    <string name="outfit_band_freezing">Fa davvero freddo</string>
+    <string name="outfit_band_cold">Fa freddo</string>
+    <string name="outfit_band_cool">Fresco</string>
+    <string name="outfit_band_mild">Mite</string>
+    <string name="outfit_band_warm">Temperatura piacevole</string>
+    <string name="outfit_band_hot">Fa caldo</string>
+    <string name="garment_coat">Cappotto</string>
+    <string name="garment_raincoat">Impermeabile</string>
+    <string name="garment_jacket">Giacca</string>
+    <string name="garment_hoodie">Felpa</string>
+    <string name="garment_long_sleeve">Maniche lunghe</string>
+    <string name="garment_short_sleeve">Maniche corte</string>
+    <string name="garment_trousers">Pantaloni lunghi</string>
+    <string name="garment_shorts">Pantaloncini</string>
+    <string name="garment_boots">Stivali</string>
+    <string name="garment_sneakers">Scarpe leggere</string>
+    <string name="garment_scarf">Sciarpa</string>
+    <string name="garment_beanie">Berretto</string>
+    <string name="garment_gloves">Guanti</string>
+    <string name="garment_umbrella">Ombrello</string>
+    <string name="garment_sunglasses">Occhiali da sole</string>
+    <string name="garment_cap">Cappellino</string>
+    <string name="garment_sunscreen">Crema solare</string>
+    <string name="outfit_tip_umbrella_useless">Con questo vento l\'ombrello si rovescia: meglio il cappuccio.</string>
+    <string name="outfit_tip_wind">Ci sarà vento: meglio qualcosa che lo fermi che qualcosa di ampio.</string>
+    <string name="outfit_tip_uv_high">Oggi il sole picchia, anche se la temperatura non lo dice.</string>
+    <string name="outfit_tip_layers">Tra minima e massima c\'è molta differenza: vestiti a strati.</string>
 </resources>

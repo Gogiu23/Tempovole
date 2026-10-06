@@ -296,4 +296,36 @@
     <!-- Widget de pantalla de inicio -->
     <string name="widget_placeholder_dash">—</string>
     <string name="widget_rain_next_hour"> %1$d%% next hour</string>
+
+    <!-- Que me pongo -->
+    <string name="bottom_bar_outfit">What to wear</string>
+    <string name="outfit_title">What to wear today</string>
+    <string name="outfit_decided_with">Based on a felt temperature of %1$d°</string>
+    <string name="outfit_band_freezing">Properly cold</string>
+    <string name="outfit_band_cold">Cold</string>
+    <string name="outfit_band_cool">Chilly</string>
+    <string name="outfit_band_mild">Mild</string>
+    <string name="outfit_band_warm">Comfortable</string>
+    <string name="outfit_band_hot">Hot</string>
+    <string name="garment_coat">Coat</string>
+    <string name="garment_raincoat">Raincoat</string>
+    <string name="garment_jacket">Jacket</string>
+    <string name="garment_hoodie">Hoodie</string>
+    <string name="garment_long_sleeve">Long sleeves</string>
+    <string name="garment_short_sleeve">Short sleeves</string>
+    <string name="garment_trousers">Trousers</string>
+    <string name="garment_shorts">Shorts</string>
+    <string name="garment_boots">Boots</string>
+    <string name="garment_sneakers">Light shoes</string>
+    <string name="garment_scarf">Scarf</string>
+    <string name="garment_beanie">Beanie</string>
+    <string name="garment_gloves">Gloves</string>
+    <string name="garment_umbrella">Umbrella</string>
+    <string name="garment_sunglasses">Sunglasses</string>
+    <string name="garment_cap">Cap</string>
+    <string name="garment_sunscreen">Sunscreen</string>
+    <string name="outfit_tip_umbrella_useless">This wind will flip an umbrella inside out: go for a hood instead.</string>
+    <string name="outfit_tip_wind">It will be windy: something that blocks it beats something loose.</string>
+    <string name="outfit_tip_uv_high">The sun is strong today, even if the temperature doesn\'t say so.</string>
+    <string name="outfit_tip_layers">Big gap between the low and the high: dress in layers.</string>
 </resources>
