@@ -1,0 +1,3 @@
+• Nuova scheda Come vestirsi: in base al tempo previsto ti dice cosa metterti, con le icone.
+• Tiene conto della temperatura corretta dal vento, della pioggia, della neve e dell'indice UV.
+• Avvisa quando conviene vestirsi a strati o quando l'ombrello non reggerà il vento.

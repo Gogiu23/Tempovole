@@ -29,6 +29,10 @@
     <string name="changelog_screen_version_label">Version %1$s</string>
     <string name="changelog_screen_current_badge">Current</string>
 
+    <string name="changelog_v15_date">October 9, 2026</string>
+    <string name="changelog_v15_item1">New What to wear tab: it tells you what to put on based on the weather ahead.</string>
+    <string name="changelog_v15_item2">It accounts for the temperature corrected for wind, plus rain, snow and the UV index, and warns you when to dress in layers or when an umbrella will not survive.</string>
+
     <string name="changelog_v14_date">October 3, 2026</string>
     <string name="changelog_v14_item1">The app can now be set to Spanish, English, Italian or Russian from the Language menu, without changing your phone\'s language.</string>
     <string name="changelog_v14_item2">The morning report and the widget speak the language you picked too, and the report now arrives with the icon of the weather ahead.</string>

@@ -29,6 +29,10 @@
     <string name="changelog_screen_version_label">Versión %1$s</string>
     <string name="changelog_screen_current_badge">Actual</string>
 
+    <string name="changelog_v15_date">9 de octubre de 2026</string>
+    <string name="changelog_v15_item1">Nueva pestaña Qué me pongo: con el tiempo que va a hacer, te dice qué ropa llevar.</string>
+    <string name="changelog_v15_item2">Tiene en cuenta la temperatura corregida por el viento, la lluvia, la nieve y el índice UV, y avisa cuando conviene ir por capas o cuando el paraguas no va a aguantar.</string>
+
     <string name="changelog_v14_date">3 de octubre de 2026</string>
     <string name="changelog_v14_item1">La app ya se puede poner en español, inglés, italiano o ruso desde el menú Idioma, sin tocar el idioma del móvil.</string>
     <string name="changelog_v14_item2">El aviso de la mañana y el widget también hablan en el idioma elegido, y el aviso llega con el icono del tiempo que va a hacer.</string>

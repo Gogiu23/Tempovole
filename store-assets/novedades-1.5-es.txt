@@ -1,0 +1,3 @@
+• Nueva pestaña Qué me pongo: con el tiempo que va a hacer, te dice qué ropa llevar, con iconos.
+• Tiene en cuenta la temperatura corregida por el viento, la lluvia, la nieve y el índice UV.
+• Avisa cuando conviene ir por capas o cuando el paraguas no va a aguantar el viento.

@@ -1,16 +1,18 @@
-# Prueba cerrada — versión 1.4
+# Prueba cerrada
 
-Guion para subir la 1.4 al canal de prueba cerrada. Todo lo que aquí se pide pegar
-está ya generado en esta carpeta. Las respuestas de los formularios están en
-`play-console-answers.md`.
+Guion de subida al canal de prueba cerrada. Vale para cualquier versión: lo único
+que cambia entre una y otra es el `versionCode` y el fichero de novedades.
+
+Todo lo que aquí se pide pegar está ya generado en esta carpeta. Las respuestas de
+los formularios están en `play-console-answers.md`.
 
 ## El artefacto
 
 - **Fichero**: `app/build/outputs/bundle/release/app-release.aab` (16 MB)
-- **versionCode**: 6 · **versionName**: 1.4
-  (el 4 y el 5 ya estan subidos a Prueba cerrada - Alpha, los dos como 1.3, y Play no
-  permite reutilizar un versionCode: de ahi el error de version si se sube un .aab con
-  el 5. El 5 tuvo lanzamiento completo en el canal cerrado el 30 sept 2026.)
+- **versionCode**: 7 · **versionName**: 1.5
+  (ya estan subidos el 4, el 5 y el 6. Un versionCode NO se puede reutilizar: si se sube
+  un .aab con uno ya usado, la consola lo rechaza con un error de version. Por eso cada
+  release sube el numero, aunque la anterior no llegara a publicarse.)
 - Firmado con `tiempo-release.jks` (el `signingConfig release` de
   `app/build.gradle.kts`), no con la clave de debug.
 - Se regenera con:
@@ -29,7 +31,7 @@ es de la última compilación, no del último commit.
    seguidos** antes de permitir el paso a producción, así que conviene meterlos todos
    de golpe el primer día — el contador se reinicia si alguno sale.
 3. **Crear versión** → sube `app-release.aab`.
-4. **Novedades de esta versión**: pega el contenido de `novedades-1.4-<idioma>.txt`
+4. **Novedades de esta versión**: pega el contenido de `novedades-<version>-<idioma>.txt`
    (uno por ficha de idioma; los cuatro están por debajo del límite de 500 caracteres).
 5. **Revisar y lanzar**.
 

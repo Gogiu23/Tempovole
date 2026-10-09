@@ -29,6 +29,10 @@
     <string name="changelog_screen_version_label">Versione %1$s</string>
     <string name="changelog_screen_current_badge">Attuale</string>
 
+    <string name="changelog_v15_date">9 ottobre 2026</string>
+    <string name="changelog_v15_item1">Nuova scheda Come vestirsi: in base al tempo previsto ti dice cosa metterti.</string>
+    <string name="changelog_v15_item2">Tiene conto della temperatura corretta dal vento, della pioggia, della neve e dell\'indice UV, e avvisa quando conviene vestirsi a strati o quando l\'ombrello non reggerà.</string>
+
     <string name="changelog_v14_date">3 ottobre 2026</string>
     <string name="changelog_v14_item1">L\'app si può impostare in spagnolo, inglese, italiano o russo dal menu Lingua, senza cambiare la lingua del telefono.</string>
     <string name="changelog_v14_item2">Anche l\'avviso del mattino e il widget parlano la lingua scelta, e l\'avviso arriva con l\'icona del tempo previsto.</string>
