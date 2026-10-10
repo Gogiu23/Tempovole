@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
@@ -147,6 +149,9 @@ import com.example.tiempo.data.GeocodingRepository
 import com.example.tiempo.data.GeocodingResult
 import com.example.tiempo.data.HistoricalWeatherRepository
 import com.example.tiempo.data.LanguagePreferences
+import com.example.tiempo.data.UpdateStatus
+import com.example.tiempo.data.startImmediateUpdate
+import com.example.tiempo.data.checkForUpdate
 import com.example.tiempo.data.LocationRepository
 import com.example.tiempo.data.MarineRepository
 import com.example.tiempo.data.SavedLocation
@@ -273,6 +278,10 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
     var notificationHour by remember { mutableStateOf(NotificationPreferences.getHour(appContext)) }
     var notificationMinute by remember { mutableStateOf(NotificationPreferences.getMinute(appContext)) }
     var hasUnseenChanges by remember { mutableStateOf(ChangelogPreferences.hasUnseenChanges(appContext)) }
+    // Se le pregunta a Play una sola vez por sesion: es lo que enciende el punto rojo de
+    // Ajustes. En un build instalado con adb siempre dara Unavailable (ver checkForUpdate).
+    var updateStatus by remember { mutableStateOf<UpdateStatus>(UpdateStatus.Unknown) }
+    LaunchedEffect(Unit) { updateStatus = checkForUpdate(appContext) }
 
     // El gesto de borde izquierdo (o botón atrás) cierra el overlay activo en lugar de salir.
     BackHandler(enabled = overlay != OverlayScreen.NONE) {
@@ -339,6 +348,11 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
                     notificationHour = hour
                     notificationMinute = minute
                     NotificationScheduler.scheduleDaily(appContext, hour = hour, minute = minute)
+                },
+                updateStatus = updateStatus,
+                onRecheckUpdate = {
+                    updateStatus = UpdateStatus.Unknown
+                    updateStatus = checkForUpdate(appContext)
                 },
                 onBack = { overlayIndex = OverlayScreen.NONE.ordinal }
             )
@@ -407,6 +421,7 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
                 ) {
                     SideMenu(
                         hasUnseenChanges = hasUnseenChanges,
+                        hasUpdate = updateStatus is UpdateStatus.Available,
                         onSelect = { screen ->
                             menuOpen = false
                             if (screen == OverlayScreen.CHANGELOG) {
@@ -427,7 +442,9 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
                 ) {
                     IconCircleButton(
                         emoji = if (menuOpen) "✕" else "☰",
-                        showBadge = hasUnseenChanges && !menuOpen,
+                        // Tambien el de actualizacion: si no, el punto de Ajustes solo se
+                        // veria abriendo el menu, que es justo lo que hay que provocar.
+                        showBadge = (hasUnseenChanges || updateStatus is UpdateStatus.Available) && !menuOpen,
                         onClick = { menuOpen = !menuOpen }
                     )
                 }
@@ -443,7 +460,11 @@ private enum class OverlayScreen { NONE, SETTINGS, BLOG, INFO, CHANGELOG, LANGUA
  * que es lo que gana el sitio al no tener que caber cuatro iconos en una esquina.
  */
 @Composable
-private fun SideMenu(hasUnseenChanges: Boolean, onSelect: (OverlayScreen) -> Unit) {
+private fun SideMenu(
+    hasUnseenChanges: Boolean,
+    hasUpdate: Boolean,
+    onSelect: (OverlayScreen) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxHeight()
@@ -469,7 +490,11 @@ private fun SideMenu(hasUnseenChanges: Boolean, onSelect: (OverlayScreen) -> Uni
         }
         SideMenuItem(R.drawable.ic_blog, stringResource(R.string.menu_blog)) { onSelect(OverlayScreen.BLOG) }
         SideMenuItem(R.drawable.ic_info, stringResource(R.string.menu_info)) { onSelect(OverlayScreen.INFO) }
-        SideMenuItem(R.drawable.ic_settings, stringResource(R.string.menu_ajustes)) { onSelect(OverlayScreen.SETTINGS) }
+        SideMenuItem(
+            R.drawable.ic_settings,
+            stringResource(R.string.menu_ajustes),
+            badge = hasUpdate
+        ) { onSelect(OverlayScreen.SETTINGS) }
         SideMenuItem(R.drawable.ic_language, stringResource(R.string.menu_idioma)) { onSelect(OverlayScreen.LANGUAGE) }
     }
 }
@@ -965,6 +990,8 @@ private fun SettingsScreen(
     notificationHour: Int,
     notificationMinute: Int,
     onNotificationTimeChanged: (Int, Int) -> Unit,
+    updateStatus: UpdateStatus,
+    onRecheckUpdate: suspend () -> Unit,
     onBack: () -> Unit
 ) {
     var showTimePicker by remember { mutableStateOf(false) }
@@ -1011,6 +1038,7 @@ private fun SettingsScreen(
                 value = "%02d:%02d".format(notificationHour, notificationMinute),
                 onClick = { showTimePicker = true }
             )
+            UpdatesRow(status = updateStatus, onRecheck = onRecheckUpdate)
         }
 
         SettingsSection(title = stringResource(R.string.settings_extra_data_label)) {
@@ -1295,6 +1323,39 @@ private fun StepperButton(symbol: String, onClick: () -> Unit) {
     ) {
         Text(text = symbol, fontSize = 16.sp)
     }
+}
+
+/**
+ * Fila de "Buscar actualizaciones". Si hay version nueva, al tocarla arranca la
+ * actualizacion; si no, vuelve a preguntarle a Play.
+ */
+@Composable
+private fun UpdatesRow(status: UpdateStatus, onRecheck: suspend () -> Unit) {
+    val scope = rememberCoroutineScope()
+    val activity = LocalContext.current as? android.app.Activity
+    // El resultado no hace falta tratarlo: si el usuario cancela, la fila sigue
+    // diciendo que hay actualizacion y puede volver a tocarla.
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { }
+
+    SettingsRow(
+        label = stringResource(R.string.settings_updates_label),
+        iconRes = R.drawable.ic_upgrade,
+        value = when (status) {
+            UpdateStatus.Unknown -> stringResource(R.string.settings_updates_checking)
+            UpdateStatus.UpToDate -> stringResource(R.string.settings_updates_up_to_date)
+            is UpdateStatus.Available -> stringResource(R.string.settings_updates_available)
+            UpdateStatus.Unavailable -> stringResource(R.string.settings_updates_unavailable)
+        },
+        onClick = {
+            if (status is UpdateStatus.Available && activity != null) {
+                startImmediateUpdate(activity, status, launcher)
+            } else {
+                scope.launch { onRecheck() }
+            }
+        }
+    )
 }
 
 @Composable

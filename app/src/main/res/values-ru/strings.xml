@@ -332,4 +332,11 @@
     <string name="outfit_tip_wind">Будет ветрено: лучше что-то плотное, чем свободное.</string>
     <string name="outfit_tip_uv_high">Сегодня солнце сильное, даже если по температуре не скажешь.</string>
     <string name="outfit_tip_layers">Между минимумом и максимумом большая разница: одевайтесь слоями.</string>
+
+    <!-- Buscar actualizaciones -->
+    <string name="settings_updates_label">Проверить обновления</string>
+    <string name="settings_updates_checking">Проверка…</string>
+    <string name="settings_updates_up_to_date">Последняя версия</string>
+    <string name="settings_updates_available">Обновить сейчас</string>
+    <string name="settings_updates_unavailable">Недоступно</string>
 </resources>

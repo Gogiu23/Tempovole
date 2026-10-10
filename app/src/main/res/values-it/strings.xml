@@ -332,4 +332,11 @@
     <string name="outfit_tip_wind">Ci sarà vento: meglio qualcosa che lo fermi che qualcosa di ampio.</string>
     <string name="outfit_tip_uv_high">Oggi il sole picchia, anche se la temperatura non lo dice.</string>
     <string name="outfit_tip_layers">Tra minima e massima c\'è molta differenza: vestiti a strati.</string>
+
+    <!-- Buscar actualizaciones -->
+    <string name="settings_updates_label">Cerca aggiornamenti</string>
+    <string name="settings_updates_checking">Controllo…</string>
+    <string name="settings_updates_up_to_date">Sei aggiornato</string>
+    <string name="settings_updates_available">Aggiorna ora</string>
+    <string name="settings_updates_unavailable">Non disponibile</string>
 </resources>

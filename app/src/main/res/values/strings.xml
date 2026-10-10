@@ -332,4 +332,11 @@
     <string name="outfit_tip_wind">Va a hacer viento: mejor algo que lo corte que algo suelto.</string>
     <string name="outfit_tip_uv_high">El sol pega fuerte hoy, aunque no lo notes en la temperatura.</string>
     <string name="outfit_tip_layers">Entre la mínima y la máxima hay mucha diferencia: ve por capas.</string>
+
+    <!-- Buscar actualizaciones -->
+    <string name="settings_updates_label">Buscar actualizaciones</string>
+    <string name="settings_updates_checking">Comprobando…</string>
+    <string name="settings_updates_up_to_date">Estás al día</string>
+    <string name="settings_updates_available">Actualizar ahora</string>
+    <string name="settings_updates_unavailable">No disponible</string>
 </resources>

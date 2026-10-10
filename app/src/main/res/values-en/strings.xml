@@ -332,4 +332,11 @@
     <string name="outfit_tip_wind">It will be windy: something that blocks it beats something loose.</string>
     <string name="outfit_tip_uv_high">The sun is strong today, even if the temperature doesn\'t say so.</string>
     <string name="outfit_tip_layers">Big gap between the low and the high: dress in layers.</string>
+
+    <!-- Buscar actualizaciones -->
+    <string name="settings_updates_label">Check for updates</string>
+    <string name="settings_updates_checking">Checking…</string>
+    <string name="settings_updates_up_to_date">You are up to date</string>
+    <string name="settings_updates_available">Update now</string>
+    <string name="settings_updates_unavailable">Unavailable</string>
 </resources>

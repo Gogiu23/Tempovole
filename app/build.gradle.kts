@@ -124,6 +124,11 @@ dependencies {
     // Widget de pantalla de inicio (Jetpack Glance)
     implementation("androidx.glance:glance-appwidget:1.1.1")
 
+    // Actualizaciones dentro de la app (Ajustes > Buscar actualizaciones). Solo funciona
+    // si la app se instalo desde Google Play: en un build puesto con adb siempre
+    // respondera que no hay actualizacion.
+    implementation("com.google.android.play:app-update-ktx:2.1.0")
+
     // Solo para previsualizar composables en Android Studio
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
