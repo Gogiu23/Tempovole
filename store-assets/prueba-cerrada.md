@@ -49,12 +49,13 @@ Solo hace falta tocarla si quieres que refleje la 1.4:
 
 Las capturas 05 (rejilla de datos) y 06 (selector de idioma) son nuevas de esta versión.
 
-## Formularios que NO cambian en la 1.4
+## Formularios que normalmente NO hay que rehacer
 
-Las respuestas siguen siendo las de `play-console-answers.md`: la 1.4 no añade
-permisos (siguen `INTERNET`, `ACCESS_NETWORK_STATE` y `POST_NOTIFICATIONS`) ni nuevos
-datos recogidos o compartidos, así que ni la clasificación de contenido ni Seguridad
-de los datos necesitan rehacerse.
+Las respuestas siguen siendo las de `play-console-answers.md` mientras una versión no
+añada permisos (hoy: `INTERNET`, `ACCESS_NETWORK_STATE` y `POST_NOTIFICATIONS`) ni
+datos nuevos recogidos o compartidos. Si alguna vez se añade un destinatario nuevo
+—por ejemplo un proveedor de IA— hay que rehacer Seguridad de los datos y actualizar
+la política de privacidad.
 
 - Política de privacidad: https://gogiu23.github.io/Tempovole/privacidad.html
 
@@ -63,3 +64,34 @@ de los datos necesitan rehacerse.
 - **Ficha traducida**: la app ya habla español, inglés, italiano y ruso, pero la ficha
   de Play solo está en español. Faltaría traducir `description-full` y
   `description-short` para las otras tres fichas de idioma.
+
+- **Activar R8 cuando acabe la prueba cerrada.** El explorador de app bundles marca
+  "Optimización de código DEX: Baja" y "Porcentaje de ofuscación: 1%" porque el build
+  de release lleva `isMinifyEnabled = false`; ese 1% viene de librerías que ya llegan
+  ofuscadas, el código propio va entero y legible. La línea `proguardFiles(...)` está
+  declarada pero no se aplica mientras minify esté en false, y `proguard-rules.pro`
+  está vacío.
+
+  Qué se gana: entre 1 y 3 MB. El grueso de los 15,7 MB son recursos (5,6 MB de WebP
+  animados en `res/raw` más drawables) y R8 solo toca el dex. De paso desaparece la
+  advertencia de "no hay archivo de desofuscación" que sale en cada release, porque
+  AGP sube el mapeo junto al bundle.
+
+  Lo que NO se gana: ocultar la clave de Unsplash. Vive en `BuildConfig` como constante
+  de texto y R8 no cifra cadenas.
+
+  Riesgo: las librerías que usan reflexión pueden romperse solo en release, que es el
+  build que no se prueba a diario. Candidatas aquí: kotlinx.serialization, Retrofit,
+  Glance y Play Core. Todas traen reglas propias, pero hay que comprobarlo.
+
+  Cómo hacerlo sin sustos:
+  1. Una release dedicada, sin ningún otro cambio dentro, para que si algo peta se
+     sepa qué fue.
+  2. `./gradlew installRelease` en un móvil real y recorrer todas las pantallas
+     (hoy, semana, día, detalle, ajustes, idioma, qué me pongo, widget y el morning
+     report) ANTES de subir nada.
+  3. Valorar también `isShrinkResources = true`, con cuidado: elimina recursos que
+     solo se referencian de forma dinámica.
+
+- **AGP 8.7.3 → 9.0**: el mismo panel de Play lo sugiere. Es un salto mayor y va
+  aparte, nunca en la misma release que lo de R8.
