@@ -2,10 +2,21 @@ package com.example.tiempo.notifications
 
 import android.content.Context
 
-/** Hora y minuto a los que se envía el morning report diario. */
+/** Si el morning report está activado, y a qué hora se envía. */
 object NotificationPreferences {
     const val DEFAULT_HOUR = 8
     const val DEFAULT_MINUTE = 0
+
+    /**
+     * Por defecto true: quien ya tenía la app instalada venía recibiendo el aviso, y
+     * actualizar no es motivo para apagárselo sin avisar.
+     */
+    fun isEnabled(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_ENABLED, true)
+
+    fun setEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_ENABLED, enabled).apply()
+    }
 
     fun getHour(context: Context): Int =
         prefs(context).getInt(KEY_HOUR, DEFAULT_HOUR)
@@ -37,6 +48,7 @@ object NotificationPreferences {
     private fun prefs(context: Context) =
         context.getSharedPreferences("notification_prefs", Context.MODE_PRIVATE)
 
+    private const val KEY_ENABLED = "enabled"
     private const val KEY_HOUR = "hour"
     private const val KEY_MINUTE = "minute"
     private const val KEY_LEGACY_WORK_CLEARED = "legacy_work_cleared"

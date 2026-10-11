@@ -112,6 +112,7 @@
     <string name="settings_app_section_title">App</string>
     <string name="menu_ubicacion">Posizione</string>
     <string name="settings_morning_report_label">Morning report</string>
+    <string name="settings_morning_report_time_label">Ora dell\'avviso</string>
     <string name="settings_extra_data_label">Dati aggiuntivi</string>
     <string name="settings_widget_label">Widget</string>
     <string name="time_picker_title">Orario del morning report</string>

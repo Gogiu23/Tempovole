@@ -17,6 +17,22 @@ object NotificationScheduler {
      * así que suenan exactamente a su hora sin depender de que se abra la app.
      * Como no es periódica, [MorningReportAlarmReceiver] se reprograma sola cada día.
      */
+    /**
+     * Quita la alarma diaria. Reconstruye el mismo PendingIntent (mismo request code y
+     * mismo Intent) porque es lo que AlarmManager usa para identificar cuál cancelar.
+     */
+    fun cancel(context: Context) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val triggerIntent = PendingIntent.getBroadcast(
+            context,
+            REQUEST_CODE,
+            Intent(context, MorningReportAlarmReceiver::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(triggerIntent)
+        triggerIntent.cancel()
+    }
+
     fun scheduleDaily(context: Context, hour: Int = 8, minute: Int = 0) {
         val now = Calendar.getInstance()
         val next = Calendar.getInstance().apply {

@@ -15,6 +15,10 @@ import androidx.work.WorkManager
  */
 class MorningReportAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        // Cinturon: si el aviso se apago, una alarma que hubiera quedado suelta no debe
+        // ni notificar ni volver a programarse.
+        if (!NotificationPreferences.isEnabled(context)) return
+
         val request = OneTimeWorkRequestBuilder<WeatherNotificationWorker>()
             .setConstraints(
                 Constraints.Builder()

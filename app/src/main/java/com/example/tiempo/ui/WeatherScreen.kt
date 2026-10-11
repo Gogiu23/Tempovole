@@ -277,6 +277,7 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
     var currentLocation by remember { mutableStateOf(LocationRepository.get(appContext)) }
     var notificationHour by remember { mutableStateOf(NotificationPreferences.getHour(appContext)) }
     var notificationMinute by remember { mutableStateOf(NotificationPreferences.getMinute(appContext)) }
+    var morningReportEnabled by remember { mutableStateOf(NotificationPreferences.isEnabled(appContext)) }
     var hasUnseenChanges by remember { mutableStateOf(ChangelogPreferences.hasUnseenChanges(appContext)) }
     // Se le pregunta a Play una sola vez por sesion: es lo que enciende el punto rojo de
     // Ajustes. En un build instalado con adb siempre dara Unavailable (ver checkForUpdate).
@@ -348,6 +349,20 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
                     notificationHour = hour
                     notificationMinute = minute
                     NotificationScheduler.scheduleDaily(appContext, hour = hour, minute = minute)
+                },
+                morningReportEnabled = morningReportEnabled,
+                onMorningReportEnabledChanged = { enabled ->
+                    NotificationPreferences.setEnabled(appContext, enabled)
+                    morningReportEnabled = enabled
+                    if (enabled) {
+                        NotificationScheduler.scheduleDaily(
+                            appContext,
+                            hour = notificationHour,
+                            minute = notificationMinute
+                        )
+                    } else {
+                        NotificationScheduler.cancel(appContext)
+                    }
                 },
                 updateStatus = updateStatus,
                 onRecheckUpdate = {
@@ -564,6 +579,7 @@ private fun ChangelogScreen(onBack: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
+            .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -672,6 +688,7 @@ private fun BlogScreen(onBack: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
+            .navigationBarsPadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
@@ -717,6 +734,7 @@ private fun LanguageScreen(onBack: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
+            .navigationBarsPadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
@@ -803,6 +821,7 @@ private fun InfoScreen(onBack: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
+            .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -990,6 +1009,8 @@ private fun SettingsScreen(
     notificationHour: Int,
     notificationMinute: Int,
     onNotificationTimeChanged: (Int, Int) -> Unit,
+    morningReportEnabled: Boolean,
+    onMorningReportEnabledChanged: (Boolean) -> Unit,
     updateStatus: UpdateStatus,
     onRecheckUpdate: suspend () -> Unit,
     onBack: () -> Unit
@@ -1014,6 +1035,7 @@ private fun SettingsScreen(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
+            .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -1032,12 +1054,20 @@ private fun SettingsScreen(
         }
 
         SettingsSection(title = stringResource(R.string.settings_app_section_title)) {
-            SettingsRow(
+            SettingsSwitchRow(
                 label = stringResource(R.string.settings_morning_report_label),
                 iconRes = R.drawable.ic_bell,
-                value = "%02d:%02d".format(notificationHour, notificationMinute),
-                onClick = { showTimePicker = true }
+                checked = morningReportEnabled,
+                onCheckedChange = onMorningReportEnabledChanged
             )
+            // La hora solo pinta algo con el aviso encendido.
+            if (morningReportEnabled) {
+                SettingsRow(
+                    label = stringResource(R.string.settings_morning_report_time_label),
+                    value = "%02d:%02d".format(notificationHour, notificationMinute),
+                    onClick = { showTimePicker = true }
+                )
+            }
             UpdatesRow(status = updateStatus, onRecheck = onRecheckUpdate)
         }
 
@@ -1325,6 +1355,54 @@ private fun StepperButton(symbol: String, onClick: () -> Unit) {
     }
 }
 
+/** Fila de ajustes que se enciende y se apaga, con el mismo interruptor que los datos extra. */
+@Composable
+private fun SettingsSwitchRow(
+    label: String,
+    iconRes: Int,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.16f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Image(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(text = label, color = Color.White.copy(alpha = 0.9f), fontSize = 15.sp)
+            }
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = Color(0xFF9CD5FF),
+                    checkedBorderColor = Color(0xFF9CD5FF),
+                    uncheckedThumbColor = Color.White.copy(alpha = 0.7f),
+                    uncheckedTrackColor = Color.White.copy(alpha = 0.2f)
+                )
+            )
+        }
+    }
+}
+
 /**
  * Fila de "Buscar actualizaciones". Si hay version nueva, al tocarla arranca la
  * actualizacion; si no, vuelve a preguntarle a Play.
@@ -1455,6 +1533,7 @@ private fun LocationSearchScreen(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
+            .navigationBarsPadding()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {

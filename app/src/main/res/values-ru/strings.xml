@@ -112,6 +112,7 @@
     <string name="settings_app_section_title">Приложение</string>
     <string name="menu_ubicacion">Местоположение</string>
     <string name="settings_morning_report_label">Morning report</string>
+    <string name="settings_morning_report_time_label">Время уведомления</string>
     <string name="settings_extra_data_label">Дополнительные данные</string>
     <string name="settings_widget_label">Виджет</string>
     <string name="time_picker_title">Время Morning report</string>

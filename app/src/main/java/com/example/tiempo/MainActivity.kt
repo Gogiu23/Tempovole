@@ -42,11 +42,14 @@ class MainActivity : ComponentActivity() {
         NotificationHelper.ensureChannel(this)
         maybeRequestNotificationPermission()
         clearLegacyWorkManagerScheduleOnce()
-        NotificationScheduler.scheduleDaily(
-            this,
-            hour = NotificationPreferences.getHour(this),
-            minute = NotificationPreferences.getMinute(this)
-        )
+        // Solo se reprograma si el usuario no lo ha apagado en Ajustes.
+        if (NotificationPreferences.isEnabled(this)) {
+            NotificationScheduler.scheduleDaily(
+                this,
+                hour = NotificationPreferences.getHour(this),
+                minute = NotificationPreferences.getMinute(this)
+            )
+        }
 
         setContent {
             TempovoleTheme {
