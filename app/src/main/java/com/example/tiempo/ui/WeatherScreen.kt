@@ -2051,15 +2051,19 @@ private fun TodayScreen(
     // El header deja de ser un elemento mas de la lista: se queda fijo arriba y encoge
     // segun bajas, como el demo shrinking-header-shadow de scroll-driven-animations.style.
     val shrinkPx = with(LocalDensity.current) { HEADER_SHRINK_DISTANCE.toPx() }
-    // Sin `by`: el valor se lee dentro de las lambdas de dibujo del header, asi que el
-    // scroll no dispara recomposiciones ni vuelve a medir el texto en cada fotograma.
-    val shrink = remember {
-        derivedStateOf {
-            if (listState.firstVisibleItemIndex > 0) {
-                1f
-            } else {
-                (listState.firstVisibleItemScrollOffset / shrinkPx).coerceIn(0f, 1f)
-            }
+    // Lambda normal, NO un derivedStateOf recordado. El valor se sigue leyendo dentro de
+    // las lambdas de dibujo del header, asi que el scroll no dispara recomposiciones ni
+    // vuelve a medir el texto; pero cada capa (el velo, la escala del titulo y el
+    // desvanecido del subtitulo) se suscribe directamente al estado del scroll.
+    //
+    // Con un derivedStateOf en medio, al volver de otra pestaña esta pantalla se recrea y
+    // el header se quedaba a medias: el titulo dibujado encogido y el velo sin pintar,
+    // cada capa con una lectura distinta y ninguna invalidada despues.
+    val shrink: () -> Float = {
+        if (listState.firstVisibleItemIndex > 0) {
+            1f
+        } else {
+            (listState.firstVisibleItemScrollOffset / shrinkPx).coerceIn(0f, 1f)
         }
     }
 
@@ -2156,7 +2160,7 @@ private fun TodayScreen(
             titleIconRes = R.drawable.ic_location,
             subtitleIconRes = current.condition.staticIcon(isDay),
             subtitle = "${current.temp.roundToInt()}°  ·  ${today.date.fullDate(stringResource(R.string.date_full_format))}",
-            shrink = shrink::value,
+            shrink = shrink,
             trailing = { LiveClock() },
             modifier = Modifier.align(Alignment.TopStart)
         )
@@ -3808,7 +3812,15 @@ private fun DayDetailScreen(
     }
 
     val shrinkPx = with(LocalDensity.current) { HEADER_SHRINK_DISTANCE.toPx() }
-    val shrink = remember { derivedStateOf { (scrollState.value / shrinkPx).coerceIn(0f, 1f) } }
+    // Lambda normal, NO un derivedStateOf recordado. El valor se sigue leyendo dentro de
+    // las lambdas de dibujo del header, asi que el scroll no dispara recomposiciones ni
+    // vuelve a medir el texto; pero cada capa (el velo, la escala del titulo y el
+    // desvanecido del subtitulo) se suscribe directamente al estado del scroll.
+    //
+    // Con un derivedStateOf en medio, al volver de otra pestaña esta pantalla se recrea y
+    // el header se quedaba a medias: el titulo dibujado encogido y el velo sin pintar,
+    // cada capa con una lectura distinta y ninguna invalidada despues.
+    val shrink: () -> Float = { (scrollState.value / shrinkPx).coerceIn(0f, 1f) }
 
     Box(Modifier.fillMaxSize()) {
     Column(
@@ -3895,7 +3907,7 @@ private fun DayDetailScreen(
         ShrinkingHeader(
             title = locationName,
             subtitle = day.date.fullDate(stringResource(R.string.date_full_format)),
-            shrink = shrink::value,
+            shrink = shrink,
             leading = { IconCircleButton(emoji = "←", onClick = onBack) },
             modifier = Modifier.align(Alignment.TopStart)
         )
