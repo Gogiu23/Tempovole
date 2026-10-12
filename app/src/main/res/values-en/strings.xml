@@ -29,6 +29,12 @@
     <string name="changelog_screen_version_label">Version %1$s</string>
     <string name="changelog_screen_current_badge">Current</string>
 
+    <string name="changelog_v16_date">October 12, 2026</string>
+    <string name="changelog_v16_item1">What to wear no longer gives one recommendation for the whole day: it now separates the current moment, the previous stretch and the next two, each with its own temperature.</string>
+    <string name="changelog_v16_item2">The morning report can be switched off in Settings, and there is now a button there to check for app updates.</string>
+    <string name="changelog_v16_item3">Fixed the header with the city name, which was left half drawn when coming back from another tab.</string>
+    <string name="changelog_v16_item4">Fixed the layout for people using the three-button navigation bar: the bottom of the screens is no longer hidden.</string>
+
     <string name="changelog_v15_date">October 9, 2026</string>
     <string name="changelog_v15_item1">New What to wear tab: it tells you what to put on based on the weather ahead.</string>
     <string name="changelog_v15_item2">It accounts for the temperature corrected for wind, plus rain, snow and the UV index, and warns you when to dress in layers or when an umbrella will not survive.</string>

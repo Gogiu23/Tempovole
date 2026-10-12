@@ -29,6 +29,12 @@
     <string name="changelog_screen_version_label">Versión %1$s</string>
     <string name="changelog_screen_current_badge">Actual</string>
 
+    <string name="changelog_v16_date">12 de octubre de 2026</string>
+    <string name="changelog_v16_item1">Qué me pongo ya no da una recomendación para todo el día: ahora separa el momento actual, el tramo anterior y los dos siguientes, cada uno con su temperatura.</string>
+    <string name="changelog_v16_item2">El aviso de la mañana se puede apagar desde Ajustes, y ahí mismo hay un botón para buscar actualizaciones de la app.</string>
+    <string name="changelog_v16_item3">Arreglado el encabezado con el nombre de la ciudad, que se quedaba a medio dibujar al volver desde otra pestaña.</string>
+    <string name="changelog_v16_item4">Corregido el diseño para quienes usan la barra de tres botones: el final de las pantallas ya no queda tapado.</string>
+
     <string name="changelog_v15_date">9 de octubre de 2026</string>
     <string name="changelog_v15_item1">Nueva pestaña Qué me pongo: con el tiempo que va a hacer, te dice qué ropa llevar.</string>
     <string name="changelog_v15_item2">Tiene en cuenta la temperatura corregida por el viento, la lluvia, la nieve y el índice UV, y avisa cuando conviene ir por capas o cuando el paraguas no va a aguantar.</string>

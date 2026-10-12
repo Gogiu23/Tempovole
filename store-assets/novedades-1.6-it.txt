@@ -1,0 +1,4 @@
+• Come vestirsi separa ora il momento attuale, la fascia precedente e le due successive, ognuna con la sua temperatura.
+• L'avviso del mattino si può disattivare dalle Impostazioni, dove puoi anche cercare aggiornamenti.
+• Corretta l'intestazione che restava disegnata a metà tornando da un'altra scheda.
+• Corretto il layout per la barra a tre pulsanti.

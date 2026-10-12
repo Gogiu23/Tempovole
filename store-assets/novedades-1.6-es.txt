@@ -1,0 +1,4 @@
+• Qué me pongo separa ahora el momento actual, el tramo anterior y los dos siguientes, cada uno con su temperatura.
+• El aviso de la mañana se puede apagar en Ajustes, y ahí mismo puedes buscar actualizaciones.
+• Arreglado el encabezado que se quedaba a medio dibujar al volver de otra pestaña.
+• Corregido el diseño con la barra de tres botones.

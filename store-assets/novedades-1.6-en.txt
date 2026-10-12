@@ -1,0 +1,4 @@
+• What to wear now separates the current moment, the previous stretch and the next two, each with its own temperature.
+• The morning report can be switched off in Settings, where you can also check for updates.
+• Fixed the header that was left half drawn when coming back from another tab.
+• Fixed the layout for the three-button navigation bar.

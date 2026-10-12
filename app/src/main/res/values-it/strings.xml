@@ -29,6 +29,12 @@
     <string name="changelog_screen_version_label">Versione %1$s</string>
     <string name="changelog_screen_current_badge">Attuale</string>
 
+    <string name="changelog_v16_date">12 ottobre 2026</string>
+    <string name="changelog_v16_item1">Come vestirsi non dà più un unico consiglio per tutta la giornata: ora separa il momento attuale, la fascia precedente e le due successive, ognuna con la sua temperatura.</string>
+    <string name="changelog_v16_item2">L\'avviso del mattino si può disattivare dalle Impostazioni, dove c\'è anche un pulsante per cercare aggiornamenti dell\'app.</string>
+    <string name="changelog_v16_item3">Corretta l\'intestazione con il nome della città, che restava disegnata a metà tornando da un\'altra scheda.</string>
+    <string name="changelog_v16_item4">Corretto il layout per chi usa la barra a tre pulsanti: la fine delle schermate non resta più coperta.</string>
+
     <string name="changelog_v15_date">9 ottobre 2026</string>
     <string name="changelog_v15_item1">Nuova scheda Come vestirsi: in base al tempo previsto ti dice cosa metterti.</string>
     <string name="changelog_v15_item2">Tiene conto della temperatura corretta dal vento, della pioggia, della neve e dell\'indice UV, e avvisa quando conviene vestirsi a strati o quando l\'ombrello non reggerà.</string>
