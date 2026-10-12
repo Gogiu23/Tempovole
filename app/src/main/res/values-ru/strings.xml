@@ -345,5 +345,5 @@
     <string name="daypart_mediodia">День</string>
     <string name="daypart_tarde">Вечер</string>
     <string name="daypart_noche">Поздний вечер</string>
-    <string name="outfit_daypart_now">СЕЙЧАС</string>
+    <string name="outfit_daypart_now">Сейчас</string>
 </resources>

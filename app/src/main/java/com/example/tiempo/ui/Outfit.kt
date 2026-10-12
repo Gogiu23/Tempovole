@@ -3,7 +3,6 @@ package com.example.tiempo.ui
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -24,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
@@ -298,8 +296,10 @@ private fun DayPartSection(tramo: DayPartOutfit) {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = stringResource(tramo.part.labelRes),
-                color = Color.White,
+                // part a null es el bloque "Ahora". Se distingue por el color en vez de
+                // con una etiqueta aparte: el propio nombre ya dice que es el de ahora.
+                text = stringResource(tramo.part?.labelRes ?: R.string.outfit_daypart_now),
+                color = if (tramo.isNow) Color(0xFF9CD5FF) else Color.White,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -315,18 +315,6 @@ private fun DayPartSection(tramo: DayPartOutfit) {
                 fontSize = 13.sp,
                 maxLines = 1
             )
-            if (tramo.isNow) {
-                Text(
-                    text = stringResource(R.string.outfit_daypart_now),
-                    color = Color(0xFF0E1B2A),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(Color(0xFF9CD5FF))
-                        .padding(horizontal = 8.dp, vertical = 2.dp)
-                )
-            }
         }
         GarmentGrid(tramo.advice.garments)
         // Los avisos de un tramo que ya paso no sirven de nada.
@@ -418,10 +406,17 @@ enum class DayPart(@StringRes val labelRes: Int, val startHour: Int, val endHour
     fun contains(hour: Int): Boolean = hour >= startHour && hour < endHour
 }
 
-/** La recomendación de un tramo concreto, y en qué punto del día cae respecto a ahora. */
+/**
+ * Un bloque de la pantalla: o un tramo con nombre, o el momento actual.
+ *
+ * [part] a null es el bloque "Ahora", que NO es un tramo: es la hora en la que estás, con
+ * la temperatura de verdad. Para el rato que estás viviendo no hace falta una previsión
+ * del tramo entero — hacía que a las 12:00 pusiera 24° (la máxima del mediodía) estando
+ * a 17°, y la cifra que se enseñaba no era la que decidía la ropa.
+ */
 data class DayPartOutfit(
-    val part: DayPart,
-    /** La máxima del tramo, que es con la que decide [outfitFor]. */
+    val part: DayPart?,
+    /** La temperatura que se enseña, y la misma con la que ha decidido [outfitFor]. */
     val temp: Int,
     val advice: OutfitAdvice,
     val isNow: Boolean,
@@ -429,13 +424,15 @@ data class DayPartOutfit(
 )
 
 /**
- * Parte el día en los cuatro tramos y resuelve cada uno por separado.
+ * Los bloques que se pintan: el tramo anterior (como contexto), AHORA, y los dos tramos
+ * siguientes. Más allá de dos no se enseña: a las 9 de la mañana lo que pase a las 23
+ * no ayuda a vestirse, y alarga la pantalla sin aportar.
  *
- * No duplica reglas: agrega las horas de cada tramo en un [DayWeather] sintético y se lo
- * pasa a [outfitFor], que sigue siendo la única tabla de decisión. Así, cambiar un umbral
- * cambia los cuatro tramos a la vez.
+ * Los que no existen se omiten: de madrugada no hay tramo anterior en el día, y de noche
+ * no quedan siguientes.
  *
- * Un tramo sin horas en los datos se omite en vez de inventárselo.
+ * No duplica reglas: cada bloque se agrega en un [DayWeather] sintético y lo resuelve
+ * [outfitFor], que sigue siendo la única tabla de decisión.
  */
 fun outfitByDayPart(
     today: DayWeather,
@@ -444,42 +441,99 @@ fun outfitByDayPart(
     now: LocalDateTime = LocalDateTime.now()
 ): List<DayPartOutfit> {
     val delDia = hours.filter { it.time.toLocalDate() == today.date }
-    return DayPart.entries.mapNotNull { part ->
-        val tramo = delDia.filter { part.contains(it.time.hour) }
-        if (tramo.isEmpty()) return@mapNotNull null
+    if (delDia.isEmpty()) return emptyList()
 
-        val tempMax = tramo.maxOf { it.temp }
-        val sintetico = today.copy(
-            tempMax = tempMax,
-            tempMin = tramo.minOf { it.temp },
-            tempMean = tramo.map { it.temp }.average(),
-            // El viento y la lluvia, a lo peor del tramo: uno se viste para el peor rato,
-            // no para la media.
-            windKmh = tramo.maxOf { it.windKmh },
-            precipitationMm = tramo.sumOf { it.precipitationMm },
-            precipProbability = tramo.mapNotNull { it.precipProbability }.maxOrNull(),
-            condition = tramo.conditionDominante()
-        )
+    val actual = DayPart.entries.firstOrNull { it.contains(now.hour) } ?: return emptyList()
+    val indice = actual.ordinal
+    val bloques = mutableListOf<DayPartOutfit>()
 
-        // No hay UV por hora en la API, solo el de ahora mismo. Se aplica unicamente a
-        // los tramos que son MAYORITARIAMENTE de dia: con `any` bastaba que amaneciera a
-        // las 8 para que toda la madrugada pidiera crema solar, y una hora de nueve no
-        // manda. En invierno la tarde (18-22) sale oscura y tampoco la pide, que es lo
-        // que toca.
-        // ponytail: el UV de ahora vale como aproximacion para todo el tramo con luz; si
-        // alguna vez Open-Meteo da uv_index por hora, usar el maximo del tramo.
-        val conLuz = tramo.count { it.isDay } * 2 >= tramo.size
-        val currentDelTramo = if (conLuz) current else current.copy(uvIndex = null)
-
-        DayPartOutfit(
-            part = part,
-            temp = tempMax.roundToInt(),
-            advice = outfitFor(sintetico, currentDelTramo),
-            isNow = now.toLocalDate() == today.date && part.contains(now.hour),
-            isPast = now.toLocalDate() > today.date ||
-                (now.toLocalDate() == today.date && now.hour >= part.endHour)
-        )
+    // El tramo de antes, atenuado: "esta mañana hacia frio" sigue siendo util.
+    DayPart.entries.getOrNull(indice - 1)?.let { anterior ->
+        tramoDe(anterior, today, current, delDia)?.let {
+            bloques += it.copy(isPast = true)
+        }
     }
+
+    bloques += ahora(today, current, delDia, now, actual)
+
+    // Los dos siguientes.
+    for (offset in 1..2) {
+        DayPart.entries.getOrNull(indice + offset)?.let { siguiente ->
+            tramoDe(siguiente, today, current, delDia)?.let { bloques += it }
+        }
+    }
+    return bloques
+}
+
+/** El bloque "Ahora": la hora en la que estás, ni más ni menos. */
+private fun ahora(
+    today: DayWeather,
+    current: CurrentWeather,
+    delDia: List<HourWeather>,
+    now: LocalDateTime,
+    actual: DayPart
+): DayPartOutfit {
+    // Si por lo que sea no hubiera dato de esta hora, se cae al resto del tramo actual
+    // antes que inventarse nada.
+    val estaHora = delDia.firstOrNull { it.time.hour == now.hour }
+    val referencia = estaHora?.let { listOf(it) } ?: delDia.filter { actual.contains(it.time.hour) }
+
+    val sintetico = today.copy(
+        // La temperatura de AHORA, que es la que se enseña: no la maxima del tramo.
+        tempMax = current.temp,
+        tempMin = current.temp,
+        tempMean = current.temp,
+        windKmh = referencia.maxOfOrNull { it.windKmh } ?: today.windKmh,
+        precipitationMm = referencia.sumOf { it.precipitationMm },
+        precipProbability = referencia.mapNotNull { it.precipProbability }.maxOrNull(),
+        condition = current.condition
+    )
+    val hayLuz = referencia.any { it.isDay }
+    return DayPartOutfit(
+        part = null,
+        temp = current.temp.roundToInt(),
+        advice = outfitFor(sintetico, if (hayLuz) current else current.copy(uvIndex = null)),
+        isNow = true,
+        isPast = false
+    )
+}
+
+/** Un tramo con nombre, agregado a partir de sus horas. Null si no hay datos de ese tramo. */
+private fun tramoDe(
+    part: DayPart,
+    today: DayWeather,
+    current: CurrentWeather,
+    delDia: List<HourWeather>
+): DayPartOutfit? {
+    val tramo = delDia.filter { part.contains(it.time.hour) }
+    if (tramo.isEmpty()) return null
+
+    val tempMax = tramo.maxOf { it.temp }
+    val sintetico = today.copy(
+        tempMax = tempMax,
+        tempMin = tramo.minOf { it.temp },
+        tempMean = tramo.map { it.temp }.average(),
+        // El viento y la lluvia, a lo peor del tramo: uno se viste para el peor rato,
+        // no para la media.
+        windKmh = tramo.maxOf { it.windKmh },
+        precipitationMm = tramo.sumOf { it.precipitationMm },
+        precipProbability = tramo.mapNotNull { it.precipProbability }.maxOrNull(),
+        condition = tramo.conditionDominante()
+    )
+
+    // No hay UV por hora en la API, solo el de ahora mismo. Se aplica unicamente a los
+    // tramos MAYORITARIAMENTE de dia: con "alguna hora con luz" bastaba que amaneciera a
+    // las 8 para que toda la madrugada pidiera crema solar, y una hora de nueve no manda.
+    // ponytail: el UV de ahora vale como aproximacion; si alguna vez Open-Meteo da
+    // uv_index por hora, usar el maximo del tramo.
+    val conLuz = tramo.count { it.isDay } * 2 >= tramo.size
+    return DayPartOutfit(
+        part = part,
+        temp = tempMax.roundToInt(),
+        advice = outfitFor(sintetico, if (conLuz) current else current.copy(uvIndex = null)),
+        isNow = false,
+        isPast = false
+    )
 }
 
 /**

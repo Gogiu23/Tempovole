@@ -345,5 +345,5 @@
     <string name="daypart_mediodia">Mezzogiorno</string>
     <string name="daypart_tarde">Sera</string>
     <string name="daypart_noche">Notte</string>
-    <string name="outfit_daypart_now">ADESSO</string>
+    <string name="outfit_daypart_now">Adesso</string>
 </resources>
