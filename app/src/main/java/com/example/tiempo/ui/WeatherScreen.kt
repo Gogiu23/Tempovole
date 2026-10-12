@@ -1705,7 +1705,7 @@ private fun WeatherContent(
                         padding
                     )
                 selectedTab == 2 && today != null ->
-                    OutfitScreen(today, state.current, location.name, padding)
+                    OutfitScreen(today, state.current, state.hours, location.name, padding)
                 else -> WeekScreen(state.days, state.hours, location.name, padding)
             }
         }

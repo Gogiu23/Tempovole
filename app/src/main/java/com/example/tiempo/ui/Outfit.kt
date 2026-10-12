@@ -3,6 +3,7 @@ package com.example.tiempo.ui
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,7 +24,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -33,7 +36,9 @@ import androidx.compose.ui.unit.sp
 import com.example.tiempo.R
 import com.example.tiempo.data.model.CurrentWeather
 import com.example.tiempo.data.model.DayWeather
+import com.example.tiempo.data.model.HourWeather
 import com.example.tiempo.data.model.WeatherCondition
+import java.time.LocalDateTime
 import kotlin.math.roundToInt
 
 /**
@@ -218,17 +223,21 @@ fun outfitFor(today: DayWeather, current: CurrentWeather): OutfitAdvice {
 /** Columnas de la rejilla de prendas, como la de datos de "Hoy". */
 private const val GARMENT_COLUMNS = 3
 
-/** Pestaña "Qué me pongo": la recomendación de hoy, decidida por [outfitFor]. */
+/**
+ * Pestaña "Qué me pongo": una recomendación por cada tramo del día, no una del día
+ * entero. A las 7 de la mañana no te vistes igual que a las 3 de la tarde.
+ */
 @Composable
 fun OutfitScreen(
     today: DayWeather,
     current: CurrentWeather,
+    hours: List<HourWeather>,
     locationName: String,
     padding: PaddingValues
 ) {
     // La tabla es pura: con los mismos datos da lo mismo, asi que no hace falta
     // recalcularla en cada recomposicion (scroll incluido).
-    val advice = remember(today, current) { outfitFor(today, current) }
+    val tramos = remember(today, current, hours) { outfitByDayPart(today, current, hours) }
 
     Column(
         modifier = Modifier
@@ -265,38 +274,64 @@ fun OutfitScreen(
             )
         }
 
-        OutfitHeadline(advice)
-        GarmentGrid(advice.garments)
-        advice.tipsRes.forEach { OutfitTip(it) }
+        tramos.forEach { tramo -> DayPartSection(tramo) }
         Spacer(Modifier.height(12.dp))
     }
 }
 
-/** El tramo de temperatura y con que sensacion termica se ha decidido. */
+/**
+ * Un tramo del dia: su nombre, su maxima, que ropa pide y los avisos.
+ *
+ * Los tramos ya pasados se atenuan en vez de ocultarse: siguen sirviendo de contexto
+ * ("esta mañana hacia frio") sin competir con el que toca ahora.
+ */
 @Composable
-private fun OutfitHeadline(advice: OutfitAdvice) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.16f))
+private fun DayPartSection(tramo: DayPartOutfit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer { alpha = if (tramo.isPast) 0.45f else 1f },
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = stringResource(advice.band.labelRes),
+                text = stringResource(tramo.part.labelRes),
                 color = Color.White,
-                fontSize = 22.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = stringResource(R.string.outfit_decided_with, advice.feelsLike),
-                color = Color.White.copy(alpha = 0.7f),
-                fontSize = 13.sp
+                text = "\u00b7 ${tramo.temp}\u00b0",
+                color = Color.White.copy(alpha = 0.85f),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold
             )
+            Text(
+                text = stringResource(tramo.advice.band.labelRes),
+                color = Color.White.copy(alpha = 0.6f),
+                fontSize = 13.sp,
+                maxLines = 1
+            )
+            if (tramo.isNow) {
+                Text(
+                    text = stringResource(R.string.outfit_daypart_now),
+                    color = Color(0xFF0E1B2A),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(Color(0xFF9CD5FF))
+                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                )
+            }
+        }
+        GarmentGrid(tramo.advice.garments)
+        // Los avisos de un tramo que ya paso no sirven de nada.
+        if (!tramo.isPast) {
+            tramo.advice.tipsRes.forEach { OutfitTip(it) }
         }
     }
 }
@@ -364,4 +399,95 @@ private fun OutfitTip(@StringRes textRes: Int) {
             fontSize = 14.sp
         )
     }
+}
+
+/**
+ * Los cuatro tramos del día.
+ *
+ * Los límites son los MISMOS que usa el degradado del gráfico de próximas horas
+ * (CHART_TINT_ANCHORS en WeatherScreen.kt): madrugada hasta las 9, mediodía hasta las 18,
+ * tarde hasta las 22 y noche el resto. Si alguna vez se mueven, hay que moverlos en los
+ * dos sitios o la app contará dos historias distintas sobre el mismo día.
+ */
+enum class DayPart(@StringRes val labelRes: Int, val startHour: Int, val endHour: Int) {
+    MADRUGADA(R.string.daypart_madrugada, 0, 9),
+    MEDIODIA(R.string.daypart_mediodia, 9, 18),
+    TARDE(R.string.daypart_tarde, 18, 22),
+    NOCHE(R.string.daypart_noche, 22, 24);
+
+    fun contains(hour: Int): Boolean = hour >= startHour && hour < endHour
+}
+
+/** La recomendación de un tramo concreto, y en qué punto del día cae respecto a ahora. */
+data class DayPartOutfit(
+    val part: DayPart,
+    /** La máxima del tramo, que es con la que decide [outfitFor]. */
+    val temp: Int,
+    val advice: OutfitAdvice,
+    val isNow: Boolean,
+    val isPast: Boolean
+)
+
+/**
+ * Parte el día en los cuatro tramos y resuelve cada uno por separado.
+ *
+ * No duplica reglas: agrega las horas de cada tramo en un [DayWeather] sintético y se lo
+ * pasa a [outfitFor], que sigue siendo la única tabla de decisión. Así, cambiar un umbral
+ * cambia los cuatro tramos a la vez.
+ *
+ * Un tramo sin horas en los datos se omite en vez de inventárselo.
+ */
+fun outfitByDayPart(
+    today: DayWeather,
+    current: CurrentWeather,
+    hours: List<HourWeather>,
+    now: LocalDateTime = LocalDateTime.now()
+): List<DayPartOutfit> {
+    val delDia = hours.filter { it.time.toLocalDate() == today.date }
+    return DayPart.entries.mapNotNull { part ->
+        val tramo = delDia.filter { part.contains(it.time.hour) }
+        if (tramo.isEmpty()) return@mapNotNull null
+
+        val tempMax = tramo.maxOf { it.temp }
+        val sintetico = today.copy(
+            tempMax = tempMax,
+            tempMin = tramo.minOf { it.temp },
+            tempMean = tramo.map { it.temp }.average(),
+            // El viento y la lluvia, a lo peor del tramo: uno se viste para el peor rato,
+            // no para la media.
+            windKmh = tramo.maxOf { it.windKmh },
+            precipitationMm = tramo.sumOf { it.precipitationMm },
+            precipProbability = tramo.mapNotNull { it.precipProbability }.maxOrNull(),
+            condition = tramo.conditionDominante()
+        )
+
+        // No hay UV por hora en la API, solo el de ahora mismo. Se aplica unicamente a
+        // los tramos que son MAYORITARIAMENTE de dia: con `any` bastaba que amaneciera a
+        // las 8 para que toda la madrugada pidiera crema solar, y una hora de nueve no
+        // manda. En invierno la tarde (18-22) sale oscura y tampoco la pide, que es lo
+        // que toca.
+        // ponytail: el UV de ahora vale como aproximacion para todo el tramo con luz; si
+        // alguna vez Open-Meteo da uv_index por hora, usar el maximo del tramo.
+        val conLuz = tramo.count { it.isDay } * 2 >= tramo.size
+        val currentDelTramo = if (conLuz) current else current.copy(uvIndex = null)
+
+        DayPartOutfit(
+            part = part,
+            temp = tempMax.roundToInt(),
+            advice = outfitFor(sintetico, currentDelTramo),
+            isNow = now.toLocalDate() == today.date && part.contains(now.hour),
+            isPast = now.toLocalDate() > today.date ||
+                (now.toLocalDate() == today.date && now.hour >= part.endHour)
+        )
+    }
+}
+
+/**
+ * La condición que manda en el tramo. Si en alguna hora nieva, nieva: es lo que cambia el
+ * calzado y no se puede promediar. Si no, la más repetida.
+ */
+private fun List<HourWeather>.conditionDominante(): WeatherCondition {
+    firstOrNull { it.condition == WeatherCondition.SNOW }?.let { return it.condition }
+    return groupingBy { it.condition }.eachCount().maxByOrNull { it.value }?.key
+        ?: WeatherCondition.UNKNOWN
 }

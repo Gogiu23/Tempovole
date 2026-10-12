@@ -305,8 +305,7 @@
     <!-- Que me pongo -->
     <string name="bottom_bar_outfit">Что надеть</string>
     <string name="outfit_title">Что надеть сегодня</string>
-    <string name="outfit_decided_with">Рассчитано по ощущаемым %1$d°</string>
-    <string name="outfit_band_freezing">По-настоящему холодно</string>
+        <string name="outfit_band_freezing">По-настоящему холодно</string>
     <string name="outfit_band_cold">Холодно</string>
     <string name="outfit_band_cool">Прохладно</string>
     <string name="outfit_band_mild">Умеренно</string>
@@ -340,4 +339,11 @@
     <string name="settings_updates_up_to_date">Последняя версия</string>
     <string name="settings_updates_available">Обновить сейчас</string>
     <string name="settings_updates_unavailable">Недоступно</string>
+
+    <!-- Tramos del dia -->
+    <string name="daypart_madrugada">Ночь</string>
+    <string name="daypart_mediodia">День</string>
+    <string name="daypart_tarde">Вечер</string>
+    <string name="daypart_noche">Поздний вечер</string>
+    <string name="outfit_daypart_now">СЕЙЧАС</string>
 </resources>

@@ -305,8 +305,7 @@
     <!-- Que me pongo -->
     <string name="bottom_bar_outfit">Qué me pongo</string>
     <string name="outfit_title">Qué me pongo hoy</string>
-    <string name="outfit_decided_with">Calculado con %1$d° de sensación térmica</string>
-    <string name="outfit_band_freezing">Hace un frío de verdad</string>
+        <string name="outfit_band_freezing">Hace un frío de verdad</string>
     <string name="outfit_band_cold">Hace frío</string>
     <string name="outfit_band_cool">Fresco</string>
     <string name="outfit_band_mild">Templado</string>
@@ -340,4 +339,11 @@
     <string name="settings_updates_up_to_date">Estás al día</string>
     <string name="settings_updates_available">Actualizar ahora</string>
     <string name="settings_updates_unavailable">No disponible</string>
+
+    <!-- Tramos del dia -->
+    <string name="daypart_madrugada">Madrugada</string>
+    <string name="daypart_mediodia">Mediodía</string>
+    <string name="daypart_tarde">Tarde</string>
+    <string name="daypart_noche">Noche</string>
+    <string name="outfit_daypart_now">AHORA</string>
 </resources>
