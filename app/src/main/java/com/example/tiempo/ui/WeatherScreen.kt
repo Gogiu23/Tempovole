@@ -36,6 +36,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -1887,32 +1889,6 @@ private fun LazyListState.entryProgress(key: Any, rangeFraction: Float = 0.8f): 
  * se miden en alturas de pantalla; aqui los medimos como fraccion de ese recorrido de `t`, que
  * es lo unico que este item puede ofrecer.
  */
-private fun LazyListState.scrollTriggerProgress(
-    key: Any,
-    startFraction: Float,
-    endFraction: Float
-): Float {
-    val info = layoutInfo
-    val item = info.visibleItemsInfo.firstOrNull { it.key == key } ?: return 0f
-    val viewportHeight = (info.viewportEndOffset - info.viewportStartOffset).toFloat()
-    val itemHeight = item.size.toFloat()
-    if (viewportHeight <= 0f || itemHeight <= 0f) return 0f
-
-    val t = ((viewportHeight - item.offset) / itemHeight).coerceIn(0f, 1f)
-    // El principio y el final de la ventana pueden llegar a coincidir (por ejemplo antes
-    // del primer layout, cuando todavia no se sabe el alto del viewport): una ventana de
-    // ancho 0 dividiria por cero y devolveria NaN, que revienta mas tarde en un
-    // roundToInt(). Sin ventana, no hay nada que animar.
-    val span = endFraction - startFraction
-    if (span <= 0f) return 0f
-    return ((t - startFraction) / span).coerceIn(0f, 1f)
-}
-
-/**
- * `poweri.inOut` de GSAP: quad/cubic/quart/quint segun [power] (1 a 4), simetrica y con
- * aceleracion-freno en el punto medio. `power` mas alto = se queda mas tiempo cerca de los
- * extremos y acelera mas de golpe por el medio.
- */
 private fun easeInOutPower(power: Int, t: Float): Float {
     val x = t.coerceIn(0f, 1f)
     val n = (power + 1).toDouble()
@@ -2011,11 +1987,7 @@ private fun TodayScreen(
         extraItems.addAll(loadExtraItems(location, current, elevationM, enabledExtras, context))
     }
 
-    // Foto de la ubicacion actual (no la ambiental de fondo): la tarjeta protagonista de
-    // la rejilla la usa mientras es grande. Se vuelve a pedir si se cambia de ubicacion.
-    val heroPhotoUrl by produceState<String?>(initialValue = null, location) {
-        value = UnsplashRepository(context).locationPhoto(location.name)?.url
-    }
+    var showAllCards by remember { mutableStateOf(false) }
 
     selectedDetail?.let { detail ->
         DetailInfoScreen(
@@ -2142,17 +2114,29 @@ private fun TodayScreen(
                 }
             }
 
-            // Las 15 tarjetas juntas en una sola rejilla de 3 columnas.
+            // Las 15 tarjetas en una rejilla de 3 columnas, todas iguales.
             item(key = "detail-tiles") {
-                AppGridReveal(
-                    items = (detailItems + extraItems).withHeroAtCenter(DetailType.RAIN_PROBABILITY),
-                    listState = listState,
-                    itemKey = "detail-tiles",
-                    heroPhotoUrl = heroPhotoUrl,
-                    heroLocationName = location.name,
-                    onClick = { selectedDetail = it }
-                )
+                DetailGrid(
+                    items = detailItems + extraItems,
+                    columns = GRID_COLUMNS,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) { item ->
+                    // La de lluvia no abre su detalle: abre el popup con todas.
+                    if (item.type == DetailType.RAIN_PROBABILITY) {
+                        showAllCards = true
+                    } else {
+                        selectedDetail = item
+                    }
+                }
             }
+        }
+
+        if (showAllCards) {
+            AllCardsDialog(
+                items = detailItems + extraItems,
+                onDismiss = { showAllCards = false },
+                onSelect = { showAllCards = false; selectedDetail = it }
+            )
         }
 
         ShrinkingHeader(
@@ -2617,9 +2601,14 @@ private fun PoppingIcon(
 }
 
 @Composable
-private fun DetailGrid(items: List<DetailItem>, onClick: (DetailItem) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        items.chunked(2).forEachIndexed { rowIndex, rowItems ->
+private fun DetailGrid(
+    items: List<DetailItem>,
+    columns: Int = 2,
+    modifier: Modifier = Modifier,
+    onClick: (DetailItem) -> Unit
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        items.chunked(columns).forEachIndexed { rowIndex, rowItems ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -2628,11 +2617,12 @@ private fun DetailGrid(items: List<DetailItem>, onClick: (DetailItem) -> Unit) {
                     DetailTile(
                         item,
                         modifier = Modifier.weight(1f),
-                        entryIndex = rowIndex * 2 + colIndex,
+                        entryIndex = rowIndex * columns + colIndex,
                         onClick = { onClick(item) }
                     )
                 }
-                if (rowItems.size == 1) {
+                // Rellena la ultima fila para que las celdas sueltas no se estiren.
+                repeat(columns - rowItems.size) {
                     Spacer(modifier = Modifier.weight(1f))
                 }
             }
@@ -2640,277 +2630,50 @@ private fun DetailGrid(items: List<DetailItem>, onClick: (DetailItem) -> Unit) {
     }
 }
 
-/**
- * La rejilla aparece inspirada en el pen https://codepen.io/jh3y/pen/VYZwOwd, adaptada a un
- * `LazyColumn` normal (sin bloque artificial ni `position: sticky`):
- *
- *  - El grupo se coloca justo despues de Sol y luna, como cualquier otro elemento de la
- *    lista. La protagonista arranca con el mismo tamano que la tarjeta de "Próximas
- *    horas" (paisaje, mas ancha que alta): de fondo lleva [heroPhotoUrl] (una foto del
- *    lugar) y sin el icono ni el texto del dato todavia.
- *  - Mientras es grande va pegada a Sol y luna, como otra tarjeta mas de la pila (sin
- *    el hueco de las filas invisibles de la rejilla por encima de su celda).
- *  - Al llegar al centro de la pantalla, la rejilla se engancha ahi (como un
- *    `position: sticky`): la pantalla sigue bajando por detras, pero la rejilla no se
- *    mueve, y la protagonista encoge y baja a la vez hasta aterrizar en su celda del
- *    centro, mientras la foto se desvanece, aparecen el icono y el valor, y las demas
- *    brotan desde cero (`scale: 0` + `opacity: 0`) a su alrededor, por capas segun lo
- *    lejos que esten de ella.
- */
-@SuppressLint("UnusedBoxWithConstraintsScope")
+/** El popup que abre la tarjeta de lluvia: todas las tarjetas juntas. */
 @Composable
-private fun AppGridReveal(
+private fun AllCardsDialog(
     items: List<DetailItem>,
-    listState: LazyListState,
-    itemKey: String,
-    /** Foto de fondo para la protagonista mientras es grande (null -> sin foto). */
-    heroPhotoUrl: String?,
-    /** Nombre de la ubicacion, escrito sobre la foto mientras la protagonista es grande. */
-    heroLocationName: String,
-    onClick: (DetailItem) -> Unit
+    onDismiss: () -> Unit,
+    onSelect: (DetailItem) -> Unit
 ) {
-    if (items.isEmpty()) return
-
-    val spacing = 13.dp
-    val density = LocalDensity.current
-
-    // Tres columnas, como la rejilla del demo en movil.
-    val columns = GRID_COLUMNS
-    val rows = (items.size + columns - 1) / columns
-    // La protagonista es la que cae en el centro de la rejilla.
-    val heroIndex = heroIndexFor(items.size)
-    val heroRow = heroIndex / columns
-    val heroColumn = heroIndex % columns
-
-    // Sin bloque artificial ni "position: sticky": el grupo mide lo que mide su propia
-    // rejilla (nada mas) y se coloca justo despues de Sol y luna, como cualquier otro
-    // elemento de la lista. La protagonista, mientras es grande, se sale visualmente de
-    // esta caja (a proposito: no hay `clipToBounds()`) y monta sobre lo de alrededor.
-    BoxWithConstraints(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = GRID_HORIZONTAL_PADDING)
+    Dialog(
+        onDismissRequest = onDismiss,
+        // Sin el ancho por defecto del sistema: con tres columnas se queda estrecho.
+        properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        val tile = (maxWidth - spacing * (columns - 1)) / columns
-        // Las celdas son 4:5, asi que son mas altas que anchas.
-        val tileHeight = tile / DETAIL_TILE_ASPECT
-        val gridHeight = tileHeight * rows + spacing * (rows - 1)
-
-        // Al arrancar, la protagonista tiene el mismo tamano que la tarjeta de "Próximas
-        // horas" (mismo margen lateral, no el hueco de 1dp de la rejilla).
-        val heroWidth = maxWidth + GRID_HORIZONTAL_PADDING * 2 - HOURLY_CHART_SIDE_PADDING * 2
-
-        val tilePx = with(density) { tile.toPx() }
-        val tileHeightPx = with(density) { tileHeight.toPx() }
-        val spacingPx = with(density) { spacing.toPx() }
-        val gridWidthPx = with(density) { maxWidth.toPx() }
-        val gridHeightPx = with(density) { gridHeight.toPx() }
-        val heroWidthPx = with(density) { heroWidth.toPx() }
-        // Mismo alto que la tarjeta de "Próximas horas", no una proporcion inventada.
-        val heroHeightPx = with(density) { HOURLY_CHART_HEIGHT.toPx() }
-        val viewportHeightPx = listState.layoutInfo.let { it.viewportEndOffset - it.viewportStartOffset }
-            .toFloat()
-
-        // Recorrido de scroll que se consume con la rejilla clavada en pantalla: es lo
-        // que dura el encogido. Equivale al `min-height: 240vh` de la seccion del demo
-        // (alli, 2,4 pantallas para un contenido de 1 pantalla = 1,4 pantallas de scroll
-        // con todo quieto). Se anade como hueco libre DEBAJO de la rejilla dentro de este
-        // mismo elemento de la lista, y el enganche lo va reabsorbiendo empujando la
-        // rejilla hacia abajo: al llegar al tope de scroll la rejilla queda pegada al
-        // fondo y ese hueco ha desaparecido, sin espacio muerto sobrante.
-        val pinRunwayPx = viewportHeightPx * GRID_PIN_RUNWAY_SCREENS
-        val pinRunway = with(density) { pinRunwayPx.toDp() }
-        val itemHeightPx = gridHeightPx + pinRunwayPx
-
-        // Centro de la celda de la protagonista dentro de la rejilla. Es el punto sobre
-        // el que la protagonista escala (crece y encoge sin moverse de ahi, porque
-        // graphicsLayer escala por defecto sobre el centro del propio elemento), asi que
-        // es tambien el punto que hay que clavar en la pantalla.
-        val heroCellCenterPx = heroRow * (tileHeightPx + spacingPx) + tileHeightPx / 2f
-        // Posicion (relativa al viewport) que debe tener el borde superior de la rejilla
-        // para que esa celda quede justo en el centro de la pantalla — fija, no cambia
-        // con el scroll: es el punto en el que la rejilla se "engancha" (el `position:
-        // sticky; top: 0` de `.content`, que por medir 100vh deja su contenido centrado).
-        val pinnedTopPx = viewportHeightPx / 2f - heroCellCenterPx
-        // La protagonista empieza a encogerse justo cuando se engancha y termina justo
-        // cuando el enganche se suelta: asi nunca se la ve moverse y encoger a la vez.
-        // Primero sube con el scroll hasta el centro; a partir de ahi se queda quieta y
-        // solo cambia de tamano mientras se consume pinRunwayPx de scroll.
-        val heroStartT = if (itemHeightPx > 0f) {
-            ((viewportHeightPx - pinnedTopPx) / itemHeightPx).coerceIn(0f, 1f)
-        } else {
-            0f
-        }
-        val heroEndT = if (itemHeightPx > 0f) {
-            (heroStartT + pinRunwayPx / itemHeightPx).coerceIn(0f, 1f)
-        } else {
-            0f
-        }
-
-        Box(modifier = Modifier.height(gridHeight + pinRunway)) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.94f)
+                .fillMaxHeight(0.82f),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xF21B2333))
+        ) {
             Column(
                 modifier = Modifier
-                    .height(gridHeight)
-                    .graphicsLayer {
-                        // Como `position: sticky`: en cuanto la rejilla llega al punto de
-                        // enganche, toda ella (protagonista y hermanas juntas) se queda
-                        // fija en pantalla — la pantalla sigue desplazandose, pero la
-                        // rejilla no — mientras la protagonista encoge y las hermanas
-                        // aparecen. Se calcula con la posicion actual de la rejilla (no
-                        // con una fraccion 0..1) para que sea reversible sea cual sea la
-                        // velocidad o la direccion del scroll.
-                        //
-                        // El tope es pinRunwayPx: mas empuje que eso sacaria la rejilla
-                        // de su propio hueco en la lista y sus ultimas filas quedarian
-                        // fuera de la pantalla sin scroll que pedir para verlas. Justo en
-                        // ese tope la rejilla queda pegada al fondo del elemento, que es
-                        // donde tiene que acabar.
-                        val liveTopPx = (listState.layoutInfo.visibleItemsInfo
-                            .firstOrNull { it.key == itemKey }?.offset ?: 0).toFloat()
-                        translationY = (pinnedTopPx - liveTopPx)
-                            .coerceIn(0f, pinRunwayPx)
-                    },
-                verticalArrangement = Arrangement.spacedBy(spacing)
+                    .fillMaxSize()
+                    .padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-            items.chunked(columns).forEachIndexed { row, rowItems ->
-                Row(horizontalArrangement = Arrangement.spacedBy(spacing)) {
-                    rowItems.forEachIndexed { column, item ->
-                        val index = row * columns + column
-                        val isHero = index == heroIndex
-                        // Anillo al que pertenece: 1 las de al lado, 2 las esquinas...
-                        val ring = maxOf(
-                            abs(row - heroRow),
-                            abs(column - heroColumn)
-                        )
-                        DetailTile(
-                            item = item,
-                            tileSize = tile,
-                            // El fondo de color usa el mismo ritmo que el ancho de la
-                            // protagonista (`power2.inOut`, igual que `.scaler img`
-                            // width en el JS).
-                            heroStyleProgress = if (isHero) {
-                                {
-                                    easeInOutPower(
-                                        2,
-                                        listState.scrollTriggerProgress(
-                                            itemKey,
-                                            heroStartT,
-                                            heroEndT
-                                        )
-                                    )
-                                }
-                            } else {
-                                null
-                            },
-                            // Ritmo del alto (`power1.inOut`), para poder compensar el
-                            // estirado del ancho y el alto por separado (ver mas abajo,
-                            // donde se usan junto a heroStyleProgress).
-                            heroHeightProgress = if (isHero) {
-                                {
-                                    easeInOutPower(
-                                        1,
-                                        listState.scrollTriggerProgress(
-                                            itemKey,
-                                            heroStartT,
-                                            heroEndT
-                                        )
-                                    )
-                                }
-                            } else {
-                                null
-                            },
-                            heroPhotoUrl = if (isHero) heroPhotoUrl else null,
-                            heroPhotoWidth = if (isHero) heroWidth else null,
-                            heroPhotoHeight = if (isHero) HOURLY_CHART_HEIGHT else null,
-                            heroLocationName = heroLocationName,
-                            modifier = Modifier
-                                .weight(1f)
-                                .zIndex(if (isHero) 1f else 0f)
-                                .graphicsLayer {
-                                    // Adaptacion de los dos ScrollTrigger del JS: `t`
-                                    // recorre 0..1 a lo largo de todo el scroll que la
-                                    // rejilla puede ofrecer (ver scrollTriggerProgress).
-                                    // La protagonista no empieza a encogerse hasta que
-                                    // se queda clavada en el centro de la pantalla
-                                    // (heroStartT); las demas brotan en la misma
-                                    // ventana, justo detras.
-                                    val heroT = listState.scrollTriggerProgress(
-                                        itemKey,
-                                        heroStartT,
-                                        heroEndT
-                                    )
-                                    val siblingsT = listState.scrollTriggerProgress(
-                                        itemKey,
-                                        heroStartT,
-                                        heroEndT
-                                    )
-
-                                    if (isHero) {
-                                        // `.from(..., {height}, "power1.inOut")` y
-                                        // `.from(..., {width}, "power2.inOut")`: cada
-                                        // eje encoge con su propia curva, no con una
-                                        // unica escala que mantendria siempre la misma
-                                        // proporcion 4:5.
-                                        val heightEase = easeInOutPower(1, heroT)
-                                        val widthEase = easeInOutPower(2, heroT)
-
-                                        // La celda de la protagonista esta en el centro
-                                        // de la rejilla, asi que si solo escalase sobre
-                                        // su propio centro, la foto grande nacería a
-                                        // media rejilla de Sol y luna con todo el hueco
-                                        // de las filas invisibles en medio. Mientras es
-                                        // grande se la sube hasta que su borde superior
-                                        // coincide con el de la rejilla (toTopY), o sea
-                                        // pegada a la tarjeta de arriba como una mas de
-                                        // la pila; ese tiron se deshace con el mismo
-                                        // ritmo que el alto, asi que al acabar de encoger
-                                        // aterriza justo en el centro de su celda, que es
-                                        // el punto que la rejilla clava en el centro de
-                                        // la pantalla (vease pinnedTopPx).
-                                        val toCenterX = gridWidthPx / 2f -
-                                                (column * (tilePx + spacingPx) + tilePx / 2f)
-                                        val toTopY = heroHeightPx / 2f - heroCellCenterPx
-                                        scaleX = lerp(heroWidthPx / tilePx, 1f, widthEase)
-                                        scaleY = lerp(heroHeightPx / tileHeightPx, 1f, heightEase)
-
-                                        translationX = toCenterX * (1f - widthEase)
-                                        translationY = toTopY * (1f - heightEase)
-                                    } else {
-                                        // Las tres `.layer` del demo comparten la MISMA
-                                        // ventana de scroll (`layersTl`): lo unico que
-                                        // cambia entre ellas es la curva de aceleracion
-                                        // (`power1/3/4.inOut` para la escala), no cuando
-                                        // empiezan o acaban. Aqui solo hay dos anillos
-                                        // alrededor de la protagonista (la rejilla es de
-                                        // 3 columnas), asi que usan los dos extremos de
-                                        // esa gama: el anillo pegado a la protagonista
-                                        // con la curva mas brusca (se queda pequeño mas
-                                        // tiempo y luego salta), el de las esquinas con
-                                        // la mas suave.
-                                        val scalePower = if (ring <= 1) 4 else 1
-                                        val toCenterX = gridWidthPx / 2f -
-                                                (column * (tilePx + spacingPx) + tilePx / 2f)
-                                        val toCenterY = gridHeightPx / 2f -
-                                                (row * (tileHeightPx + spacingPx) + tileHeightPx / 2f)
-                                        val fadeEase = easeSineOut(siblingsT)
-                                        val scaleEase = easeInOutPower(scalePower, siblingsT)
-
-                                        scaleX = scaleEase
-                                        scaleY = scaleEase
-                                        alpha = fadeEase
-                                        translationX = toCenterX * (1f - scaleEase)
-                                        translationY = toCenterY * (1f - scaleEase)
-                                    }
-                                },
-                            entryIndex = index,
-                            onClick = { onClick(item) }
-                        )
-                    }
-                    repeat(columns - rowItems.size) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = stringResource(R.string.grid_all_title),
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    IconCircleButton(emoji = "✕", onClick = onDismiss)
                 }
-            }
+                DetailGrid(
+                    items = items,
+                    columns = GRID_COLUMNS,
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    onClick = onSelect
+                )
             }
         }
     }
@@ -2921,41 +2684,8 @@ private fun AppGridReveal(
  * "Próximas horas" en vez de quedarse en el hueco que deja este padding. */
 private val GRID_HORIZONTAL_PADDING = 1.dp
 
-/** Esquinas de la protagonista mientras es la foto grande: un redondeo minimo (frente
- * al 25% de las celdas normales), para que no se vean completamente a escuadra. */
-private const val HERO_PHOTO_CORNER_PERCENT = 6f
-
-/**
- * Coloca el dato de [type] en la celda que abre la animacion, si esta en esta tanda: la
- * del centro de la rejilla, que es la que el demo reserva al `.scaler`.
- */
-private fun List<DetailItem>.withHeroAtCenter(type: DetailType): List<DetailItem> {
-    val current = indexOfFirst { it.type == type }
-    if (current < 0) return this
-    val target = heroIndexFor(size)
-    if (current == target) return this
-    return toMutableList().apply { add(target, removeAt(current)) }
-}
-
-/** Celda que hace de protagonista en una rejilla de [count] tarjetas. */
-private fun heroIndexFor(count: Int): Int {
-    val rows = (count + GRID_COLUMNS - 1) / GRID_COLUMNS
-    return (((rows - 1) / 2) * GRID_COLUMNS + (GRID_COLUMNS - 1) / 2).coerceIn(0, count - 1)
-}
-
 /** Columnas de la rejilla, como el `repeat(3, 1fr)` del demo en movil. */
 private const val GRID_COLUMNS = 3
-
-/** Tarjetas por tanda: dos filas de tres. */
-private const val GRID_TILES_PER_BLOCK = 6
-
-/**
- * Cuantas pantallas de scroll se consumen con la rejilla clavada en el sitio (que es lo
- * que dura el encogido de la protagonista). Es el equivalente al `min-height: 240vh` de
- * la seccion del demo: alli el contenido pegajoso mide 1 pantalla y la seccion 2,4, o
- * sea 1,4 pantallas de scroll sin que nada se mueva de sitio.
- */
-private const val GRID_PIN_RUNWAY_SCREENS = 1.2f
 
 /** La tarjeta crece desde cero y se funde segun entra en pantalla, como las de la rejilla. */
 private fun Modifier.revealOnScroll(
@@ -2975,159 +2705,20 @@ private fun DetailTile(
     entryIndex: Int = 0,
     /** Lado de la celda: el contenido se ajusta a el en vez de usar tamanos fijos. */
     tileSize: Dp = DETAIL_TILE_REFERENCE,
-    /**
-     * Solo la protagonista de la rejilla: 0 al principio (la foto de [heroPhotoUrl] se ve
-     * entera y ni el icono ni el valor todavia) y 1 cuando ya ha terminado de encogerse
-     * (para entonces la foto se ha desvanecido del todo y ha aparecido el mismo cristal
-     * translucido, icono y texto que las demas tarjetas). Null en el resto, que siempre
-     * llevan el estilo normal.
-     */
-    heroStyleProgress: (() -> Float)? = null,
-    /** Igual que [heroStyleProgress] pero con el ritmo del alto (`power1.inOut`), no el
-     * del ancho: hace falta el par para compensar el estirado de la foto y el texto por
-     * separado en cada eje (ver mas abajo). Si es null se usa [heroStyleProgress]. */
-    heroHeightProgress: (() -> Float)? = null,
-    /** Foto que se ve de fondo mientras la protagonista es grande; ignorada si es null. */
-    heroPhotoUrl: String? = null,
-    /** Tamano real (no el de la celda) al que debe verse la foto y el texto de encima,
-     * para que ninguno de los dos quede estirado por el escalado no uniforme con el que
-     * la celda pequeña simula ser esta protagonista grande. */
-    heroPhotoWidth: Dp? = null,
-    heroPhotoHeight: Dp? = null,
-    /** Nombre de la ubicacion, escrito abajo a la izquierda sobre [heroPhotoUrl]. */
-    heroLocationName: String? = null,
     onClick: () -> Unit
 ) {
     val shape = RoundedCornerShape(TILE_CORNER_FRACTION)
     Box(
         modifier = modifier
             .aspectRatio(DETAIL_TILE_ASPECT)
-            .then(
-                if (heroStyleProgress != null) {
-                    // Esquinas casi rectas mientras es la foto grande; se redondean
-                    // del todo (como las demas) segun se asienta. Animado aqui (no
-                    // con un `.clip()` fijo) para no recomponer en cada fotograma.
-                    Modifier.graphicsLayer {
-                        val settle = heroStyleProgress().coerceIn(0f, 1f)
-                        this.clip = true
-                        this.shape = RoundedCornerShape(
-                            percent = lerp(HERO_PHOTO_CORNER_PERCENT, 25f, settle).roundToInt()
-                        )
-                        // La foto grande si lleva sombra, que es lo que la despega del
-                        // fondo mientras es una tarjeta de verdad; se apaga segun se
-                        // asienta para acabar como las demas: sin sombra y sin canto, que
-                        // es lo que dibujaba el cuadrado. Va aqui, y no en un .shadow(),
-                        // porque este bloque se reevalua por fotograma sin recomponer.
-                        shadowElevation = lerp(14.dp.toPx(), 0f, settle)
-                        ambientShadowColor = Color.Black.copy(alpha = 0.5f)
-                        spotShadowColor = Color.Black.copy(alpha = 0.7f)
-                    }
-                } else {
-                    Modifier.clip(shape)
-                }
-            )
-            .then(
-                if (heroStyleProgress != null) {
-                    // Crossfade: mientras la foto (dibujada como hijo, mas abajo) se
-                    // desvanece, el cristal de las demas aparece por detras segun avanza
-                    // el progreso, en vez de cambiar de golpe de un fondo a otro.
-                    Modifier.drawWithCache {
-                        onDrawBehind {
-                            drawTileGlass(alpha = heroStyleProgress().coerceIn(0f, 1f))
-                        }
-                    }
-                } else {
-                    Modifier.drawBehind { drawTileGlass() }
-                }
-            )
+            .clip(shape)
+            .drawBehind { drawTileGlass() }
             .clickable(onClick = onClick)
     ) {
-        if (heroStyleProgress != null && heroPhotoUrl != null &&
-            heroPhotoWidth != null && heroPhotoHeight != null
-        ) {
-            // El resto de esta tarjeta (fondo, borde) puede estirarse sin problema para
-            // simular el tamano grande porque son formas lisas, pero una foto y un texto
-            // se notarian deformados. Por eso esta caja interior tiene su tamano real
-            // ([heroPhotoWidth] x [heroPhotoHeight], no el de la celda) y una escala
-            // exactamente inversa a la del contenedor en cada instante: al pintarse
-            // dentro de una celda que luego se estira de forma distinta en ancho y alto,
-            // el estirado y esta escala inversa se cancelan y queda sin deformar (el
-            // recorte del contenedor, que si seguimos aplicandose, es lo que la va
-            // "encogiendo" de verdad segun avanza el scroll).
-            val heroWidthRatio = heroPhotoWidth / tileSize
-            val heroHeightRatio = heroPhotoHeight / (tileSize / DETAIL_TILE_ASPECT)
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    // requiredSize, no size: la celda ya viene con restricciones fijas
-                    // (min=max=su propio tamano pequeño) desde el aspectRatio()+weight()
-                    // de mas arriba, y un .size() normal se recorta dentro de esas
-                    // restricciones en vez de imponer el suyo — por eso la foto salia
-                    // pequeña pese a pedir el tamano grande.
-                    .requiredSize(heroPhotoWidth, heroPhotoHeight)
-                    .graphicsLayer {
-                        val widthEase = heroStyleProgress().coerceIn(0f, 1f)
-                        val heightEase = (heroHeightProgress?.invoke() ?: widthEase)
-                            .coerceIn(0f, 1f)
-                        scaleX = 1f / lerp(heroWidthRatio, 1f, widthEase)
-                        scaleY = 1f / lerp(heroHeightRatio, 1f, heightEase)
-                    }
-            ) {
-                // La foto se ve entera al principio y se desvanece con el mismo ritmo
-                // con el que aparece el cristal normal (arriba) y el icono+texto (mas
-                // abajo).
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(heroPhotoUrl)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer { alpha = 1f - heroStyleProgress().coerceIn(0f, 1f) }
-                )
-                if (!heroLocationName.isNullOrBlank()) {
-                    // Degradado gris oscuro por detras, para que el texto se lea encima
-                    // de cualquier foto por clara que sea.
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .fillMaxWidth()
-                            .height(56.dp)
-                            .graphicsLayer { alpha = 1f - heroStyleProgress().coerceIn(0f, 1f) }
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.55f))
-                                )
-                            )
-                    )
-                    Text(
-                        text = heroLocationName,
-                        color = Color.White,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(16.dp)
-                            .graphicsLayer { alpha = 1f - heroStyleProgress().coerceIn(0f, 1f) }
-                    )
-                }
-            }
-        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp * (tileSize / DETAIL_TILE_REFERENCE))
-                .then(
-                    if (heroStyleProgress != null) {
-                        // El icono y el texto aparecen con el mismo ritmo con el que se
-                        // desvanece la foto: nada de golpes ni recomposicion, solo alpha.
-                        Modifier.graphicsLayer { alpha = heroStyleProgress().coerceIn(0f, 1f) }
-                    } else {
-                        Modifier
-                    }
-                ),
+                .padding(horizontal = tileSize * 0.07f, vertical = tileSize * 0.06f),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -3135,15 +2726,16 @@ private fun DetailTile(
             PoppingIcon(
                 emoji = item.emoji,
                 iconRes = item.type.iconRes(),
-                delayMillis = entryIndex * 40,
-                size = 28.sp * scale
+                delayMillis = entryIndex * 45,
+                size = (28f * scale).sp
             )
-            Spacer(Modifier.height(6.dp * scale))
+            Spacer(Modifier.height(tileSize * 0.05f))
             Text(
                 text = item.value,
                 color = Color.White,
-                fontSize = 20.sp * scale,
+                fontSize = maxOf(17f * scale, 14f).sp,
                 fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
                 maxLines = 1
             )
             Text(

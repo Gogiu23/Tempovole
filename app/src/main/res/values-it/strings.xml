@@ -352,4 +352,5 @@
     <string name="daypart_tarde">Sera</string>
     <string name="daypart_noche">Notte</string>
     <string name="outfit_daypart_now">Adesso</string>
+    <string name="grid_all_title">Tutti i dati</string>
 </resources>
