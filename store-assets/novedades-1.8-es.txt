@@ -1,0 +1,3 @@
+• «Hoy» muestra el tiempo de ahora y la probabilidad de lluvia de las próximas 3 horas.
+• El mapa tiene play para recorrer las horas solas, botón «Ahora» y una barra nueva con sol o luna.
+• Botones con degradados e iconos, y textos que ya no se cortan en pantallas estrechas.

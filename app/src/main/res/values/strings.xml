@@ -32,6 +32,10 @@
     <string name="changelog_v17_date">4 de noviembre de 2026</string>
     <string name="changelog_v17_item1">«Más datos» ya no abre una ventana: ahora son tarjetas de colores en un carrusel, como el de Semana. Desliza de lado para recorrerlas y toca una para ver su información.</string>
     <string name="changelog_v17_item2">Nuevo mapa del tiempo al final de Hoy, con relieve, costas y nombres de ciudades. Muestra el viento en movimiento, las nubes y la lluvia, y una rueda de tiempo para ver cómo evolucionan ayer, hoy y mañana.</string>
+    <string name="changelog_v18_date">4 de noviembre de 2026</string>
+    <string name="changelog_v18_item1">Hoy muestra el tiempo de ahora (ya no sale «Lluvia» con sol) y, debajo, la probabilidad de lluvia de las próximas 3 horas.</string>
+    <string name="changelog_v18_item2">El mapa tiene botón de play para recorrer las horas solas, de media en media hora, y un botón «Ahora» para volver. Una barra nueva con un sol o una luna según la hora, y un movimiento más suave.</string>
+    <string name="changelog_v18_item3">Botones con degradados de color e iconos, nombres y temperaturas que se ajustan a pantallas estrechas, y «Sol y luna» ya no asoma cortada arriba.</string>
     <string name="changelog_v16_date">12 de octubre de 2026</string>
     <string name="changelog_v16_item1">Qué me pongo ya no da una recomendación para todo el día: ahora separa el momento actual, el tramo anterior y los dos siguientes, cada uno con su temperatura.</string>
     <string name="changelog_v16_item2">El aviso de la mañana se puede apagar desde Ajustes, y ahí mismo hay un botón para buscar actualizaciones de la app.</string>
@@ -142,7 +146,8 @@
     <!-- Hoy -->
     <string name="today_max_label">Máxima</string>
     <string name="today_min_label">Mínima</string>
-    <string name="today_rain_probability_label">Prob. lluvia</string>
+    <string name="today_rain_probability_label">Prob. lluvia (3 h)</string>
+    <string name="today_rain_next_hours">Lluvia próximas 3 h: %1$d%%</string>
     <string name="today_next_hours_title">Próximas horas</string>
     <string name="today_pressure_label">Presión</string>
     <string name="today_historical_label">Vs. media histórica</string>
@@ -166,7 +171,7 @@
     <string name="day_detail_max">Máxima</string>
     <string name="day_detail_min">Mínima</string>
     <string name="day_detail_avg">Media</string>
-    <string name="day_detail_rain_probability_label">Prob. lluvia</string>
+    <string name="day_detail_rain_probability_label">Prob. lluvia (3 h)</string>
     <string name="day_detail_moon_label">Luna</string>
 
     <!-- DetailType (tarjetas de datos) -->
@@ -221,7 +226,7 @@
 
     <!-- Condición meteorológica -->
     <string name="weather_condition_clear">Despejado</string>
-    <string name="weather_condition_partly">Parcial</string>
+    <string name="weather_condition_partly">Poco nuboso</string>
     <string name="weather_condition_cloudy">Nublado</string>
     <string name="weather_condition_fog">Niebla</string>
     <string name="weather_condition_drizzle">Llovizna</string>
@@ -362,5 +367,7 @@
     <string name="map_clouds">Nubes</string>
     <string name="map_error">No se pudo cargar el mapa</string>
     <string name="map_rain">Lluvia</string>
+    <string name="map_play">Reproducir</string>
+    <string name="map_pause">Pausa</string>
     <string name="map_credits">Relieve: AWS Terrain Tiles (Mapzen, NASA SRTM) · Meteo: Open-Meteo · Mapa: Natural Earth</string>
 </resources>

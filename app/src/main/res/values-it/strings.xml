@@ -32,6 +32,10 @@
     <string name="changelog_v17_date">4 novembre 2026</string>
     <string name="changelog_v17_item1">«Altri dati» non apre più una finestra: ora sono schede colorate in un carosello, come quello di Settimana. Scorri di lato per sfogliarle e tocca una scheda per vederne i dettagli.</string>
     <string name="changelog_v17_item2">Nuova mappa meteo in fondo a Oggi, con rilievo, coste e nomi delle città. Mostra il vento in movimento, le nuvole e la pioggia, con un cursore del tempo per vedere come cambiano da ieri a domani.</string>
+    <string name="changelog_v18_date">4 novembre 2026</string>
+    <string name="changelog_v18_item1">Oggi mostra il meteo di adesso (niente più «Pioggia» con il sole) e, sotto, la probabilità di pioggia nelle prossime 3 ore.</string>
+    <string name="changelog_v18_item2">La mappa ha un pulsante play per scorrere le ore da sola, di mezz\'ora in mezz\'ora, e un pulsante «Adesso» per tornare. C\'è una nuova barra con un sole o una luna a seconda dell\'ora e un movimento più fluido.</string>
+    <string name="changelog_v18_item3">Pulsanti con sfumature di colore e icone, nomi e temperature che si adattano agli schermi stretti e «Sole e luna» non spunta più tagliato in alto.</string>
     <string name="changelog_v16_date">12 ottobre 2026</string>
     <string name="changelog_v16_item1">Come vestirsi non dà più un unico consiglio per tutta la giornata: ora separa il momento attuale, la fascia precedente e le due successive, ognuna con la sua temperatura.</string>
     <string name="changelog_v16_item2">L\'avviso del mattino si può disattivare dalle Impostazioni, dove c\'è anche un pulsante per cercare aggiornamenti dell\'app.</string>
@@ -142,7 +146,8 @@
     <!-- Oggi -->
     <string name="today_max_label">Massima</string>
     <string name="today_min_label">Minima</string>
-    <string name="today_rain_probability_label">Prob. pioggia</string>
+    <string name="today_rain_probability_label">Prob. pioggia (3 h)</string>
+    <string name="today_rain_next_hours">Pioggia nelle prossime 3 h: %1$d%%</string>
     <string name="today_next_hours_title">Prossime ore</string>
     <string name="today_pressure_label">Pressione</string>
     <string name="today_historical_label">Vs. media storica</string>
@@ -166,7 +171,7 @@
     <string name="day_detail_max">Massima</string>
     <string name="day_detail_min">Minima</string>
     <string name="day_detail_avg">Media</string>
-    <string name="day_detail_rain_probability_label">Prob. pioggia</string>
+    <string name="day_detail_rain_probability_label">Prob. pioggia (3 h)</string>
     <string name="day_detail_moon_label">Luna</string>
 
     <!-- DetailType (schede dei dati) -->
@@ -221,7 +226,7 @@
 
     <!-- Condizione meteorologica -->
     <string name="weather_condition_clear">Sereno</string>
-    <string name="weather_condition_partly">Parziale</string>
+    <string name="weather_condition_partly">Poco nuvoloso</string>
     <string name="weather_condition_cloudy">Nuvoloso</string>
     <string name="weather_condition_fog">Nebbia</string>
     <string name="weather_condition_drizzle">Pioviggine</string>
@@ -362,4 +367,6 @@
     <string name="map_clouds">Nuvole</string>
     <string name="map_error">Impossibile caricare la mappa</string>
     <string name="map_rain">Pioggia</string>
+    <string name="map_play">Riproduci</string>
+    <string name="map_pause">Pausa</string>
 </resources>

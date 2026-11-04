@@ -148,6 +148,8 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -1796,7 +1798,8 @@ private fun ShrinkingHeader(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.graphicsLayer {
+                // Sin peso, un nombre largo empujaba al reloj y el texto se cortaba.
+                modifier = Modifier.weight(1f, fill = false).graphicsLayer {
                     // El titulo se hace pequeno escalandolo, no cambiando su tamano de
                     // letra: asi no hay que volver a medir el texto en cada fotograma.
                     val scale = lerp(1f, HEADER_TITLE_SHRINK, shrink())
@@ -1806,7 +1809,7 @@ private fun ShrinkingHeader(
                 }
             ) {
                 leading?.invoke()
-                Column {
+                Column(modifier = Modifier.weight(1f, fill = false)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1818,12 +1821,12 @@ private fun ShrinkingHeader(
                                 modifier = Modifier.size(28.dp)
                             )
                         }
-                        Text(
+                        FitText(
                             text = title,
                             color = Color.White,
                             fontSize = 30.sp,
                             fontWeight = FontWeight.Bold,
-                            maxLines = 1
+                            modifier = Modifier.weight(1f, fill = false)
                         )
                     }
                     Row(
@@ -1838,11 +1841,11 @@ private fun ShrinkingHeader(
                                 modifier = Modifier.size(20.dp)
                             )
                         }
-                        Text(
+                        FitText(
                             text = subtitle,
                             color = Color.White.copy(alpha = 0.85f),
                             fontSize = 15.sp,
-                            maxLines = 1
+                            modifier = Modifier.weight(1f, fill = false)
                         )
                     }
                 }
@@ -1850,6 +1853,37 @@ private fun ShrinkingHeader(
             trailing?.invoke()
         }
     }
+}
+
+/**
+ * Texto de una línea que reduce la letra hasta caber en el ancho que tiene (con un mínimo del
+ * 55 %, y puntos suspensivos si aun asi no cabe), en vez de cortarse en pantallas estrechas.
+ */
+@Composable
+private fun FitText(
+    text: String,
+    color: Color,
+    fontSize: TextUnit,
+    modifier: Modifier = Modifier,
+    fontWeight: FontWeight? = null
+) {
+    var size by remember(text, fontSize) { mutableStateOf(fontSize) }
+    val atMin = size.value <= fontSize.value * 0.55f
+    Text(
+        text = text,
+        color = color,
+        fontSize = size,
+        fontWeight = fontWeight,
+        maxLines = 1,
+        softWrap = false,
+        // Con puntos suspensivos el texto ya "cabe" y nunca se detectaria el desbordamiento:
+        // solo se ponen cuando ya no se puede encoger mas.
+        overflow = if (atMin) TextOverflow.Ellipsis else TextOverflow.Clip,
+        modifier = modifier,
+        onTextLayout = {
+            if (it.didOverflowWidth && !atMin) size = (size.value * 0.92f).sp
+        }
+    )
 }
 
 /**
@@ -2023,6 +2057,9 @@ private fun TodayScreen(
     }
 
     val upcomingHours = hours.upcoming()
+    // La del dia entero (el maximo de cualquier hora) asustaba con sol: se usa la de las
+    // proximas 3 horas.
+    val rainSoon = upcomingHours.take(3).mapNotNull { it.precipProbability }.maxOrNull()
 
     val maxLabel = stringResource(R.string.today_max_label)
     val minLabel = stringResource(R.string.today_min_label)
@@ -2039,7 +2076,7 @@ private fun TodayScreen(
                 DetailType.PRECIPITATION
             )
         )
-        today.precipProbability?.let {
+        rainSoon?.let {
             add(DetailItem("☔", rainProbabilityLabel, "$it%", DetailType.RAIN_PROBABILITY))
         }
     }
@@ -2081,13 +2118,22 @@ private fun TodayScreen(
                         .appearOnScroll(listState, "condition"),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    WeatherIcon(today.condition, isDay = true, size = 80.dp)
+                    // El tiempo de ahora: el codigo del dia entero es el peor de cualquier
+                    // hora, y con sol sacaba "Lluvia" por un chubasco de madrugada.
+                    WeatherIcon(current.condition, isDay = isDay, size = 80.dp)
                     Text(
-                        text = stringResource(today.condition.labelRes),
+                        text = stringResource(current.condition.labelRes),
                         color = Color.White,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.SemiBold
                     )
+                    rainSoon?.let {
+                        Text(
+                            text = stringResource(R.string.today_rain_next_hours, it),
+                            color = Color.White.copy(alpha = 0.85f),
+                            fontSize = 15.sp
+                        )
+                    }
                     Spacer(Modifier.height(8.dp))
                     Text(
                         text = "${today.tempMax.roundToInt()}° / ${today.tempMin.roundToInt()}°",
@@ -2268,11 +2314,25 @@ private suspend fun loadExtraItems(
 private enum class HourlyMetric(
     @androidx.annotation.StringRes val labelRes: Int,
     val unit: String,
-    val iconRes: Int
+    val iconRes: Int,
+    /** Degradado propio de la metrica: la linea del grafico y el fondo de su boton. */
+    val gradientStart: Color,
+    val gradientEnd: Color,
+    /** Color de la letra del boton seleccionado, segun lo claro que sea su degradado. */
+    val selectedTextColor: Color
 ) {
-    RAIN(R.string.today_metric_rain_label, "%", R.drawable.ic_heavy_rain),
-    TEMP(R.string.today_metric_temp_label, "°", R.drawable.ic_temp_medium),
-    WIND(DetailType.WIND.titleRes, "", R.drawable.ic_wind)
+    RAIN(
+        R.string.today_metric_rain_label, "%", R.drawable.ic_heavy_rain,
+        Color(0xFFFFD700), Color(0xFF81D4FA), Color(0xFF1B1B1B)
+    ),
+    TEMP(
+        R.string.today_metric_temp_label, "°", R.drawable.ic_temp_medium,
+        Color(0xFFFF3B30), Color(0xFF2979FF), Color.White
+    ),
+    WIND(
+        DetailType.WIND.titleRes, "", R.drawable.ic_wind,
+        Color(0xFF9E9E9E), Color.White, Color(0xFF1B1B1B)
+    )
 }
 
 /**
@@ -2326,7 +2386,12 @@ private fun MetricSelector(selected: HourlyMetric, onSelect: (HourlyMetric) -> U
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Color.White.copy(alpha = if (isSelected) 0.28f else 0.1f))
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(metric.gradientStart, metric.gradientEnd)
+                                .map { it.copy(alpha = if (isSelected) 1f else 0.4f) }
+                        )
+                    )
                     .clickable { onSelect(metric) }
                     .padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
@@ -2340,11 +2405,12 @@ private fun MetricSelector(selected: HourlyMetric, onSelect: (HourlyMetric) -> U
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
                     )
-                    Text(
+                    FitText(
                         text = stringResource(metric.labelRes),
-                        color = Color.White,
+                        color = if (isSelected) metric.selectedTextColor else Color.White,
                         fontSize = 13.sp,
-                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                 }
             }
@@ -2366,7 +2432,11 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
     val pointSpacing = 52.dp
     val chartSidePadding = 0.dp
     val chartHeight = HOURLY_CHART_HEIGHT
-    val lineColor = Color.White
+    // Degradado de la linea, de arriba (valores altos) a abajo (bajos).
+    // En lluvia al reves: sin lluvia (abajo) dorado, con lluvia (arriba) azul.
+    val reversed = metric == HourlyMetric.RAIN
+    val lineTop = if (reversed) metric.gradientEnd else metric.gradientStart
+    val lineBottom = if (reversed) metric.gradientStart else metric.gradientEnd
 
     val values = remember(hours, metric) { hours.map { it.valueFor(metric) } }
     val minValue = values.min()
@@ -2449,6 +2519,12 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
                     Offset(sidePad + stepPx * i + stepPx / 2f, yFor(v))
                 }
 
+                val lineBrush = Brush.verticalGradient(
+                    colors = listOf(lineTop, lineBottom),
+                    startY = topPad,
+                    endY = size.height - bottomPad
+                )
+
                 val fillPath = Path().apply {
                     moveTo(points.first().x, size.height - bottomPad)
                     lineTo(points.first().x, points.first().y)
@@ -2459,7 +2535,7 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
                 drawPath(
                     path = fillPath,
                     brush = Brush.verticalGradient(
-                        colors = listOf(lineColor.copy(alpha = 0.35f), lineColor.copy(alpha = 0f)),
+                        colors = listOf(lineTop.copy(alpha = 0.35f), lineBottom.copy(alpha = 0f)),
                         startY = topPad,
                         endY = size.height - bottomPad
                     )
@@ -2471,7 +2547,7 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
                 }
                 drawPath(
                     path = linePath,
-                    color = lineColor,
+                    brush = lineBrush,
                     style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
                 )
 
@@ -2505,7 +2581,7 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
                 val rainBarBaseY = size.height - 18.dp.toPx() // justo encima de la hora
 
                 points.forEachIndexed { i, p ->
-                    drawCircle(lineColor, radius = 3.dp.toPx(), center = p)
+                    drawCircle(lineBrush, radius = 3.dp.toPx(), center = p)
 
                     // Barra de precipitación en la zona inferior
                     val precip = hours[i].precipitationMm.toFloat()
@@ -2660,12 +2736,19 @@ private fun DetailGrid(
  * "Próximas horas" en vez de quedarse en el hueco que deja este padding. */
 private val GRID_HORIZONTAL_PADDING = 1.dp
 
+/** Cuanto hay que bajar desde arriba del todo para que la tarjeta este del todo permitida. */
+private val REVEAL_SCROLL_DISTANCE = 120.dp
+
 /** La tarjeta crece desde cero y se funde segun entra en pantalla, como las de la rejilla. */
 private fun Modifier.revealOnScroll(
     listState: LazyListState,
     key: Any
 ): Modifier = graphicsLayer {
-    val eased = smoothstep(listState.entryProgress(key, rangeFraction = 1f))
+    // Con la pagina arriba del todo la tarjeta asomaba cortada por el borde de abajo (mas o
+    // menos segun el alto del telefono): no aparece hasta que se empieza a hacer scroll.
+    val scrolled = if (listState.firstVisibleItemIndex > 0) 1f
+    else (listState.firstVisibleItemScrollOffset / REVEAL_SCROLL_DISTANCE.toPx()).coerceIn(0f, 1f)
+    val eased = smoothstep(listState.entryProgress(key, rangeFraction = 1f)) * scrolled
     scaleX = eased
     scaleY = eased
     alpha = eased
@@ -3326,12 +3409,11 @@ private fun DataCover(
                 )
             }
             Spacer(Modifier.height(size * 0.05f))
-            Text(
+            FitText(
                 text = item.value,
                 color = Color.White,
                 fontSize = with(density) { (size * 0.135f).toSp() },
-                fontWeight = FontWeight.Bold,
-                maxLines = 1
+                fontWeight = FontWeight.Bold
             )
             Text(
                 text = item.label,

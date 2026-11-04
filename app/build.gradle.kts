@@ -33,8 +33,8 @@ android {
         // Entonces: subir versionCode en 1 (Play lo exige) y versionName, y añadir la entrada
         // correspondiente en ui/Changelog.kt con ese mismo versionName. Si se olvida, la
         // pantalla de Novedades avisa de que van desincronizados.
-        versionCode = 9
-        versionName = "1.7"
+        versionCode = 10
+        versionName = "1.8"
 
         buildConfigField("String", "UNSPLASH_ACCESS_KEY", "\"$unsplashKey\"")
     }

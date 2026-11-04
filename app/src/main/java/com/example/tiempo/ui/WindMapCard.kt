@@ -18,6 +18,18 @@ import kotlin.math.roundToInt
 import kotlin.math.atan2
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -121,9 +133,18 @@ fun WindMapCard(location: SavedLocation, animate: Boolean, modifier: Modifier = 
                 fontWeight = FontWeight.SemiBold
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                LayerChip(stringResource(R.string.map_wind), windOn) { windOn = !windOn }
-                LayerChip(stringResource(R.string.map_clouds), cloudsOn) { cloudsOn = !cloudsOn }
-                LayerChip(stringResource(R.string.map_rain), rainOn) { rainOn = !rainOn }
+                LayerChip(
+                    stringResource(R.string.map_wind), R.drawable.ic_wind, windOn,
+                    Color(0xFFBDBDBD), Color(0xFF616161), Color.White
+                ) { windOn = !windOn }
+                LayerChip(
+                    stringResource(R.string.map_clouds), R.drawable.ic_clouds, cloudsOn,
+                    Color(0xFF90CAF9), Color(0xFF1565C0), Color.White
+                ) { cloudsOn = !cloudsOn }
+                LayerChip(
+                    stringResource(R.string.map_rain), R.drawable.ic_heavy_rain, rainOn,
+                    Color(0xFFFFD700), Color(0xFF81D4FA), Color(0xFF1B1B1B)
+                ) { rainOn = !rainOn }
             }
             val f = field
             when {
@@ -140,17 +161,36 @@ fun WindMapCard(location: SavedLocation, animate: Boolean, modifier: Modifier = 
 }
 
 @Composable
-private fun LayerChip(label: String, selected: Boolean, onClick: () -> Unit) {
-    Text(
-        text = label,
-        color = Color.White,
-        fontSize = 14.sp,
+private fun LayerChip(
+    label: String,
+    iconRes: Int,
+    selected: Boolean,
+    start: Color,
+    end: Color,
+    /** Letra con la capa activa, segun lo claro que sea su degradado. */
+    selectedTextColor: Color,
+    onClick: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier
             .clip(RoundedCornerShape(50))
-            .background(Color.White.copy(alpha = if (selected) 0.32f else 0.12f))
+            .background(
+                Brush.horizontalGradient(
+                    listOf(start, end).map { it.copy(alpha = if (selected) 1f else 0.4f) }
+                )
+            )
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp)
-    )
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+        Image(painter = painterResource(iconRes), contentDescription = null, modifier = Modifier.size(18.dp))
+        Text(
+            text = label,
+            color = if (selected) selectedTextColor else Color.White,
+            fontSize = 14.sp
+        )
+    }
 }
 
 @Composable
@@ -166,22 +206,57 @@ private fun WindMapBody(
 ) {
     val hourCount = field.times.size
     // Arranca en la hora actual de la zona; si no está en la lista, en el primer paso de hoy.
-    var hourValue by remember(field) {
-        val now = LocalDateTime.now().withMinute(0).withSecond(0).withNano(0)
-            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"))
-        mutableFloatStateOf(field.times.indexOf(now).takeIf { it >= 0 }?.toFloat() ?: 24f)
+    // La posición se mide en horas (los datos son horarios) y avanza de 0,5 en 0,5: 30 min.
+    val nowValue = remember(field) {
+        val now = LocalDateTime.now()
+        val index = field.times.indexOf(
+            now.withMinute(0).withSecond(0).withNano(0)
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"))
+        )
+        if (index >= 0) index + (now.minute / 30) * HALF_HOUR else 24f
     }
-    val hour = hourValue.toInt().coerceIn(0, hourCount - 1)
-    val hourState = rememberUpdatedState(hour)
+    var hourValue by remember(field) { mutableFloatStateOf(nowValue) }
+    var playing by rememberSaveable { mutableStateOf(false) }
+    // Solo cambia al cruzar una hora: durante la reproducción, el cuerpo del mapa no se
+    // recompone a cada fotograma, solo se redibujan las capas que leen `hourValue`.
+    val hour by remember(field) { derivedStateOf { hourValue.toInt().coerceIn(0, hourCount - 1) } }
+    val nextHour = (hour + 1).coerceAtMost(hourCount - 1)
+
+    // Reproducción: avanza con el reloj de fotogramas (no a saltos de media hora) para que el
+    // fundido entre horas sea continuo; al llegar al final se detiene.
+    LaunchedEffect(playing, field, animate) {
+        if (!playing || !animate) return@LaunchedEffect
+        var last = 0L
+        while (hourValue < hourCount - 1) {
+            withFrameNanos { now ->
+                if (last != 0L) {
+                    hourValue = (hourValue + (now - last) / 1e9f * PLAY_HOURS_PER_SECOND)
+                        .coerceAtMost((hourCount - 1).toFloat())
+                }
+                last = now
+            }
+        }
+        playing = false
+    }
 
     val particles = remember(field) { Particles(PARTICLES) }
+    // Buffers y colores de las estelas, reutilizados en cada fotograma (sin asignar memoria).
+    val lines = remember { Array(SPEED_BUCKETS * (TRAIL - 1)) { FloatArray(PARTICLES * 4) } }
+    val counts = remember { IntArray(lines.size) }
+    val groupColors = remember {
+        IntArray(lines.size) { g ->
+            val a = 1f - (g % (TRAIL - 1)) / (TRAIL - 1f)
+            speedColor((g / (TRAIL - 1) + 0.5f) * SPEED_BUCKET_KMH).copy(alpha = a * 0.9f).toArgb()
+        }
+    }
+    val paint = remember { android.graphics.Paint().apply { isAntiAlias = true; style = android.graphics.Paint.Style.STROKE } }
     var frame by remember { mutableLongStateOf(0L) }
     LaunchedEffect(field, windOn, animate) {
         if (!windOn || !animate) return@LaunchedEffect
         var last = 0L
         while (true) {
             withFrameNanos { now ->
-                if (last != 0L) particles.step(field, hourState.value, ((now - last) / 1e9f).coerceAtMost(0.05f))
+                if (last != 0L) particles.step(field, hourValue, ((now - last) / 1e9f).coerceAtMost(0.05f))
                 last = now
                 frame = now
             }
@@ -189,13 +264,14 @@ private fun WindMapBody(
     }
 
     // Por debajo del 25% de cobertura no se pinta nada: el cielo despejado deja ver el mapa.
-    val cloudImage = remember(field, hour) {
-        fieldImage(field, field.cloud[hour]) { c ->
-            val a = ((c - 25f) / 75f).coerceIn(0f, 1f)
-            ((Math.pow(a.toDouble(), 1.2) * 0.6 * 255).toInt() shl 24) or 0xE8EEF7
-        }
-    }
-    val rainImage = remember(field, hour) { fieldImage(field, field.rain[hour]) { rampArgb(it, RAIN_STOPS) } }
+    // Cada hora se pinta una sola vez: al cruzar de una a otra, la siguiente ya estaba hecha
+    // y solo hay que preparar una nueva, en vez de rehacer cuatro mapas de golpe.
+    val cloudCache = remember(field) { HashMap<Int, androidx.compose.ui.graphics.ImageBitmap>() }
+    val rainCache = remember(field) { HashMap<Int, androidx.compose.ui.graphics.ImageBitmap>() }
+    val cloudImage = cloudCache.getOrPut(hour) { cloudFieldImage(field, hour) }
+    val cloudNext = cloudCache.getOrPut(nextHour) { cloudFieldImage(field, nextHour) }
+    val rainImage = rainCache.getOrPut(hour) { fieldImage(field, field.rain[hour]) { rampArgb(it, RAIN_STOPS) } }
+    val rainNext = rainCache.getOrPut(nextHour) { fieldImage(field, field.rain[nextHour]) { rampArgb(it, RAIN_STOPS) } }
 
     // Relieve de la zona: llega aparte (descarga de teselas) y, hasta entonces, la tierra va lisa.
     var terrain by remember(field) { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
@@ -237,20 +313,17 @@ private fun WindMapBody(
                 layers?.let { drawPath(it.land, LAND) }
                 terrain?.let { drawImage(it, dstSize = IntSize(w.toInt(), h.toInt()), filterQuality = FilterQuality.High) }
 
+                val dst = IntSize(w.toInt(), h.toInt())
+                // Entre dos horas se funden las capas de las dos. Se lee aquí, en el dibujo.
+                val frac = if (nextHour == hour) 0f else (hourValue - hour).coerceIn(0f, 1f)
                 if (cloudsOn) {
-                    drawImage(
-                        image = cloudImage,
-                        dstSize = IntSize(w.toInt(), h.toInt()),
-                        filterQuality = FilterQuality.High
-                    )
+                    drawImage(cloudImage, dstSize = dst, alpha = 1f - frac, filterQuality = FilterQuality.High)
+                    if (frac > 0f) drawImage(cloudNext, dstSize = dst, alpha = frac, filterQuality = FilterQuality.High)
                 }
 
                 if (rainOn) {
-                    drawImage(
-                        image = rainImage,
-                        dstSize = IntSize(w.toInt(), h.toInt()),
-                        filterQuality = FilterQuality.High
-                    )
+                    drawImage(rainImage, dstSize = dst, alpha = 1f - frac, filterQuality = FilterQuality.High)
+                    if (frac > 0f) drawImage(rainNext, dstSize = dst, alpha = frac, filterQuality = FilterQuality.High)
                 }
 
                 layers?.let { drawPath(it.coast, Color.White.copy(alpha = 0.55f), style = Stroke(width = 1.2.dp.toPx())) }
@@ -261,18 +334,31 @@ private fun WindMapBody(
                     val w = size.width
                     val h = size.height
                     @Suppress("UNUSED_VARIABLE") val tick = frame // suscribe el dibujo a cada fotograma
+                    // Miles de líneas sueltas por fotograma eran el cuello de botella: se agrupan
+                    // por (velocidad, tramo de la estela) y cada grupo se pinta de una vez.
+                    counts.fill(0)
                     for (i in 0 until particles.n) {
+                        val fade = minOf(1f, particles.age[i] / 12f, (MAX_AGE - particles.age[i]) / 12f)
+                        if (fade < 0.3f) continue // recién nacida o a punto de morir: casi invisible
+                        val bucket = (particles.speed[i] / SPEED_BUCKET_KMH).toInt().coerceIn(0, SPEED_BUCKETS - 1)
                         val b = i * TRAIL
-                        val fade = minOf(1f, particles.age[i] / 12f, (MAX_AGE - particles.age[i]) / 12f).coerceAtLeast(0f)
-                        val color = speedColor(particles.speed[i])
                         for (j in 0 until TRAIL - 1) {
-                            val a = (1f - j / (TRAIL - 1f)) * fade
-                            drawLine(
-                                color = color.copy(alpha = a * 0.9f),
-                                start = Offset(particles.tx[b + j] * w, particles.ty[b + j] * h),
-                                end = Offset(particles.tx[b + j + 1] * w, particles.ty[b + j + 1] * h),
-                                strokeWidth = 2.dp.toPx()
-                            )
+                            val g = bucket * (TRAIL - 1) + j
+                            val arr = lines[g]
+                            val k = counts[g]
+                            arr[k] = particles.tx[b + j] * w
+                            arr[k + 1] = particles.ty[b + j] * h
+                            arr[k + 2] = particles.tx[b + j + 1] * w
+                            arr[k + 3] = particles.ty[b + j + 1] * h
+                            counts[g] = k + 4
+                        }
+                    }
+                    paint.strokeWidth = 2.dp.toPx()
+                    drawIntoCanvas { canvas ->
+                        for (g in lines.indices) {
+                            if (counts[g] == 0) continue
+                            paint.color = groupColors[g]
+                            canvas.nativeCanvas.drawLines(lines[g], 0, counts[g], paint)
                         }
                     }
                 }
@@ -308,29 +394,14 @@ private fun WindMapBody(
             LegendBar(stringResource(R.string.map_rain), "0", "10+ mm/h", RAIN_STOPS.drop(1).map { Color(it.second or 0xFF000000.toInt()) })
         }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = formatHour(field.times[hour]),
-                color = Color.White,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(end = 12.dp)
-            )
-            Slider(
-                value = hourValue,
-                onValueChange = { hourValue = it },
-                valueRange = 0f..(hourCount - 1).toFloat(),
-                steps = hourCount - 2,
-                colors = SliderDefaults.colors(
-                    thumbColor = Color.White,
-                    activeTrackColor = Color.White.copy(alpha = 0.8f),
-                    inactiveTrackColor = Color.White.copy(alpha = 0.25f),
-                    activeTickColor = Color.Transparent,
-                    inactiveTickColor = Color.Transparent
-                ),
-                modifier = Modifier.weight(1f)
-            )
-        }
+        TimeControls(
+            times = field.times,
+            hourValue = { hourValue },
+            onHourValue = { hourValue = it },
+            playing = playing,
+            onPlaying = { playing = it },
+            nowValue = nowValue
+        )
         Text(
             text = stringResource(R.string.map_credits),
             color = Color.White.copy(alpha = 0.5f),
@@ -339,8 +410,119 @@ private fun WindMapBody(
     }
 }
 
-private fun formatHour(iso: String): String =
-    LocalDateTime.parse(iso).format(DateTimeFormatter.ofPattern("EEE HH:mm"))
+private fun formatHour(iso: String, extraMinutes: Int = 0): String =
+    LocalDateTime.parse(iso).plusMinutes(extraMinutes.toLong()).format(DateTimeFormatter.ofPattern("EEE HH:mm"))
+
+/** Colores del deslizador: los mismos del fondo del gráfico de "Próximas horas" (amanecer a noche). */
+private val SLIDER_COLORS = listOf(Color(0xFFFF7F50), Color(0xFFFFD166), Color(0xFF06D6A0), Color(0xFF118AB2))
+
+/**
+ * Play, "Ahora", la hora que se ve y el deslizador. `hourValue` llega como lambda y se lee
+ * aquí dentro: así, mientras suena la reproducción, solo se recompone esto y no el mapa.
+ */
+@Composable
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+private fun TimeControls(
+    times: List<String>,
+    hourValue: () -> Float,
+    onHourValue: (Float) -> Unit,
+    playing: Boolean,
+    onPlaying: (Boolean) -> Unit,
+    nowValue: Float
+) {
+    val last = (times.size - 1).toFloat()
+    val value = hourValue()
+    val hour = value.toInt().coerceIn(0, times.size - 1)
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        val playLabel = stringResource(if (playing) R.string.map_pause else R.string.map_play)
+        // Al final de todo, el play vuelve a empezar desde el principio.
+        TimeButton(if (playing) "⏸" else "▶", playLabel) {
+            if (!playing && value >= last) onHourValue(0f)
+            onPlaying(!playing)
+        }
+        TimeButton("⟲ " + stringResource(R.string.today_now_label), stringResource(R.string.today_now_label)) {
+            onPlaying(false)
+            onHourValue(nowValue)
+        }
+        Text(
+            text = formatHour(times[hour], ((value - hour) * 2).toInt().coerceIn(0, 1) * 30),
+            color = Color.White,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f),
+            textAlign = androidx.compose.ui.text.style.TextAlign.End
+        )
+    }
+    Slider(
+        value = value,
+        // Tocar el deslizador toma el mando: se para la reproducción.
+        onValueChange = { onPlaying(false); onHourValue(it) },
+        valueRange = 0f..last,
+        steps = (times.size - 1) * 2 - 1,
+        // Pista con el degradado de la app y un pulgar blanco con sombra, en vez de la barra gris por defecto.
+        track = { state ->
+            val fraction = (state.value / last).coerceIn(0f, 1f)
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(50))
+                    .drawBehind {
+                        val brush = Brush.horizontalGradient(SLIDER_COLORS)
+                        drawRect(brush, alpha = 0.28f)
+                        clipRect(right = size.width * fraction) { drawRect(brush) }
+                    }
+            )
+        },
+        // El indicador es el astro de la hora que marca: un sol que gira de día y una luna de
+        // noche. ponytail: día fijo de 7 a 19 h; con el amanecer real de cada lugar, mejor.
+        thumb = { state ->
+            val v = state.value
+            val h = v.toInt().coerceIn(0, times.size - 1)
+            val day = LocalDateTime.parse(times[h]).hour in 7..19
+            Box(
+                Modifier
+                    .size(36.dp)
+                    .shadow(8.dp, CircleShape)
+                    .background(if (day) Color(0xFFFFE9A8) else Color(0xFF26335C), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (day) "☀️" else "🌙",
+                    fontSize = 20.sp,
+                    modifier = Modifier.graphicsLayer { rotationZ = if (day) v * 45f else 0f }
+                )
+            }
+        },
+        modifier = Modifier.fillMaxWidth()
+    )
+}
+
+/** Botón redondeado de los controles de tiempo del mapa. */
+@Composable
+private fun TimeButton(text: String, description: String, onClick: () -> Unit) {
+    Text(
+        text = text,
+        color = Color.White,
+        fontSize = 14.sp,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(Color.White.copy(alpha = 0.22f))
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = description }
+            .padding(horizontal = 14.dp, vertical = 8.dp)
+    )
+}
+
+/** Media hora, el paso con que avanza la hora del mapa. */
+private const val HALF_HOUR = 0.5f
+
+/** Las estelas se agrupan en 8 tramos de velocidad de 12 km/h cada uno (azul a rojo). */
+private const val SPEED_BUCKETS = 8
+private const val SPEED_BUCKET_KMH = 12f
+
+/** Velocidad de la reproducción: 0,5 h por segundo, media hora cada segundo. */
+private const val PLAY_HOURS_PER_SECOND = 0.5f
 
 /** Azul con calma, verde, amarillo y rojo según se acelera el viento (km/h). */
 private fun speedColor(kmh: Float): Color {
@@ -356,6 +538,11 @@ private fun speedColor(kmh: Float): Color {
 }
 
 /** Bitmap de baja resolución del campo, interpolado entre los puntos de la rejilla, para estirarlo al lienzo. */
+private fun cloudFieldImage(field: WindField, hour: Int) = fieldImage(field, field.cloud[hour]) { c ->
+    val a = ((c - 25f) / 75f).coerceIn(0f, 1f)
+    ((Math.pow(a.toDouble(), 1.2) * 0.6 * 255).toInt() shl 24) or 0xE8EEF7
+}
+
 private fun fieldImage(field: WindField, grid: FloatArray, argb: (Float) -> Int): androidx.compose.ui.graphics.ImageBitmap {
     val w = 64
     val h = (w / WindMapRepository.ASPECT).toInt()
@@ -425,10 +612,14 @@ private class Particles(val n: Int) {
         for (j in 0 until TRAIL) { tx[i * TRAIL + j] = x[i]; ty[i * TRAIL + j] = y[i] }
     }
 
-    fun step(f: WindField, hour: Int, dt: Float) {
+    /** [hourPos] son horas con decimales: el viento se mezcla entre la hora y la siguiente. */
+    fun step(f: WindField, hourPos: Float, dt: Float) {
+        val hour = hourPos.toInt().coerceIn(0, f.times.size - 1)
+        val next = (hour + 1).coerceAtMost(f.times.size - 1)
+        val t = if (next == hour) 0f else (hourPos - hour).coerceIn(0f, 1f)
         for (i in 0 until n) {
-            val u = f.sample(f.u[hour], x[i], y[i])
-            val v = f.sample(f.v[hour], x[i], y[i])
+            val u = f.sample(f.u[hour], x[i], y[i]) * (1 - t) + f.sample(f.u[next], x[i], y[i]) * t
+            val v = f.sample(f.v[hour], x[i], y[i]) * (1 - t) + f.sample(f.v[next], x[i], y[i]) * t
             speed[i] = hypot(u, v)
             x[i] += u * dt * HOURS_PER_SECOND / f.widthKm
             y[i] -= v * dt * HOURS_PER_SECOND / f.heightKm

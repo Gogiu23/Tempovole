@@ -1,0 +1,3 @@
+• “Today” shows the current weather and the chance of rain over the next 3 hours.
+• The map has a play button to step through the hours, a “Now” button and a new slider with a sun or moon.
+• Buttons with gradients and icons, and text that no longer gets cut off on narrow screens.

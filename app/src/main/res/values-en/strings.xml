@@ -32,6 +32,10 @@
     <string name="changelog_v17_date">November 4, 2026</string>
     <string name="changelog_v17_item1">“More data” no longer opens a window: it is now a carousel of colourful cards, like the one in Week. Swipe sideways to browse them and tap one to see its details.</string>
     <string name="changelog_v17_item2">New weather map at the bottom of Today, with terrain, coastlines and city names. It shows moving wind, clouds and rain, plus a time slider to see how they change from yesterday to tomorrow.</string>
+    <string name="changelog_v18_date">November 4, 2026</string>
+    <string name="changelog_v18_item1">Today now shows the current weather (no more “Rain” on a sunny day) and, below it, the chance of rain over the next 3 hours.</string>
+    <string name="changelog_v18_item2">The map has a play button to step through the hours on its own, half an hour at a time, and a “Now” button to jump back. There is a new slider with a sun or a moon depending on the time, and smoother movement.</string>
+    <string name="changelog_v18_item3">Buttons with colour gradients and icons, names and temperatures that fit narrow screens, and “Sun and moon” no longer peeks out cut off at the top.</string>
     <string name="changelog_v16_date">October 12, 2026</string>
     <string name="changelog_v16_item1">What to wear no longer gives one recommendation for the whole day: it now separates the current moment, the previous stretch and the next two, each with its own temperature.</string>
     <string name="changelog_v16_item2">The morning report can be switched off in Settings, and there is now a button there to check for app updates.</string>
@@ -142,7 +146,8 @@
     <!-- Hoy -->
     <string name="today_max_label">High</string>
     <string name="today_min_label">Low</string>
-    <string name="today_rain_probability_label">Rain chance</string>
+    <string name="today_rain_probability_label">Rain chance (3 h)</string>
+    <string name="today_rain_next_hours">Rain in the next 3 h: %1$d%%</string>
     <string name="today_next_hours_title">Next hours</string>
     <string name="today_pressure_label">Pressure</string>
     <string name="today_historical_label">Vs. historical average</string>
@@ -166,7 +171,7 @@
     <string name="day_detail_max">High</string>
     <string name="day_detail_min">Low</string>
     <string name="day_detail_avg">Average</string>
-    <string name="day_detail_rain_probability_label">Rain chance</string>
+    <string name="day_detail_rain_probability_label">Rain chance (3 h)</string>
     <string name="day_detail_moon_label">Moon</string>
 
     <!-- DetailType (tarjetas de datos) -->
@@ -362,4 +367,6 @@
     <string name="map_clouds">Clouds</string>
     <string name="map_error">Couldn\'t load the map</string>
     <string name="map_rain">Rain</string>
+    <string name="map_play">Play</string>
+    <string name="map_pause">Pause</string>
 </resources>

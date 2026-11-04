@@ -1,0 +1,3 @@
+• «Oggi» mostra il meteo di adesso e la probabilità di pioggia nelle prossime 3 ore.
+• La mappa ha il play per scorrere le ore, il pulsante «Adesso» e una nuova barra con sole o luna.
+• Pulsanti con sfumature e icone, e testi che non si tagliano più sugli schermi stretti.
