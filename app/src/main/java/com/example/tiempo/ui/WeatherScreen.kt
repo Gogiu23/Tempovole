@@ -6,6 +6,18 @@ import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.DrawableRes
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toBitmap
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
@@ -23,6 +35,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.foundation.gestures.FlingBehavior
+import androidx.compose.runtime.State
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.gestures.snapping.snapFlingBehavior
@@ -99,6 +113,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
@@ -178,7 +193,9 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
+import kotlin.math.max
 import kotlin.math.abs
+import kotlin.math.exp
 import kotlin.math.pow
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -190,13 +207,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
-
-/** Degradado para que el contenido se desvanezca en el borde inferior al hacer scroll. */
-private val bottomFadeBrush = Brush.verticalGradient(
-    0f to Color.Black,
-    0.88f to Color.Black,
-    1f to Color.Transparent
-)
 
 /** Velo sobre la foto de la tarjeta: sin el, el texto blanco se pierde en las fotos claras. */
 private val coverScrim = Brush.verticalGradient(
@@ -242,14 +252,6 @@ private fun DrawScope.drawTileGlass(alpha: Float = 1f) {
     )
 }
 
-
-/** Aplica [brush] como máscara de transparencia sobre el contenido ya dibujado. */
-private fun Modifier.fadingEdge(brush: Brush): Modifier = this
-    .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
-    .drawWithContent {
-        drawContent()
-        drawRect(brush = brush, blendMode = BlendMode.DstIn)
-    }
 
 @Composable
 private fun LiveClock() {
@@ -1943,6 +1945,24 @@ private fun Modifier.appearOnScroll(listState: LazyListState, key: Any): Modifie
  * Sirve para no gastar la animacion de un icono con la tarjeta asomando por el borde:
  * se reproduce al llegar al medio, que es donde se esta mirando.
  */
+/** Si la tarjeta ocupa al menos la mitad de la pantalla: para las que son tan altas que nunca quedan centradas. */
+@Composable
+private fun LazyListState.isMostlyInViewport(key: Any): Boolean {
+    val state = this
+    return remember(state, key) {
+        derivedStateOf {
+            val info = state.layoutInfo
+            val item = info.visibleItemsInfo.firstOrNull { it.key == key }
+                ?: return@derivedStateOf false
+            val viewportHeight = (info.viewportEndOffset - info.viewportStartOffset).toFloat()
+            if (viewportHeight <= 0f) return@derivedStateOf false
+            val visible = minOf(item.offset + item.size, info.viewportEndOffset) -
+                maxOf(item.offset, info.viewportStartOffset)
+            visible >= viewportHeight * 0.5f
+        }
+    }.value
+}
+
 @Composable
 private fun LazyListState.isCenteredInViewport(key: Any, bandFraction: Float = 0.2f): Boolean {
     val state = this
@@ -1971,6 +1991,9 @@ private fun TodayScreen(
 ) {
     var selectedDetail by remember { mutableStateOf<DetailItem?>(null) }
     val listState = rememberLazyListState()
+    // Aqui y no dentro del carrusel: al abrir un dato esta pantalla deja de componer la lista,
+    // y con ella el carrusel; el estado, subido, es lo que le hace volver donde estaba.
+    val dataCarouselState = rememberLazyListState()
     val isDay = remember {
         val now = LocalTime.now()
         now.isAfter(today.sunrise.toLocalTime()) && now.isBefore(today.sunset.toLocalTime())
@@ -1987,7 +2010,8 @@ private fun TodayScreen(
         extraItems.addAll(loadExtraItems(location, current, elevationM, enabledExtras, context))
     }
 
-    var showAllCards by remember { mutableStateOf(false) }
+    // El boton atras del sistema cierra el detalle en vez de salirse de la app.
+    BackHandler(enabled = selectedDetail != null) { selectedDetail = null }
 
     selectedDetail?.let { detail ->
         DetailInfoScreen(
@@ -2044,8 +2068,7 @@ private fun TodayScreen(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .fadingEdge(bottomFadeBrush),
+                .padding(padding),
             // Hueco fijo para el header: el contenido no baila mientras el header encoge.
             contentPadding = PaddingValues(top = HEADER_MAX_HEIGHT, bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -2114,29 +2137,31 @@ private fun TodayScreen(
                 }
             }
 
-            // Las 15 tarjetas en una rejilla de 3 columnas, todas iguales.
-            item(key = "detail-tiles") {
-                DetailGrid(
-                    items = detailItems + extraItems,
-                    columns = GRID_COLUMNS,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                ) { item ->
-                    // La de lluvia no abre su detalle: abre el popup con todas.
-                    if (item.type == DetailType.RAIN_PROBABILITY) {
-                        showAllCards = true
-                    } else {
-                        selectedDetail = item
-                    }
+            // Todas las tarjetas de datos, en un carrusel de cover flow como el de Semana.
+            item(key = "more-data") {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = stringResource(R.string.grid_all_title),
+                        color = Color.White.copy(alpha = 0.85f),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                    DataCoverFlow(
+                        items = detailItems + extraItems,
+                        listState = dataCarouselState,
+                        onSelect = { selectedDetail = it }
+                    )
                 }
             }
-        }
 
-        if (showAllCards) {
-            AllCardsDialog(
-                items = detailItems + extraItems,
-                onDismiss = { showAllCards = false },
-                onSelect = { showAllCards = false; selectedDetail = it }
-            )
+            item(key = "wind-map") {
+                WindMapCard(
+                    location = location,
+                    animate = listState.isMostlyInViewport("wind-map"),
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
         }
 
         ShrinkingHeader(
@@ -2426,7 +2451,8 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
 
                 val fillPath = Path().apply {
                     moveTo(points.first().x, size.height - bottomPad)
-                    points.forEach { lineTo(it.x, it.y) }
+                    lineTo(points.first().x, points.first().y)
+                    smoothTo(points)
                     lineTo(points.last().x, size.height - bottomPad)
                     close()
                 }
@@ -2440,9 +2466,8 @@ private fun HourlyLineChart(hours: List<HourWeather>, metric: HourlyMetric) {
                 )
 
                 val linePath = Path().apply {
-                    points.forEachIndexed { i, p ->
-                        if (i == 0) moveTo(p.x, p.y) else lineTo(p.x, p.y)
-                    }
+                    moveTo(points.first().x, points.first().y)
+                    smoothTo(points)
                 }
                 drawPath(
                     path = linePath,
@@ -2630,62 +2655,10 @@ private fun DetailGrid(
     }
 }
 
-/** El popup que abre la tarjeta de lluvia: todas las tarjetas juntas. */
-@Composable
-private fun AllCardsDialog(
-    items: List<DetailItem>,
-    onDismiss: () -> Unit,
-    onSelect: (DetailItem) -> Unit
-) {
-    Dialog(
-        onDismissRequest = onDismiss,
-        // Sin el ancho por defecto del sistema: con tres columnas se queda estrecho.
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth(0.94f)
-                .fillMaxHeight(0.82f),
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xF21B2333))
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = stringResource(R.string.grid_all_title),
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    IconCircleButton(emoji = "✕", onClick = onDismiss)
-                }
-                DetailGrid(
-                    items = items,
-                    columns = GRID_COLUMNS,
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                    onClick = onSelect
-                )
-            }
-        }
-    }
-}
-
 /** Padding horizontal de la rejilla: se recupera (junto con [HOURLY_CHART_SIDE_PADDING])
  * para que el ancho de la protagonista, al arrancar, iguale al de la tarjeta de
  * "Próximas horas" en vez de quedarse en el hueco que deja este padding. */
 private val GRID_HORIZONTAL_PADDING = 1.dp
-
-/** Columnas de la rejilla, como el `repeat(3, 1fr)` del demo en movil. */
-private const val GRID_COLUMNS = 3
 
 /** La tarjeta crece desde cero y se funde segun entra en pantalla, como las de la rejilla. */
 private fun Modifier.revealOnScroll(
@@ -3073,42 +3046,9 @@ private fun WeekScreen(
 
     // La tarjeta que queda mas cerca del centro se dibuja por encima de las demas: es lo
     // que hace que las laterales parezcan apiladas hacia fuera, como en un cover flow.
-    val centeredIndex by remember {
-        derivedStateOf {
-            val info = listState.layoutInfo
-            val center = (info.viewportStartOffset + info.viewportEndOffset) / 2f
-            info.visibleItemsInfo
-                .minByOrNull { abs(it.offset + it.size / 2f - center) }
-                ?.index ?: 0
-        }
-    }
+    val centeredIndex by rememberCenteredIndex(listState)
 
-    // Al soltar, el carrusel tiene que seguir rodando. El proveedor de snap que
-    // trae Compose recorta el recorrido natural del fling en el ancho de una
-    // tarjeta, que es lo que hacia que frenase en seco nada mas levantar el dedo:
-    // aqui se le deja toda la inercia y el ajuste al centro se hace al final.
-    // Menos friccion que el scroll normal de Android: un carrusel de tarjetas
-    // grandes con la friccion de serie se para en la tarjeta de al lado.
-    val decay = remember { exponentialDecay<Float>(frictionMultiplier = COVER_FLING_FRICTION) }
-    val flingBehavior = remember(listState, decay) {
-        val byDefault = SnapLayoutInfoProvider(listState, SnapPosition.Center)
-        snapFlingBehavior(
-            snapLayoutInfoProvider = object : SnapLayoutInfoProvider by byDefault {
-                override fun calculateApproachOffset(
-                    velocity: Float,
-                    decayOffset: Float
-                ): Float = decayOffset
-            },
-            decayAnimationSpec = decay,
-            // Asentamiento sin rebote y resuelto: la inercia ya la pone el decay de
-            // arriba, asi que un muelle final lento solo alarga la sensacion de no
-            // tener el control.
-            snapAnimationSpec = spring(
-                dampingRatio = Spring.DampingRatioNoBouncy,
-                stiffness = Spring.StiffnessMediumLow
-            )
-        )
-    }
+    val flingBehavior = rememberCoverFlingBehavior(listState)
 
     // Una sola zona de scroll: la lista ocupa la pantalla entera y el titulo va dibujado
     // encima. Asi se arrastra desde cualquier punto (los iconos de arriba estan por encima
@@ -3150,50 +3090,22 @@ private fun WeekScreen(
                     photos = photosByCondition[day.condition].orEmpty(),
                     date = day.date
                 )
-                // La tarjeta se dibuja una sola vez y queda grabada aqui; el reflejo
-                // reaprovecha ese dibujo en lugar de componer y medir otra tarjeta
-                // entera con su propia foto.
-                val coverLayer = rememberGraphicsLayer()
-
-                Column(
+                ReflectedCover(
+                    coverSize = coverSize,
+                    reflectionRatio = reflectionRatio,
                     modifier = Modifier
                         .zIndex(-abs(index - centeredIndex).toFloat())
                         .width(coverSize)
-                        .coverFlowItem(listState, "day-$index", pivotY, zoom, stacked = isLandscape),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
+                        .coverFlowItem(listState, "day-$index", pivotY, zoom, stacked = isLandscape)
+                ) { coverModifier ->
                     DayCover(
                         day = day,
                         size = coverSize,
                         zoom = zoom,
                         photo = photo,
                         onClick = { selectedDay = day },
-                        modifier = Modifier.drawWithContent {
-                            coverLayer.record { this@drawWithContent.drawContent() }
-                            drawLayer(coverLayer)
-                        }
+                        modifier = coverModifier
                     )
-                    Spacer(Modifier.height(2.dp))
-                    // El reflejo del cover flow: el mismo dibujo volteado y
-                    // desvaneciendose. Hereda las esquinas redondeadas de la tarjeta
-                    // porque es literalmente su dibujo, no un recuadro aparte.
-                    Canvas(
-                        modifier = Modifier
-                            .width(coverSize)
-                            .height(coverSize * reflectionRatio)
-                            .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
-                    ) {
-                        withTransform({
-                            scale(
-                                scaleX = 1f,
-                                scaleY = -1f,
-                                pivot = Offset(size.width / 2f, size.width / 2f)
-                            )
-                        }) {
-                            drawLayer(coverLayer)
-                        }
-                        drawRect(brush = reflectionBrush, blendMode = BlendMode.DstIn)
-                    }
                 }
             }
         }
@@ -3228,6 +3140,207 @@ private fun WeekScreen(
                     fontSize = 14.sp
                 )
             }
+        }
+    }
+}
+
+/** Índice de la tarjeta que queda más cerca del centro del carrusel. */
+@Composable
+private fun rememberCenteredIndex(listState: LazyListState): State<Int> = remember(listState) {
+    derivedStateOf {
+        val info = listState.layoutInfo
+        val center = (info.viewportStartOffset + info.viewportEndOffset) / 2f
+        info.visibleItemsInfo
+            .minByOrNull { abs(it.offset + it.size / 2f - center) }
+            ?.index ?: 0
+    }
+}
+
+/**
+ * Al soltar, el carrusel tiene que seguir rodando. El proveedor de snap que trae Compose
+ * recorta el recorrido natural del fling en el ancho de una tarjeta, que es lo que hacia que
+ * frenase en seco nada mas levantar el dedo: aqui se le deja toda la inercia y el ajuste al
+ * centro se hace al final. Menos friccion que el scroll normal de Android: un carrusel de
+ * tarjetas grandes con la friccion de serie se para en la tarjeta de al lado.
+ */
+@Composable
+private fun rememberCoverFlingBehavior(listState: LazyListState): FlingBehavior {
+    val decay = remember { exponentialDecay<Float>(frictionMultiplier = COVER_FLING_FRICTION) }
+    return remember(listState, decay) {
+        val byDefault = SnapLayoutInfoProvider(listState, SnapPosition.Center)
+        snapFlingBehavior(
+            snapLayoutInfoProvider = object : SnapLayoutInfoProvider by byDefault {
+                override fun calculateApproachOffset(
+                    velocity: Float,
+                    decayOffset: Float
+                ): Float = decayOffset
+            },
+            decayAnimationSpec = decay,
+            // Asentamiento sin rebote y resuelto: la inercia ya la pone el decay de
+            // arriba, asi que un muelle final lento solo alarga la sensacion de no
+            // tener el control.
+            snapAnimationSpec = spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            )
+        )
+    }
+}
+
+/**
+ * Una tarjeta de cover flow con su reflejo debajo. La tarjeta se dibuja una sola vez y queda
+ * grabada; el reflejo reaprovecha ese dibujo, volteado y desvaneciendose, en lugar de componer
+ * y medir otra tarjeta entera. Hereda las esquinas redondeadas porque es literalmente su dibujo.
+ */
+@Composable
+private fun ReflectedCover(
+    coverSize: Dp,
+    reflectionRatio: Float,
+    modifier: Modifier = Modifier,
+    cover: @Composable (Modifier) -> Unit
+) {
+    val coverLayer = rememberGraphicsLayer()
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        cover(
+            Modifier.drawWithContent {
+                coverLayer.record { this@drawWithContent.drawContent() }
+                drawLayer(coverLayer)
+            }
+        )
+        Spacer(Modifier.height(2.dp))
+        Canvas(
+            modifier = Modifier
+                .width(coverSize)
+                .height(coverSize * reflectionRatio)
+                .graphicsLayer(compositingStrategy = CompositingStrategy.Offscreen)
+        ) {
+            withTransform({
+                scale(scaleX = 1f, scaleY = -1f, pivot = Offset(size.width / 2f, size.width / 2f))
+            }) {
+                drawLayer(coverLayer)
+            }
+            drawRect(brush = reflectionBrush, blendMode = BlendMode.DstIn)
+        }
+    }
+}
+
+/**
+ * "Más datos": todas las tarjetas de datos en un carrusel de cover flow, como el de Semana,
+ * con color vivo y reflejo. Deslizar de lado las recorre; tocar una abre su información.
+ */
+@Composable
+private fun DataCoverFlow(
+    items: List<DetailItem>,
+    listState: LazyListState,
+    onSelect: (DetailItem) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val centeredIndex by rememberCenteredIndex(listState)
+    val flingBehavior = rememberCoverFlingBehavior(listState)
+
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val reflectionRatio = 0.5f
+        val zoom = MAX_COVER_ZOOM
+        val coverSize = min(maxWidth * 0.4f, 150.dp)
+        val itemHeight = coverSize * (1f + reflectionRatio) + 2.dp
+        // El giro y la ampliacion pivotan sobre el centro de la tarjeta, no sobre el conjunto.
+        val pivotY = (coverSize / 2) / itemHeight
+
+        LazyRow(
+            state = listState,
+            // Alto de sobra: la tarjeta centrada se amplia y su reflejo con ella.
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(coverSize * zoom * (1f + reflectionRatio) + 24.dp),
+            contentPadding = PaddingValues(horizontal = (maxWidth - coverSize) / 2),
+            verticalAlignment = Alignment.CenterVertically,
+            flingBehavior = flingBehavior
+        ) {
+            itemsIndexed(items, key = { index, _ -> "data-$index" }) { index, item ->
+                ReflectedCover(
+                    coverSize = coverSize,
+                    reflectionRatio = reflectionRatio,
+                    modifier = Modifier
+                        .zIndex(-abs(index - centeredIndex).toFloat())
+                        .width(coverSize)
+                        .coverFlowItem(listState, "data-$index", pivotY, zoom, stacked = false)
+                ) { coverModifier ->
+                    DataCover(item, coverSize, onClick = { onSelect(item) }, modifier = coverModifier)
+                }
+            }
+        }
+    }
+}
+
+/** Sube la saturación y recorta el brillo: el color de cada dato, vivo y no pastel. */
+private fun vivid(color: Color): Color {
+    val hsv = FloatArray(3)
+    android.graphics.Color.colorToHSV(color.toArgb(), hsv)
+    hsv[1] = max(hsv[1], 0.75f)
+    hsv[2] = hsv[2].coerceIn(0.6f, 0.92f)
+    return Color(android.graphics.Color.HSVToColor(hsv))
+}
+
+@Composable
+private fun DataCover(
+    item: DetailItem,
+    size: Dp,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val density = LocalDensity.current
+    val shape = RoundedCornerShape(size * 0.13f)
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(shape)
+            .background(Brush.linearGradient(listOf(vivid(item.type.gradientStart), vivid(item.type.gradientEnd))))
+            .border(1.dp, Color.White.copy(alpha = 0.3f), shape)
+            .clickable(onClick = onClick)
+    ) {
+        // Brillo de cristal en la mitad de arriba.
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.5f)
+                .background(Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.28f), Color.Transparent)))
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(size * 0.08f),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(size * 0.4f)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.22f)),
+                contentAlignment = Alignment.Center
+            ) {
+                PoppingIcon(
+                    emoji = item.emoji,
+                    iconRes = item.type.iconRes(),
+                    size = with(density) { (size * 0.26f).toSp() }
+                )
+            }
+            Spacer(Modifier.height(size * 0.05f))
+            Text(
+                text = item.value,
+                color = Color.White,
+                fontSize = with(density) { (size * 0.135f).toSp() },
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
+            Text(
+                text = item.label,
+                color = Color.White.copy(alpha = 0.92f),
+                fontSize = with(density) { (size * 0.075f).toSp() },
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                maxLines = 2
+            )
         }
     }
 }
@@ -3640,5 +3753,28 @@ private fun LocalDateTime.hourLabel(nowLabel: String): String {
         nowLabel
     } else {
         "%02d:00".format(hour)
+    }
+}
+
+/** Curva cúbica monótona (Fritsch-Carlson simplificada) por los puntos: suave y sin picos que se pasen de la temperatura real. */
+private fun Path.smoothTo(points: List<Offset>) {
+    val n = points.size
+    if (n < 2) return
+    val d = FloatArray(n - 1) { (points[it + 1].y - points[it].y) / (points[it + 1].x - points[it].x) }
+    val m = FloatArray(n) { k ->
+        when {
+            k == 0 -> d[0]
+            k == n - 1 -> d[n - 2]
+            d[k - 1] * d[k] <= 0f -> 0f
+            else -> 2f * d[k - 1] * d[k] / (d[k - 1] + d[k])
+        }
+    }
+    for (k in 0 until n - 1) {
+        val dx = (points[k + 1].x - points[k].x) / 3f
+        cubicTo(
+            points[k].x + dx, points[k].y + m[k] * dx,
+            points[k + 1].x - dx, points[k + 1].y - m[k + 1] * dx,
+            points[k + 1].x, points[k + 1].y
+        )
     }
 }

@@ -1,0 +1,2 @@
+• “More data” is now a carousel of colourful cards, like the one in Week: swipe sideways and tap one for its details.
+• New weather map at the bottom of Today, with terrain, coastlines and cities: moving wind, clouds and rain, with a time slider.

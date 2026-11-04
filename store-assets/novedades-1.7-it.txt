@@ -1,0 +1,2 @@
+• «Altri dati» ora è un carosello di schede colorate, come quello di Settimana: scorri di lato e tocca una scheda per i dettagli.
+• Nuova mappa meteo in fondo a Oggi, con rilievo, coste e città: vento in movimento, nuvole e pioggia, con un cursore del tempo.

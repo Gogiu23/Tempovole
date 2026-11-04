@@ -77,6 +77,10 @@ object Network {
         build("https://api.open-meteo.com/").create(WeatherApi::class.java)
     }
 
+    val windMapApi: WindMapApi by lazy {
+        build("https://api.open-meteo.com/").create(WindMapApi::class.java)
+    }
+
     val unsplashApi: UnsplashApi by lazy {
         build("https://api.unsplash.com/").create(UnsplashApi::class.java)
     }

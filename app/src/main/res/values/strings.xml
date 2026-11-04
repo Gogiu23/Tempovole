@@ -29,6 +29,9 @@
     <string name="changelog_screen_version_label">Versión %1$s</string>
     <string name="changelog_screen_current_badge">Actual</string>
 
+    <string name="changelog_v17_date">4 de noviembre de 2026</string>
+    <string name="changelog_v17_item1">«Más datos» ya no abre una ventana: ahora son tarjetas de colores en un carrusel, como el de Semana. Desliza de lado para recorrerlas y toca una para ver su información.</string>
+    <string name="changelog_v17_item2">Nuevo mapa del tiempo al final de Hoy, con relieve, costas y nombres de ciudades. Muestra el viento en movimiento, las nubes y la lluvia, y una rueda de tiempo para ver cómo evolucionan ayer, hoy y mañana.</string>
     <string name="changelog_v16_date">12 de octubre de 2026</string>
     <string name="changelog_v16_item1">Qué me pongo ya no da una recomendación para todo el día: ahora separa el momento actual, el tramo anterior y los dos siguientes, cada uno con su temperatura.</string>
     <string name="changelog_v16_item2">El aviso de la mañana se puede apagar desde Ajustes, y ahí mismo hay un botón para buscar actualizaciones de la app.</string>
@@ -353,4 +356,11 @@
     <string name="daypart_noche">Noche</string>
     <string name="outfit_daypart_now">Ahora</string>
     <string name="grid_all_title">Todos los datos</string>
+    <string name="grid_more_data">Más datos…</string>
+    <string name="map_title">Mapa en tiempo real</string>
+    <string name="map_wind">Viento</string>
+    <string name="map_clouds">Nubes</string>
+    <string name="map_error">No se pudo cargar el mapa</string>
+    <string name="map_rain">Lluvia</string>
+    <string name="map_credits">Relieve: AWS Terrain Tiles (Mapzen, NASA SRTM) · Meteo: Open-Meteo · Mapa: Natural Earth</string>
 </resources>

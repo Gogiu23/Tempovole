@@ -1,0 +1,2 @@
+• «Más datos» ahora es un carrusel de tarjetas de colores, como el de Semana: desliza de lado y toca una para ver su información.
+• Nuevo mapa del tiempo al final de Hoy, con relieve, costas y ciudades: viento en movimiento, nubes y lluvia, con una rueda de tiempo.

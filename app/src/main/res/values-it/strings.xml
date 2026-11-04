@@ -29,6 +29,9 @@
     <string name="changelog_screen_version_label">Versione %1$s</string>
     <string name="changelog_screen_current_badge">Attuale</string>
 
+    <string name="changelog_v17_date">4 novembre 2026</string>
+    <string name="changelog_v17_item1">«Altri dati» non apre più una finestra: ora sono schede colorate in un carosello, come quello di Settimana. Scorri di lato per sfogliarle e tocca una scheda per vederne i dettagli.</string>
+    <string name="changelog_v17_item2">Nuova mappa meteo in fondo a Oggi, con rilievo, coste e nomi delle città. Mostra il vento in movimento, le nuvole e la pioggia, con un cursore del tempo per vedere come cambiano da ieri a domani.</string>
     <string name="changelog_v16_date">12 ottobre 2026</string>
     <string name="changelog_v16_item1">Come vestirsi non dà più un unico consiglio per tutta la giornata: ora separa il momento attuale, la fascia precedente e le due successive, ognuna con la sua temperatura.</string>
     <string name="changelog_v16_item2">L\'avviso del mattino si può disattivare dalle Impostazioni, dove c\'è anche un pulsante per cercare aggiornamenti dell\'app.</string>
@@ -353,4 +356,10 @@
     <string name="daypart_noche">Notte</string>
     <string name="outfit_daypart_now">Adesso</string>
     <string name="grid_all_title">Tutti i dati</string>
+    <string name="grid_more_data">Altri dati…</string>
+    <string name="map_title">Mappa in tempo reale</string>
+    <string name="map_wind">Vento</string>
+    <string name="map_clouds">Nuvole</string>
+    <string name="map_error">Impossibile caricare la mappa</string>
+    <string name="map_rain">Pioggia</string>
 </resources>

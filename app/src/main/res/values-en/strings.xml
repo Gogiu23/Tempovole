@@ -29,6 +29,9 @@
     <string name="changelog_screen_version_label">Version %1$s</string>
     <string name="changelog_screen_current_badge">Current</string>
 
+    <string name="changelog_v17_date">November 4, 2026</string>
+    <string name="changelog_v17_item1">“More data” no longer opens a window: it is now a carousel of colourful cards, like the one in Week. Swipe sideways to browse them and tap one to see its details.</string>
+    <string name="changelog_v17_item2">New weather map at the bottom of Today, with terrain, coastlines and city names. It shows moving wind, clouds and rain, plus a time slider to see how they change from yesterday to tomorrow.</string>
     <string name="changelog_v16_date">October 12, 2026</string>
     <string name="changelog_v16_item1">What to wear no longer gives one recommendation for the whole day: it now separates the current moment, the previous stretch and the next two, each with its own temperature.</string>
     <string name="changelog_v16_item2">The morning report can be switched off in Settings, and there is now a button there to check for app updates.</string>
@@ -353,4 +356,10 @@
     <string name="daypart_noche">Night</string>
     <string name="outfit_daypart_now">Now</string>
     <string name="grid_all_title">All data</string>
+    <string name="grid_more_data">More data…</string>
+    <string name="map_title">Live map</string>
+    <string name="map_wind">Wind</string>
+    <string name="map_clouds">Clouds</string>
+    <string name="map_error">Couldn\'t load the map</string>
+    <string name="map_rain">Rain</string>
 </resources>
