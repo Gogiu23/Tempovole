@@ -37,6 +37,7 @@ import com.example.tiempo.data.model.DayWeather
 import com.example.tiempo.data.model.HourWeather
 import com.example.tiempo.data.model.WeatherCondition
 import java.time.LocalDateTime
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
@@ -129,7 +130,8 @@ private fun windChill(windKmh: Double): Double =
  * corregida por viento; el resto de reglas añaden o quitan por encima de esa base.
  */
 fun outfitFor(today: DayWeather, current: CurrentWeather): OutfitAdvice {
-    val feels = today.tempMax - windChill(today.windKmh)
+    // La sensación real de Open-Meteo (viento y humedad); sin ella, el ajuste lineal por viento.
+    val feels = today.feelsLike ?: (today.tempMax - windChill(today.windKmh))
     val band = when {
         feels < 0 -> TempBand.FREEZING
         feels < 8 -> TempBand.COLD
@@ -272,8 +274,30 @@ fun OutfitScreen(
             )
         }
 
+        HowItWorksCard()
+
         tramos.forEach { tramo -> DayPartSection(tramo) }
         Spacer(Modifier.height(12.dp))
+    }
+}
+
+/** Explica en dos líneas de dónde sale la recomendación. */
+@Composable
+private fun HowItWorksCard() {
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.12f))
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                stringResource(R.string.outfit_how_title),
+                color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold
+            )
+            Text(
+                stringResource(R.string.outfit_how_body),
+                color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp
+            )
+        }
     }
 }
 
@@ -304,7 +328,9 @@ private fun DayPartSection(tramo: DayPartOutfit) {
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "\u00b7 ${tramo.temp}\u00b0",
+                // La sensación solo se enseña si se aleja de la temperatura: si no, es ruido.
+                text = "\u00b7 ${tramo.temp}\u00b0" + tramo.advice.feelsLike.takeIf { abs(it - tramo.temp) >= 2 }
+                    ?.let { " (" + stringResource(R.string.outfit_feels_like, it) + ")" }.orEmpty(),
                 color = Color.White.copy(alpha = 0.85f),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold
@@ -486,7 +512,8 @@ private fun ahora(
         windKmh = referencia.maxOfOrNull { it.windKmh } ?: today.windKmh,
         precipitationMm = referencia.sumOf { it.precipitationMm },
         precipProbability = referencia.mapNotNull { it.precipProbability }.maxOrNull(),
-        condition = current.condition
+        condition = current.condition,
+        feelsLike = current.feelsLike
     )
     val hayLuz = referencia.any { it.isDay }
     return DayPartOutfit(
@@ -518,7 +545,8 @@ private fun tramoDe(
         windKmh = tramo.maxOf { it.windKmh },
         precipitationMm = tramo.sumOf { it.precipitationMm },
         precipProbability = tramo.mapNotNull { it.precipProbability }.maxOrNull(),
-        condition = tramo.conditionDominante()
+        condition = tramo.conditionDominante(),
+        feelsLike = tramo.mapNotNull { it.feelsLike }.maxOrNull()
     )
 
     // No hay UV por hora en la API, solo el de ahora mismo. Se aplica unicamente a los

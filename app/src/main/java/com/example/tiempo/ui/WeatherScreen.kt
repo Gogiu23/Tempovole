@@ -74,6 +74,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -410,7 +411,10 @@ fun WeatherScreen(viewModel: WeatherViewModel = viewModel()) {
                         }
                     }
                 ) { innerPadding ->
-                    WeatherContent(state, selectedTab, currentLocation, innerPadding)
+                    WeatherContent(
+                        state, selectedTab, currentLocation, innerPadding,
+                        onRetry = { viewModel.load(currentLocation.lat, currentLocation.lon) }
+                    )
                 }
 
                 // Un unico boton arriba: el resto de accesos viven en el menu lateral.
@@ -1673,7 +1677,8 @@ private fun WeatherContent(
     state: WeatherUiState,
     selectedTab: Int,
     location: SavedLocation,
-    padding: PaddingValues
+    padding: PaddingValues,
+    onRetry: () -> Unit
 ) {
     when (state) {
         WeatherUiState.Loading -> Box(
@@ -1691,11 +1696,19 @@ private fun WeatherContent(
                 .padding(padding),
             Alignment.Center
         ) {
-            Text(
-                text = stringResource(R.string.weather_error_prefix, state.message),
-                color = Color.White,
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(24.dp)
-            )
+            ) {
+                Text(
+                    text = if (state.offline) stringResource(R.string.weather_error_offline)
+                    else stringResource(R.string.weather_error_prefix, state.message),
+                    color = Color.White,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(16.dp))
+                Button(onClick = onRetry) { Text(stringResource(R.string.weather_retry)) }
+            }
         }
 
         is WeatherUiState.Success -> {

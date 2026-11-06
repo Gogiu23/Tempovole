@@ -32,6 +32,10 @@
     <string name="changelog_v17_date">4 novembre 2026</string>
     <string name="changelog_v17_item1">«Altri dati» non apre più una finestra: ora sono schede colorate in un carosello, come quello di Settimana. Scorri di lato per sfogliarle e tocca una scheda per vederne i dettagli.</string>
     <string name="changelog_v17_item2">Nuova mappa meteo in fondo a Oggi, con rilievo, coste e nomi delle città. Mostra il vento in movimento, le nuvole e la pioggia, con un cursore del tempo per vedere come cambiano da ieri a domani.</string>
+    <string name="changelog_v19_date">7 novembre 2026</string>
+    <string name="changelog_v19_item1">Senza connessione, Oggi lo segnala e offre un pulsante «Riprova» invece di restare vuota.</string>
+    <string name="changelog_v19_item2">La mappa si scurisce di notte, seguendo l\'alba e il tramonto reali della tua città, e anche il sole o la luna della barra li segue.</string>
+    <string name="changelog_v19_item3">«Cosa mi metto» spiega come decide e usa la temperatura percepita reale (vento e umidità inclusi).</string>
     <string name="changelog_v18_date">4 novembre 2026</string>
     <string name="changelog_v18_item1">Oggi mostra il meteo di adesso (niente più «Pioggia» con il sole) e, sotto, la probabilità di pioggia nelle prossime 3 ore.</string>
     <string name="changelog_v18_item2">La mappa ha un pulsante play per scorrere le ore da sola, di mezz\'ora in mezz\'ora, e un pulsante «Adesso» per tornare. C\'è una nuova barra con un sole o una luna a seconda dell\'ora e un movimento più fluido.</string>
@@ -142,6 +146,8 @@
     <string name="bottom_bar_today">Oggi</string>
     <string name="bottom_bar_week">Settimana</string>
     <string name="weather_error_prefix">Impossibile caricare il meteo:\n%1$s</string>
+    <string name="weather_error_offline">Nessuna connessione. Controlla la rete e riprova.</string>
+    <string name="weather_retry">Riprova</string>
 
     <!-- Oggi -->
     <string name="today_max_label">Massima</string>
@@ -319,6 +325,9 @@
     <!-- Que me pongo -->
     <string name="bottom_bar_outfit">Come vestirsi</string>
     <string name="outfit_title">Come vestirsi oggi</string>
+    <string name="outfit_how_title">Come funziona</string>
+    <string name="outfit_how_body">Ogni blocco (adesso, mattina presto, mezzogiorno, pomeriggio e notte) guarda la temperatura percepita, che include vento e umidità, oltre a pioggia e indice UV. Ti vesti per il momento peggiore di ogni fascia. È una guida: con lo stesso meteo consiglia sempre lo stesso.</string>
+    <string name="outfit_feels_like">perc. %1$d°</string>
         <string name="outfit_band_freezing">Fa davvero freddo</string>
     <string name="outfit_band_cold">Fa freddo</string>
     <string name="outfit_band_cool">Fresco</string>

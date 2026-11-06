@@ -1,0 +1,3 @@
+• Senza connessione, «Oggi» lo segnala e offre un pulsante «Riprova» invece di restare vuota.
+• La mappa si scurisce di notte, seguendo alba e tramonto reali, e la barra segue sole e luna.
+• «Cosa mi metto» spiega come decide e usa la temperatura percepita reale.

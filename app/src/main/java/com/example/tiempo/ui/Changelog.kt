@@ -25,6 +25,15 @@ data class ChangelogEntry(
 object Changelog {
     val entries: List<ChangelogEntry> = listOf(
         ChangelogEntry(
+            version = "1.9",
+            dateRes = R.string.changelog_v19_date,
+            changeRes = listOf(
+                R.string.changelog_v19_item1,
+                R.string.changelog_v19_item2,
+                R.string.changelog_v19_item3
+            )
+        ),
+        ChangelogEntry(
             version = "1.8",
             dateRes = R.string.changelog_v18_date,
             changeRes = listOf(

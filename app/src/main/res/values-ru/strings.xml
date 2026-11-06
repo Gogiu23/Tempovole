@@ -32,6 +32,10 @@
     <string name="changelog_v17_date">4 ноября 2026 г.</string>
     <string name="changelog_v17_item1">«Больше данных» теперь не открывает окно: это карусель цветных карточек, как в «Неделе». Листайте вбок и нажмите на карточку, чтобы увидеть подробности.</string>
     <string name="changelog_v17_item2">Новая карта погоды внизу «Сегодня» с рельефом, береговыми линиями и названиями городов. Она показывает движущийся ветер, облака и дождь, а ползунок времени позволяет увидеть изменения от вчера до завтра.</string>
+    <string name="changelog_v19_date">7 ноября 2026 г.</string>
+    <string name="changelog_v19_item1">Без соединения «Сегодня» сообщает об этом и предлагает кнопку «Повторить» вместо пустого экрана.</string>
+    <string name="changelog_v19_item2">Ночью карта темнеет по реальному рассвету и закату вашего города, а солнце или луна на ползунке следуют за ними.</string>
+    <string name="changelog_v19_item3">«Что надеть» объясняет, как принимается решение, и использует реальную ощущаемую температуру (с ветром и влажностью).</string>
     <string name="changelog_v18_date">4 ноября 2026 г.</string>
     <string name="changelog_v18_item1">«Сегодня» показывает текущую погоду (больше никакого «Дождя» в солнечный день) и ниже — вероятность дождя в ближайшие 3 часа.</string>
     <string name="changelog_v18_item2">На карте есть кнопка воспроизведения: часы идут сами, с шагом в полчаса, а кнопка «Сейчас» возвращает назад. Новый ползунок с солнцем или луной в зависимости от времени и более плавное движение.</string>
@@ -142,6 +146,8 @@
     <string name="bottom_bar_today">Сегодня</string>
     <string name="bottom_bar_week">Неделя</string>
     <string name="weather_error_prefix">Не удалось загрузить погоду:\n%1$s</string>
+    <string name="weather_error_offline">Нет соединения. Проверьте сеть и повторите попытку.</string>
+    <string name="weather_retry">Повторить</string>
 
     <!-- Hoy -->
     <string name="today_max_label">Максимум</string>
@@ -319,6 +325,9 @@
     <!-- Que me pongo -->
     <string name="bottom_bar_outfit">Что надеть</string>
     <string name="outfit_title">Что надеть сегодня</string>
+    <string name="outfit_how_title">Как это работает</string>
+    <string name="outfit_how_body">Каждый блок (сейчас, раннее утро, день, вечер и ночь) учитывает ощущаемую температуру с ветром и влажностью, а также дождь и УФ-индекс. Одеваться нужно под самый неприятный момент каждого периода. Это подсказка: при одной и той же погоде совет всегда одинаков,.</string>
+    <string name="outfit_feels_like">ощущ. %1$d°</string>
         <string name="outfit_band_freezing">По-настоящему холодно</string>
     <string name="outfit_band_cold">Холодно</string>
     <string name="outfit_band_cool">Прохладно</string>

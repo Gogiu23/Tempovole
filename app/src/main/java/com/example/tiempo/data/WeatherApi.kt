@@ -20,14 +20,15 @@ interface WeatherApi {
     suspend fun getForecast(
         @Query("latitude") lat: Double,
         @Query("longitude") lon: Double,
-        @Query("current") current: String = "temperature_2m,weather_code,uv_index," +
+        @Query("current") current: String = "temperature_2m,apparent_temperature,weather_code,uv_index," +
             "shortwave_radiation,dew_point_2m,surface_pressure",
         @Query("daily") daily: String =
             "temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum," +
                 "precipitation_probability_max,wind_speed_10m_max,weather_code," +
                 "sunrise,sunset,moon_phase",
         @Query("hourly") hourly: String =
-            "temperature_2m,precipitation_probability,precipitation,wind_speed_10m,weather_code,is_day",
+            "temperature_2m,apparent_temperature,precipitation_probability,precipitation," +
+                "wind_speed_10m,weather_code,is_day",
         @Query("timezone") timezone: String = "auto",
         @Query("forecast_days") days: Int = 7
     ): ForecastResponse

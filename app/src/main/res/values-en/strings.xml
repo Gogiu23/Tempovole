@@ -32,6 +32,10 @@
     <string name="changelog_v17_date">November 4, 2026</string>
     <string name="changelog_v17_item1">“More data” no longer opens a window: it is now a carousel of colourful cards, like the one in Week. Swipe sideways to browse them and tap one to see its details.</string>
     <string name="changelog_v17_item2">New weather map at the bottom of Today, with terrain, coastlines and city names. It shows moving wind, clouds and rain, plus a time slider to see how they change from yesterday to tomorrow.</string>
+    <string name="changelog_v19_date">November 7, 2026</string>
+    <string name="changelog_v19_item1">With no connection, Today now says so and offers a “Retry” button instead of staying blank.</string>
+    <string name="changelog_v19_item2">The map darkens at night, following your city\'s real sunrise and sunset, and the sun or moon on the slider follows it too.</string>
+    <string name="changelog_v19_item3">“What to wear” explains how it decides and uses the real feels-like temperature (wind and humidity included).</string>
     <string name="changelog_v18_date">November 4, 2026</string>
     <string name="changelog_v18_item1">Today now shows the current weather (no more “Rain” on a sunny day) and, below it, the chance of rain over the next 3 hours.</string>
     <string name="changelog_v18_item2">The map has a play button to step through the hours on its own, half an hour at a time, and a “Now” button to jump back. There is a new slider with a sun or a moon depending on the time, and smoother movement.</string>
@@ -142,6 +146,8 @@
     <string name="bottom_bar_today">Today</string>
     <string name="bottom_bar_week">Week</string>
     <string name="weather_error_prefix">Couldn\'t load the weather:\n%1$s</string>
+    <string name="weather_error_offline">No connection. Check your network and try again.</string>
+    <string name="weather_retry">Retry</string>
 
     <!-- Hoy -->
     <string name="today_max_label">High</string>
@@ -319,6 +325,9 @@
     <!-- Que me pongo -->
     <string name="bottom_bar_outfit">What to wear</string>
     <string name="outfit_title">What to wear today</string>
+    <string name="outfit_how_title">How it works</string>
+    <string name="outfit_how_body">Each block (now, early morning, midday, afternoon and night) looks at the feels-like temperature, which includes wind and humidity, plus rain and the UV index. You dress for the worst moment of each part of the day. It is a guide: the same weather always gives the same advice,.</string>
+    <string name="outfit_feels_like">feels %1$d°</string>
         <string name="outfit_band_freezing">Properly cold</string>
     <string name="outfit_band_cold">Cold</string>
     <string name="outfit_band_cool">Chilly</string>

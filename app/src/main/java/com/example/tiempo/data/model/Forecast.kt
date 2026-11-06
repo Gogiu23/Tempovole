@@ -21,6 +21,7 @@ data class ForecastResponse(
 @Serializable
 data class CurrentForecast(
     @SerialName("temperature_2m") val temperature: Double,
+    @SerialName("apparent_temperature") val apparentTemperature: Double? = null,
     @SerialName("weather_code") val weatherCode: Int,
     @SerialName("uv_index") val uvIndex: Double? = null,
     @SerialName("shortwave_radiation") val solarRadiation: Double? = null,
@@ -51,7 +52,8 @@ data class HourlyForecast(
     @SerialName("precipitation") val precipitation: List<Double>,
     @SerialName("wind_speed_10m") val windSpeed: List<Double>,
     @SerialName("weather_code") val weatherCode: List<Int>,
-    @SerialName("is_day") val isDay: List<Int>
+    @SerialName("is_day") val isDay: List<Int>,
+    @SerialName("apparent_temperature") val apparentTemperature: List<Double?> = emptyList()
 )
 
 /** Modelo limpio que usa la UI. */
@@ -67,7 +69,9 @@ data class DayWeather(
     val sunrise: LocalDateTime,
     val sunset: LocalDateTime,
     /** Fracción 0..1 del ciclo lunar (0 y 1 = luna nueva, 0.5 = luna llena). */
-    val moonPhase: Double
+    val moonPhase: Double,
+    /** Sensación térmica con la que se decide la ropa; null = se estima con el viento. */
+    val feelsLike: Double? = null
 )
 
 data class HourWeather(
@@ -77,7 +81,8 @@ data class HourWeather(
     val precipitationMm: Double,
     val windKmh: Double,
     val condition: WeatherCondition,
-    val isDay: Boolean
+    val isDay: Boolean,
+    val feelsLike: Double? = null
 ) {
     /** Emoji de condición, con variante de noche (luna) para cielo despejado o parcial. */
     val displayEmoji: String
@@ -95,7 +100,8 @@ data class CurrentWeather(
     val uvIndex: Double? = null,
     val solarRadiation: Double? = null,
     val dewPoint: Double? = null,
-    val pressureHpa: Double? = null
+    val pressureHpa: Double? = null,
+    val feelsLike: Double? = null
 )
 
 /** Previsión completa: tiempo actual, diaria (7 días) y por horas. */
@@ -179,7 +185,8 @@ fun ForecastResponse.toHourWeatherList(): List<HourWeather> =
             precipitationMm = hourly.precipitation.getOrElse(i) { 0.0 },
             windKmh = hourly.windSpeed[i],
             condition = WeatherCondition.fromCode(hourly.weatherCode[i]),
-            isDay = hourly.isDay.getOrNull(i) == 1
+            isDay = hourly.isDay.getOrNull(i) == 1,
+            feelsLike = hourly.apparentTemperature.getOrNull(i)
         )
     }
 
@@ -190,7 +197,8 @@ fun ForecastResponse.toCurrentWeather(): CurrentWeather =
         uvIndex = current.uvIndex,
         solarRadiation = current.solarRadiation,
         dewPoint = current.dewPoint,
-        pressureHpa = current.pressure
+        pressureHpa = current.pressure,
+        feelsLike = current.apparentTemperature
     )
 
 fun ForecastResponse.toWeatherForecast(): WeatherForecast =

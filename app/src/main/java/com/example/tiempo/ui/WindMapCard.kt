@@ -92,6 +92,9 @@ private const val HOURS_PER_SECOND = 6f
 
 private val OCEAN = Color(0xFF0A1E3C)
 private val LAND = Color(0xFF5A7350)
+private val NIGHT_TINT = Color(0xFF050B2A)
+private const val NIGHT_TINT_ALPHA = 0.62f
+private const val NIGHT_CLOUD_DIM = 0.45f
 
 /**
  * Mapa propio con el viento (partículas que fluyen) y las nubes de la zona, con una rueda
@@ -316,9 +319,12 @@ private fun WindMapBody(
                 val dst = IntSize(w.toInt(), h.toInt())
                 // Entre dos horas se funden las capas de las dos. Se lee aquí, en el dibujo.
                 val frac = if (nextHour == hour) 0f else (hourValue - hour).coerceIn(0f, 1f)
+                // De noche, un velo azul oscuro sobre tierra y relieve; las nubes y la costa se apagan.
+                val night = field.night[hour] * (1f - frac) + field.night[nextHour] * frac
+                if (night > 0f) drawRect(NIGHT_TINT.copy(alpha = NIGHT_TINT_ALPHA * night))
                 if (cloudsOn) {
-                    drawImage(cloudImage, dstSize = dst, alpha = 1f - frac, filterQuality = FilterQuality.High)
-                    if (frac > 0f) drawImage(cloudNext, dstSize = dst, alpha = frac, filterQuality = FilterQuality.High)
+                    drawImage(cloudImage, dstSize = dst, alpha = (1f - frac) * (1f - NIGHT_CLOUD_DIM * night), filterQuality = FilterQuality.High)
+                    if (frac > 0f) drawImage(cloudNext, dstSize = dst, alpha = frac * (1f - NIGHT_CLOUD_DIM * night), filterQuality = FilterQuality.High)
                 }
 
                 if (rainOn) {
@@ -326,7 +332,7 @@ private fun WindMapBody(
                     if (frac > 0f) drawImage(rainNext, dstSize = dst, alpha = frac, filterQuality = FilterQuality.High)
                 }
 
-                layers?.let { drawPath(it.coast, Color.White.copy(alpha = 0.55f), style = Stroke(width = 1.2.dp.toPx())) }
+                layers?.let { drawPath(it.coast, Color.White.copy(alpha = 0.55f - 0.25f * night), style = Stroke(width = 1.2.dp.toPx())) }
             }
 
             if (windOn) {
@@ -400,7 +406,8 @@ private fun WindMapBody(
             onHourValue = { hourValue = it },
             playing = playing,
             onPlaying = { playing = it },
-            nowValue = nowValue
+            nowValue = nowValue,
+            night = field.night
         )
         Text(
             text = stringResource(R.string.map_credits),
@@ -428,7 +435,8 @@ private fun TimeControls(
     onHourValue: (Float) -> Unit,
     playing: Boolean,
     onPlaying: (Boolean) -> Unit,
-    nowValue: Float
+    nowValue: Float,
+    night: FloatArray
 ) {
     val last = (times.size - 1).toFloat()
     val value = hourValue()
@@ -475,11 +483,11 @@ private fun TimeControls(
             )
         },
         // El indicador es el astro de la hora que marca: un sol que gira de día y una luna de
-        // noche. ponytail: día fijo de 7 a 19 h; con el amanecer real de cada lugar, mejor.
+        // noche, según el amanecer y el atardecer reales del lugar (campo `is_day`).
         thumb = { state ->
             val v = state.value
             val h = v.toInt().coerceIn(0, times.size - 1)
-            val day = LocalDateTime.parse(times[h]).hour in 7..19
+            val day = night[h] == 0f
             Box(
                 Modifier
                     .size(36.dp)

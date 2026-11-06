@@ -1,0 +1,3 @@
+• With no connection, “Today” says so and offers a “Retry” button instead of staying blank.
+• The map darkens at night, following the real sunrise and sunset, and the slider follows the sun and moon.
+• “What to wear” explains how it decides and uses the real feels-like temperature.

@@ -19,7 +19,7 @@ sealed interface WeatherUiState {
         val hours: List<HourWeather>,
         val elevationM: Double
     ) : WeatherUiState
-    data class Error(val message: String) : WeatherUiState
+    data class Error(val message: String, val offline: Boolean = false) : WeatherUiState
 }
 
 class WeatherViewModel(
@@ -36,7 +36,11 @@ class WeatherViewModel(
                 val forecast = repository.getForecast(lat, lon)
                 WeatherUiState.Success(forecast.current, forecast.days, forecast.hours, forecast.elevationM)
             } catch (e: Exception) {
-                WeatherUiState.Error(e.message ?: "Error desconocido")
+                // Sin red o sin respuesta del servidor: se explica con un texto propio.
+                WeatherUiState.Error(
+                    e.message ?: "Error desconocido",
+                    offline = e is java.io.IOException
+                )
             }
         }
     }

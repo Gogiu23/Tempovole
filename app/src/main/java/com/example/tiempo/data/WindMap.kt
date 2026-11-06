@@ -15,7 +15,7 @@ interface WindMapApi {
     suspend fun getGrid(
         @Query("latitude") lats: String,
         @Query("longitude") lons: String,
-        @Query("hourly") hourly: String = "wind_speed_10m,wind_direction_10m,cloud_cover,precipitation",
+        @Query("hourly") hourly: String = "wind_speed_10m,wind_direction_10m,cloud_cover,precipitation,is_day",
         @Query("wind_speed_unit") unit: String = "kmh",
         @Query("timezone") timezone: String = "auto",
         @Query("past_days") past: Int = 1,
@@ -32,7 +32,8 @@ data class WindPointHourly(
     @SerialName("wind_speed_10m") val windSpeed: List<Double?>,
     @SerialName("wind_direction_10m") val windDirection: List<Double?>,
     @SerialName("cloud_cover") val cloudCover: List<Double?>,
-    val precipitation: List<Double?>
+    val precipitation: List<Double?>,
+    @SerialName("is_day") val isDay: List<Int?> = emptyList()
 )
 
 /**
@@ -52,6 +53,8 @@ class WindField(
     val cloud: List<FloatArray>,
     /** Igual, precipitación en mm por hora. */
     val rain: List<FloatArray>,
+    /** Por hora: 1 de noche, 0 de día (el sol del centro del mapa); entre horas se interpola. */
+    val night: FloatArray,
     val latMin: Double,
     val latMax: Double,
     val lonMin: Double,
@@ -132,7 +135,9 @@ object WindMapRepository {
                 rain[t][p] = (point.hourly.precipitation.getOrNull(t) ?: 0.0).toFloat()
             }
         }
-        return WindField(SIDE, SIDE, times, u, v, cloud, rain, latMin, latMax, lonMin, lonMax)
+        val centerDay = points[points.size / 2].hourly.isDay
+        val night = FloatArray(n) { if (centerDay.getOrNull(it) == 0) 1f else 0f }
+        return WindField(SIDE, SIDE, times, u, v, cloud, rain, night, latMin, latMax, lonMin, lonMax)
             .also { cached = key to it }
     }
 }

@@ -1,0 +1,3 @@
+• Sin conexión, «Hoy» avisa y ofrece un botón «Reintentar» en vez de quedarse en blanco.
+• El mapa se oscurece de noche, con el amanecer y el atardecer reales, y la barra sigue al sol y la luna.
+• «Qué me pongo» explica cómo decide y usa la sensación térmica real.

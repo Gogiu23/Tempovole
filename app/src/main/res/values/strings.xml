@@ -32,6 +32,10 @@
     <string name="changelog_v17_date">4 de noviembre de 2026</string>
     <string name="changelog_v17_item1">«Más datos» ya no abre una ventana: ahora son tarjetas de colores en un carrusel, como el de Semana. Desliza de lado para recorrerlas y toca una para ver su información.</string>
     <string name="changelog_v17_item2">Nuevo mapa del tiempo al final de Hoy, con relieve, costas y nombres de ciudades. Muestra el viento en movimiento, las nubes y la lluvia, y una rueda de tiempo para ver cómo evolucionan ayer, hoy y mañana.</string>
+    <string name="changelog_v19_date">7 de noviembre de 2026</string>
+    <string name="changelog_v19_item1">Si no hay conexión, Hoy avisa y ofrece un botón «Reintentar» en vez de quedarse en blanco.</string>
+    <string name="changelog_v19_item2">El mapa se oscurece de noche, con el amanecer y el atardecer reales de tu ciudad, y el sol o la luna de la barra los sigue.</string>
+    <string name="changelog_v19_item3">«Qué me pongo» explica cómo decide y usa la sensación térmica real (viento y humedad incluidos).</string>
     <string name="changelog_v18_date">4 de noviembre de 2026</string>
     <string name="changelog_v18_item1">Hoy muestra el tiempo de ahora (ya no sale «Lluvia» con sol) y, debajo, la probabilidad de lluvia de las próximas 3 horas.</string>
     <string name="changelog_v18_item2">El mapa tiene botón de play para recorrer las horas solas, de media en media hora, y un botón «Ahora» para volver. Una barra nueva con un sol o una luna según la hora, y un movimiento más suave.</string>
@@ -142,6 +146,8 @@
     <string name="bottom_bar_today">Hoy</string>
     <string name="bottom_bar_week">Semana</string>
     <string name="weather_error_prefix">No se pudo cargar el tiempo:\n%1$s</string>
+    <string name="weather_error_offline">Sin conexión. Comprueba tu red e inténtalo de nuevo.</string>
+    <string name="weather_retry">Reintentar</string>
 
     <!-- Hoy -->
     <string name="today_max_label">Máxima</string>
@@ -319,6 +325,9 @@
     <!-- Que me pongo -->
     <string name="bottom_bar_outfit">Qué me pongo</string>
     <string name="outfit_title">Qué me pongo hoy</string>
+    <string name="outfit_how_title">Cómo funciona</string>
+    <string name="outfit_how_body">Cada bloque (ahora, madrugada, mediodía, tarde y noche) mira la sensación térmica, que incluye viento y humedad, además de la lluvia y el índice UV. Te vistes para el peor rato de cada tramo. Es una guía: con el mismo tiempo, siempre recomienda lo mismo.</string>
+    <string name="outfit_feels_like">sens. %1$d°</string>
         <string name="outfit_band_freezing">Hace un frío de verdad</string>
     <string name="outfit_band_cold">Hace frío</string>
     <string name="outfit_band_cool">Fresco</string>
