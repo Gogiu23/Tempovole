@@ -171,8 +171,8 @@ class UnsplashRepository(
      * Pide [PHOTOS_PER_CONDITION] fotos de cada condición en **una sola petición** y las
      * guarda [REFRESH_DAYS] días, de modo que el gasto habitual es de unas pocas
      * peticiones por semana y no una por tarjeta y día. Solo se piden las condiciones que
-     * de verdad salen en la previsión, y una condición que falle no se reintenta hasta el
-     * día siguiente: sin cobertura, abrir la app muchas veces no debe fundir la cuota.
+     * de verdad salen en la previsión, y una condición que falle no se reintenta hasta pasados
+     * [RETRY_AFTER_FAILURE_MS]: sin cobertura, abrir la app muchas veces no debe fundir la cuota.
      */
     suspend fun conditionPhotos(
         conditions: Collection<WeatherCondition>
@@ -182,14 +182,16 @@ class UnsplashRepository(
 
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val today = LocalDate.now().toEpochDay()
+        val now = System.currentTimeMillis()
 
         return conditions.distinct().mapNotNull { condition ->
             val cached = prefs.readConditionPhotos(condition)
             val stale = today - prefs.getLong(condition.fetchedKey(), 0L) >= REFRESH_DAYS
-            val triedToday = prefs.getLong(condition.triedKey(), 0L) == today
+            // Instante del último fallo (versiones anteriores guardaban aquí el día, un número
+            // pequeño que cae siempre fuera de la ventana de espera).
+            val recentlyFailed = now - prefs.getLong(condition.triedKey(), 0L) < RETRY_AFTER_FAILURE_MS
 
-            val fresh = if ((cached.isEmpty() || stale) && !triedToday) {
-                prefs.edit().putLong(condition.triedKey(), today).apply()
+            val fresh = if ((cached.isEmpty() || stale) && !recentlyFailed) {
                 runCatching {
                     api.randomPhotos(
                         query = condition.photoQuery,
@@ -197,6 +199,12 @@ class UnsplashRepository(
                         clientId = key
                     )
                 }.getOrNull()?.map { it.toBackgroundPhoto() }?.takeIf { it.isNotEmpty() }
+                    // Solo un fallo real frena los reintentos: antes se marcaba el intento
+                    // antes de pedir y un corte de red dejaba la condición sin fotos todo el día.
+                    ?: run {
+                        prefs.edit().putLong(condition.triedKey(), now).apply()
+                        null
+                    }
             } else {
                 null
             }
@@ -235,6 +243,9 @@ class UnsplashRepository(
 
         /** Cada cuántos días se renueva la colección de fotos de una condición. */
         private const val REFRESH_DAYS = 7L
+
+        /** Espera tras un fallo antes de volver a pedir una condición: sin red no se funde la cuota. */
+        private const val RETRY_AFTER_FAILURE_MS = 10 * 60 * 1000L
 
         /** Las fotos que se estan mostrando hoy, o vacio si el registro es de otro dia. */
         private fun SharedPreferences.readUsedToday(): List<BackgroundPhoto> =

@@ -32,6 +32,8 @@
     <string name="changelog_v17_date">4 de noviembre de 2026</string>
     <string name="changelog_v17_item1">«Más datos» ya no abre una ventana: ahora son tarjetas de colores en un carrusel, como el de Semana. Desliza de lado para recorrerlas y toca una para ver su información.</string>
     <string name="changelog_v17_item2">Nuevo mapa del tiempo al final de Hoy, con relieve, costas y nombres de ciudades. Muestra el viento en movimiento, las nubes y la lluvia, y una rueda de tiempo para ver cómo evolucionan ayer, hoy y mañana.</string>
+    <string name="changelog_v110_date">13 de noviembre de 2026</string>
+    <string name="changelog_v110_item1">Las fotos de las tarjetas de Semana se recuperan solas tras un corte de conexión, en vez de quedarse sin imagen todo el día.</string>
     <string name="changelog_v19_date">7 de noviembre de 2026</string>
     <string name="changelog_v19_item1">Si no hay conexión, Hoy avisa y ofrece un botón «Reintentar» en vez de quedarse en blanco.</string>
     <string name="changelog_v19_item2">El mapa se oscurece de noche, con el amanecer y el atardecer reales de tu ciudad, y el sol o la luna de la barra los sigue.</string>

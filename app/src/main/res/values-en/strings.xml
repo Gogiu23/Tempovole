@@ -32,6 +32,8 @@
     <string name="changelog_v17_date">November 4, 2026</string>
     <string name="changelog_v17_item1">“More data” no longer opens a window: it is now a carousel of colourful cards, like the one in Week. Swipe sideways to browse them and tap one to see its details.</string>
     <string name="changelog_v17_item2">New weather map at the bottom of Today, with terrain, coastlines and city names. It shows moving wind, clouds and rain, plus a time slider to see how they change from yesterday to tomorrow.</string>
+    <string name="changelog_v110_date">November 13, 2026</string>
+    <string name="changelog_v110_item1">Week card photos now recover on their own after a connection drop, instead of staying blank all day.</string>
     <string name="changelog_v19_date">November 7, 2026</string>
     <string name="changelog_v19_item1">With no connection, Today now says so and offers a “Retry” button instead of staying blank.</string>
     <string name="changelog_v19_item2">The map darkens at night, following your city\'s real sunrise and sunset, and the sun or moon on the slider follows it too.</string>

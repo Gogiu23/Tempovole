@@ -32,6 +32,8 @@
     <string name="changelog_v17_date">4 novembre 2026</string>
     <string name="changelog_v17_item1">«Altri dati» non apre più una finestra: ora sono schede colorate in un carosello, come quello di Settimana. Scorri di lato per sfogliarle e tocca una scheda per vederne i dettagli.</string>
     <string name="changelog_v17_item2">Nuova mappa meteo in fondo a Oggi, con rilievo, coste e nomi delle città. Mostra il vento in movimento, le nuvole e la pioggia, con un cursore del tempo per vedere come cambiano da ieri a domani.</string>
+    <string name="changelog_v110_date">13 novembre 2026</string>
+    <string name="changelog_v110_item1">Le foto delle schede della settimana si recuperano da sole dopo un\'interruzione di connessione, invece di restare vuote tutto il giorno.</string>
     <string name="changelog_v19_date">7 novembre 2026</string>
     <string name="changelog_v19_item1">Senza connessione, Oggi lo segnala e offre un pulsante «Riprova» invece di restare vuota.</string>
     <string name="changelog_v19_item2">La mappa si scurisce di notte, seguendo l\'alba e il tramonto reali della tua città, e anche il sole o la luna della barra li segue.</string>
